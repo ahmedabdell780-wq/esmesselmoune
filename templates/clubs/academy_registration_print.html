@@ -7,28 +7,25 @@
     <!-- Tailwind CSS (CDN for printing) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    
     <style>
-        body {
-            font-family: 'Cairo', sans-serif;
-            background: white;
-            color: black;
-            font-size: 14px;
-        }
+        body { font-family: 'Cairo', sans-serif; background: white; color: black; font-size: 13px; }
         @media print {
-            body { font-size: 12px; }
+            @page { margin: 0; size: A4; }
+            body { margin: 0; padding: 10mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .no-print { display: none !important; }
-            .page-break { page-break-before: always; }
-            @page { margin: 1cm; size: A4 portrait; }
+            .page-break { page-break-after: always; break-after: page; }
+            .form-container { max-width: 100%; margin: 0; padding: 0; box-sizing: border-box; }
         }
-        
-        .form-container { max-width: 800px; margin: 0 auto; padding: 5px; }
-        .green-header { background-color: #047857 !important; color: white !important; font-weight: bold; padding: 6px 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; border: 1px solid #047857; margin-top: 15px; }
-        .field-box { border: 1px solid #e5e7eb; padding: 6px 12px; display: flex; align-items: center; gap: 8px; }
+        .form-container { max-width: 800px; margin: 0 auto; }
+        .green-header { background-color: #047857 !important; color: white !important; font-weight: bold; padding: 4px 8px; border: 1px solid #047857; margin-top: 10px; font-size: 12px; }
+        .field-box { border: 1px solid #e5e7eb; padding: 4px 8px; display: flex; align-items: center; gap: 8px; font-size: 12px; }
         .field-label { font-weight: bold; color: #374151; white-space: nowrap; }
         .field-value { font-weight: bold; color: black; flex-grow: 1; border-bottom: 1px dashed #9ca3af; padding-bottom: 2px; }
-        .checkbox-box { width: 14px; height: 14px; border: 1px solid black; display: inline-block; position: relative; top: 2px; }
-        .checkbox-checked::after { content: '✓'; position: absolute; top: -5px; left: 1px; font-weight: bold; font-size: 14px; }
+        .checkbox-box { width: 12px; height: 12px; border: 1px solid black; display: inline-block; position: relative; top: 2px; }
+        .checkbox-checked::after { content: '?'; position: absolute; top: -6px; left: 1px; font-weight: bold; font-size: 12px; }
     </style>
+
 </head>
 <body>
     <div class="no-print text-center py-4 bg-gray-100 mb-6 border-b">
@@ -37,14 +34,14 @@
     </div>
 
     <!-- PAGE 1: RECTO -->
-    <div class="form-container">
+    <div class="form-container page-break">
         <!-- HEADER -->
         <div class="flex justify-between items-start border-b-2 border-emerald-700 pb-2 mb-2">
             <div class="w-24 h-24 border border-dashed border-gray-400 flex items-center justify-center text-xs text-gray-400">
                 {% if player.photo %}<img src="{{ player.photo.url }}" class="w-full h-full object-cover">{% else %}Photo{% endif %}
             </div>
             <div class="text-center flex-1 px-4">
-                <h1 class="text-2xl font-black text-emerald-800">الوفاق الرياضي مسلمون</h1>
+                <h1 class="text-lg font-black text-emerald-800">الوفاق الرياضي مسلمون</h1>
                 <h2 class="text-lg font-bold text-gray-700 uppercase">ESM FOOTBALL CLUB — EL WIFAK SPORTIF MESSELMOUN</h2>
                 <p class="text-xs font-bold mt-1">مدرسة كرة القدم والتربية الرياضية — فئات البراعم والمواهب الشابة (U-9 / U-11 / U-13)</p>
                 <div class="bg-emerald-800 text-white font-bold py-1 px-4 mt-2 inline-block rounded" style="-webkit-print-color-adjust: exact;">
@@ -56,7 +53,7 @@
             </div>
         </div>
 
-        <div class="flex justify-between text-sm font-bold mb-4">
+        <div class="flex justify-between text-sm font-bold mb-2">
             <div>رقم ملف الانخراط: ESM - B / ______ / 2026</div>
             <div>الموسم الرياضي: 2026/2027</div>
         </div>
@@ -75,17 +72,17 @@
         <!-- 2. PROFIL SPORTIF -->
         <div class="green-header">2. الملف الفني والرياضي للاعب / PROFIL SPORTIF ET TECHNIQUE</div>
         <div class="border border-gray-200 p-2 text-sm">
-            <div class="flex gap-4 mb-2">
+            <div class="flex gap-2 mb-2">
                 <span class="field-label">الفئة العمرية:</span>
                 <span class="font-bold border-b border-dashed border-gray-400 flex-1">{{ player.category.name|default:"____________________" }}</span>
             </div>
-            <div class="flex gap-4 mb-2">
+            <div class="flex gap-2 mb-2">
                 <span class="field-label">المنصب التكتيكي:</span>
                 <span class="font-bold border-b border-dashed border-gray-400 flex-1">{{ player.position|default:"____________________" }}</span>
                 <span class="field-label ml-4">القدم المفضلة:</span>
                 <span class="font-bold border-b border-dashed border-gray-400 w-32">{{ player.preferred_foot|default:"__________" }}</span>
             </div>
-            <div class="flex gap-4">
+            <div class="flex gap-2">
                 <span class="field-label">النادي أو المدرسة السابقة:</span>
                 <span class="font-bold border-b border-dashed border-gray-400 flex-1">{{ player.previous_club|default:"____________________" }}</span>
                 <span class="field-label ml-4">رقم القميص:</span>
@@ -107,7 +104,7 @@
         <!-- 4. DOSSIER & COTISATION -->
         <div class="green-header">4. الوثائق المطلوبة، حقوق الاشتراك والتصريح الأبوي / DOSSIER & COTISATION</div>
         <div class="border border-gray-200 flex">
-            <div class="w-1/2 p-4 border-l border-gray-200">
+            <div class="w-1/2 p-2 border-l border-gray-200">
                 <p class="font-bold mb-2">الوثائق الإدارية المرفقة بالملف:</p>
                 <div class="mb-1"><span class="checkbox-box"></span> شهادة ميلاد أصلية حديثة (عقد أصلي)</div>
                 <div class="mb-1"><span class="checkbox-box"></span> صورتان (02) شمسيتان حديثتان ملونتان</div>
@@ -118,7 +115,7 @@
                 <div class="mb-1 mr-4"><span class="checkbox-box"></span> الاشتراك السنوي: <span class="bg-emerald-100 px-2 rounded border border-emerald-200 text-emerald-800" style="-webkit-print-color-adjust: exact;">3000 دج</span></div>
                 <div class="mr-4"><span class="checkbox-box"></span> الاشتراك الشهري: <span class="bg-emerald-100 px-2 rounded border border-emerald-200 text-emerald-800" style="-webkit-print-color-adjust: exact;">500 دج</span></div>
             </div>
-            <div class="w-1/2 p-4">
+            <div class="w-1/2 p-2">
                 <p class="font-bold mb-2 text-center">تصريح وترخيص أبوي رسمي (Autorisation Parentale):</p>
                 <p class="text-xs text-justify leading-relaxed">
                     أنا الموقع أسفله الولي الشرعي للطفل المصرح به أعلاه، أصرح بموافقتي الكاملة على انخراط ابني في صفوف مدرسة/نادي الوفاق الرياضي مسلمون (ESM) وأرخص له بالمشاركة في جميع الحصص التدريبية، التربصات، والمباريات الرسمية والودية والتنقلات المبرمجة، وأتعهد بدفع حقوق الاشتراك المحددة والامتثال للنظام الداخلي للنادي وميثاق الروح الرياضية.
@@ -142,23 +139,21 @@
             </div>
         </div>
 
-        <div class="text-center mt-4 text-[10px] text-gray-500">
+        <div class="text-center mt-2 text-[10px] text-gray-500">
             نادي الوفاق الرياضي مسلمون (ESM) — بلدية مسلمون، دائرة قوراية، ولاية تيبازة | استمارة الانخراط والتسجيل — فئة البراعم والمواهب الشابة (الصفحة 1/2)
         </div>
     </div>
 
     <!-- PAGE BREAK FOR PAGE 2 -->
-    <div class="page-break"></div>
-
-    <!-- PAGE 2: VERSO -->
+    
     <div class="form-container">
         <!-- HEADER P2 -->
-        <div class="flex justify-between items-center border-b-2 border-emerald-700 pb-2 mb-4">
+        <div class="flex justify-between items-center border-b-2 border-emerald-700 pb-2 mb-2">
             <div class="w-20 border border-emerald-800 text-emerald-800 text-center font-bold text-xs p-2">
                 الملف الطبي<br>الإجباري<br>DOSSIER<br>MÉDICAL
             </div>
             <div class="text-center flex-1 px-4">
-                <h1 class="text-2xl font-black text-emerald-800">الوفاق الرياضي مسلمون — الوحدة الطبية الرياضية</h1>
+                <h1 class="text-lg font-black text-emerald-800">الوفاق الرياضي مسلمون — الوحدة الطبية الرياضية</h1>
                 <h2 class="text-sm font-bold text-gray-700 uppercase">ESM FOOTBALL CLUB — EL WIFAK SPORTIF MESSELMOUN</h2>
                 <p class="text-xs font-bold mt-1">الملف الطبي الرياضي وشهادة القدرة البدنية لممارسة كرة القدم (الموسم 2026/2027)</p>
                 <div class="bg-emerald-800 text-white font-bold py-1 px-4 mt-2 inline-block rounded" style="-webkit-print-color-adjust: exact;">
@@ -170,7 +165,7 @@
             </div>
         </div>
 
-        <div class="flex justify-between text-sm font-bold border border-gray-200 p-2 mb-4 bg-gray-50" style="-webkit-print-color-adjust: exact;">
+        <div class="flex justify-between text-sm font-bold border border-gray-200 p-2 mb-2 bg-gray-50" style="-webkit-print-color-adjust: exact;">
             <div class="flex-1 flex gap-2"><span class="text-gray-600">اسم ولقب اللاعب:</span> <span>{{ player.first_name }} {{ player.last_name|upper }}</span></div>
             <div class="flex-1 border-r border-gray-300 pr-4 flex gap-2"><span class="text-gray-600">تاريخ الازدياد:</span> <span>{{ player.date_of_birth|date:"Y / m / d" }}</span></div>
             <div class="w-32 border-r border-gray-300 pr-4 flex gap-2"><span class="text-gray-600">الفئة:</span> <span class="text-emerald-700">{{ player.category.name|default:"___" }}</span></div>
@@ -179,23 +174,23 @@
         <!-- 1. BIOMETRIE -->
         <div class="green-header">1. القياسات البيومترية وفصيلة الدم / BIOMÉTRIE & GROUPE SANGUIN</div>
         <div class="grid grid-cols-3 border border-gray-200">
-            <div class="p-4 border-l border-gray-200 text-center">
+            <div class="p-2 border-l border-gray-200 text-center">
                 <div class="font-bold text-gray-600 mb-2">القامة (Taille):</div>
-                <div class="text-xl font-black">{{ player.height|default:"___" }} <span class="text-sm font-normal">سم (cm)</span></div>
+                <div class="text-lg font-black">{{ player.height|default:"___" }} <span class="text-sm font-normal">سم (cm)</span></div>
             </div>
-            <div class="p-4 border-l border-gray-200 text-center">
+            <div class="p-2 border-l border-gray-200 text-center">
                 <div class="font-bold text-gray-600 mb-2">الوزن (Poids):</div>
-                <div class="text-xl font-black">{{ player.weight|default:"___" }} <span class="text-sm font-normal">كغ (kg)</span></div>
+                <div class="text-lg font-black">{{ player.weight|default:"___" }} <span class="text-sm font-normal">كغ (kg)</span></div>
             </div>
-            <div class="p-4 text-center">
+            <div class="p-2 text-center">
                 <div class="font-bold text-gray-600 mb-2">فصيلة الدم (Groupe sanguin):</div>
-                <div class="text-2xl font-black text-red-600">{{ player.blood_type|default:"___" }}</div>
+                <div class="text-lg font-black text-red-600">{{ player.blood_type|default:"___" }}</div>
             </div>
         </div>
 
         <!-- 2. ANTECEDENTS -->
         <div class="green-header">2. السوابق الصحية، الجراحية والأمراض المزمنة / ANTÉCÉDENTS MÉDICAUX</div>
-        <div class="border border-gray-200 p-4">
+        <div class="border border-gray-200 p-2">
             <div class="flex items-center gap-2 mb-3 font-bold text-lg">
                 <span class="checkbox-box {% if not player.medical_history %}checkbox-checked{% endif %}"></span>
                 لا توجد (اللاعب سليم تماماً معافى)
@@ -207,11 +202,11 @@
                     {{ player.medical_history|default:"" }}
                 </span>
             </div>
-            <div class="border-b-2 border-dotted border-gray-500 w-full mt-4"></div>
+            <div class="border-b-2 border-dotted border-gray-500 w-full mt-2"></div>
         </div>
 
         <!-- 3. CERTIFICAT -->
-        <div class="green-header mt-4">3. شهادة التأهيل والأهلية الطبية الرياضية / CERTIFICAT D'APTITUDE SPORTIVE</div>
+        <div class="green-header mt-2">3. شهادة التأهيل والأهلية الطبية الرياضية / CERTIFICAT D'APTITUDE SPORTIVE</div>
         <div class="border border-green-600 p-3 rounded-lg mt-2 relative">
             <div class="absolute inset-0 opacity-5 pointer-events-none flex items-center justify-center">
                 <img src="{% static 'images/messelmoun.jpg' %}" class="w-64 opacity-20 object-contain">
@@ -233,26 +228,26 @@
                 </p>
             </div>
             
-            <div class="flex flex-col items-center gap-4 my-4 relative z-10">
-                <div class="flex items-center gap-3 text-2xl font-black text-emerald-700">
+            <div class="flex flex-col items-center gap-2 my-2 relative z-10">
+                <div class="flex items-center gap-3 text-lg font-black text-emerald-700">
                     <div class="w-6 h-6 border-2 border-emerald-700 rounded"></div>
                     مؤهل وقادر بدنياً لممارسة كرة القدم في التدريبات والمنافسات (APTE)
                 </div>
-                <div class="flex items-center gap-3 text-xl font-bold text-red-600">
+                <div class="flex items-center gap-3 text-lg font-bold text-red-600">
                     <div class="w-5 h-5 border-2 border-red-600 rounded"></div>
                     غير مؤهل مؤقتاً / نهائياً (INAPTE)
                 </div>
             </div>
             
-            <div class="mb-4 relative z-10">
+            <div class="mb-2 relative z-10">
                 <div class="flex items-end gap-2 text-lg font-bold">
                     <span class="whitespace-nowrap">توصيات أو إرشادات وقائية خاصة باللاعب:</span>
                     <span class="border-b-2 border-dotted border-gray-500 flex-1"></span>
                 </div>
-                <div class="border-b-2 border-dotted border-gray-500 w-full mt-4"></div>
+                <div class="border-b-2 border-dotted border-gray-500 w-full mt-2"></div>
             </div>
             
-            <div class="flex justify-between mt-6 relative z-10">
+            <div class="flex justify-between mt-4 relative z-10">
                 <div class="text-center w-1/2">
                     <p class="text-lg font-bold">حرر بـمـسـلمـون فـي: _____ / _____ / 2026</p>
                 </div>
@@ -263,7 +258,7 @@
             </div>
         </div>
 
-        <div class="text-center mt-4 text-[10px] text-gray-500">
+        <div class="text-center mt-2 text-[10px] text-gray-500">
             نادي الوفاق الرياضي مسلمون (ESM) — بلدية مسلمون، دائرة قوراية، ولاية تيبازة | الملف الطبي الرياضي الإجباري — فئة البراعم والمواهب الشابة (الصفحة 2/2)
         </div>
     </div>
