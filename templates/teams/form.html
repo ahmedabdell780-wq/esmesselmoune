@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% load i18n turniq_tags %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+
+  <!-- BREADCRUMB -->
+  <div class="flex items-center gap-2 text-sm mb-6" style="color:var(--muted)">
+    <a href="{% url 'teams:list' %}" class="hover:underline" style="color:var(--primary)">⚽ {% trans "Équipes" %}</a>
+    <span>›</span>
+    {% if action == 'update' %}
+      <a href="{% url 'teams:detail' object.pk %}" class="hover:underline" style="color:var(--primary)">{{ object.name }}</a>
+      <span>›</span>
+      <span>{% trans "Modifier" %}</span>
+    {% else %}
+      <span>{% trans "Nouvelle équipe" %}</span>
+    {% endif %}
+  </div>
+
+  <div class="card rounded-2xl overflow-hidden">
+    <!-- Header -->
+    <div class="px-6 py-4 border-b flex items-center gap-3" style="border-color:var(--border);background:var(--card2)">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
+           style="background:var(--primary-glow);border:1px solid var(--primary)">⚽</div>
+      <div>
+        <h1 class="font-bold text-lg">{{ page_title }}</h1>
+        <p class="text-xs" style="color:var(--muted)">
+          {% if action == 'create' %}
+            أدخل بيانات الفريق الجديد · Renseignez les informations du nouveau club
+          {% else %}
+            عدّل بيانات الفريق · Mettez à jour les informations du club
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="p-6">
+      {% csrf_token %}
+
+      {% if form.errors %}
+      <div class="mb-5 p-4 rounded-xl" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3)">
+        <p class="font-bold text-sm text-red-400 mb-2">❌ يرجى تصحيح الأخطاء / Veuillez corriger les erreurs :</p>
+        {% for field, errors in form.errors.items %}
+          {% for error in errors %}
+            <p class="text-xs text-red-300 mt-0.5">• {{ error }}</p>
+          {% endfor %}
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+        <!-- Nom -->
+        <div class="md:col-span-2">
+          <label class="form-label">🏷️ {% trans "Nom de l'équipe" %} / اسم الفريق <span class="text-red-400">*</span></label>
+          <input type="text" name="name" value="{{ form.name.value|default:'' }}"
+                 class="form-input text-base font-bold" required
+                 placeholder="Ex: Hay El Wiam"/>
+        </div>
+
+        <!-- Quartier -->
+        <div>
+          <label class="form-label">📍 {% trans "Quartier" %} / الحي <span class="text-red-400">*</span></label>
+          <input type="text" name="neighborhood" value="{{ form.neighborhood.value|default:'' }}"
+                 class="form-input" required placeholder="Cité El Wiam"/>
+        </div>
+
+        <!-- Ville -->
+        <div>
+          <label class="form-label">🏙️ {% trans "Commune" %} / البلدية</label>
+          <input type="text" name="city" value="{{ form.city.value|default:'MESSLMOUNE' }}"
+                 class="form-input"/>
+        </div>
+
+        <!-- Wilaya -->
+        <div>
+          <label class="form-label">🗺️ {% trans "Wilaya" %} / الولاية</label>
+          <input type="text" name="wilaya" value="{{ form.wilaya.value|default:'Tipaza' }}"
+                 class="form-input"/>
+        </div>
+
+        <!-- Année de fondation -->
+        <div>
+          <label class="form-label">📅 {% trans "Année de fondation" %} / سنة التأسيس</label>
+          <input type="number" name="founded_year" value="{{ form.founded_year.value|default:'' }}"
+                 class="form-input" min="1900" max="2030" placeholder="2024"/>
+        </div>
+
+        <!-- Logo -->
+        <div class="md:col-span-2">
+          <label class="form-label">🖼️ {% trans "Logo du club" %} / شعار النادي</label>
+          <div class="flex items-center gap-4">
+            {% if action == 'update' and object.logo %}
+            <img src="{{ object.logo.url }}" class="w-16 h-16 rounded-xl object-cover border"
+                 style="border-color:var(--border)" id="logo-preview"/>
+            {% else %}
+            <div class="w-16 h-16 rounded-xl border flex items-center justify-center text-2xl"
+                 style="border-color:var(--border);background:var(--card2)" id="logo-preview">⚽</div>
+            {% endif %}
+            <div class="flex-1">
+              <input type="file" name="logo" accept="image/*" class="form-input flex-1"
+                   onchange="if(this.files[0]) { document.getElementById('logo-preview').innerHTML = '<img src=\''+URL.createObjectURL(this.files[0])+'\' class=\'w-full h-full object-cover rounded-xl\'>'; }"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cover Photo -->
+        <div class="md:col-span-2 mt-4">
+          <label class="form-label">🎬 {% trans "Photo de couverture" %} / صورة الغلاف (Cinematic)</label>
+          <div class="flex flex-col gap-3">
+            {% if action == 'update' and object.cover_photo %}
+            <div class="w-full h-32 rounded-xl border border-white/10 overflow-hidden relative" id="cover-preview">
+              <img src="{{ object.cover_photo.url }}" class="w-full h-full object-cover" 
+                   style="object-position: center {{ object.cover_offset_y|default:50 }}%"/>
+            </div>
+            {% else %}
+            <div class="w-full h-32 rounded-xl border border-white/10 flex flex-col items-center justify-center text-gray-500 bg-white/5" id="cover-preview">
+              <span class="text-3xl mb-2">📸</span>
+              <span class="text-xs">1920×1080px (Optionnel)</span>
+            </div>
+            {% endif %}
+            <input type="file" name="cover_photo" accept="image/*" class="form-input"
+                   onchange="if(this.files[0]) { document.getElementById('cover-preview').innerHTML = '<img src=\''+URL.createObjectURL(this.files[0])+'\' class=\'w-full h-full object-cover rounded-xl\'>'; }"/>
+          </div>
+        </div>
+
+        <!-- NEW: Frame Control -->
+        <div class="md:col-span-1 p-4 bg-white/5 border border-white/5 rounded-2xl">
+          <label class="form-label mb-3 flex items-center gap-2">📐 {% trans "Hauteur de l'image" %} / طول الإطار <span class="text-[10px] text-gray-500">(px)</span></label>
+          <input type="number" name="banner_height" value="{{ form.banner_height.value|default:550 }}"
+                 class="form-input" min="200" max="1000" step="50"/>
+          <p class="text-[9px] text-gray-500 mt-2">تتحكم في مدى ضخامة صورة الغلاف عمودياً.</p>
+        </div>
+
+        <div class="md:col-span-1 p-4 bg-white/5 border border-white/5 rounded-2xl">
+          <label class="form-label mb-3 flex items-center justify-between">
+            <span>↔️ {% trans "Position verticale" %} / تحريك الصورة</span>
+            <span id="pos-val" class="text-xs font-mono text-primary">{{ form.cover_offset_y.value|default:50 }}%</span>
+          </label>
+          <input type="range" name="cover_offset_y" value="{{ form.cover_offset_y.value|default:50 }}"
+                 class="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary" 
+                 min="0" max="100" 
+                 oninput="document.getElementById('pos-val').innerText = this.value + '%'; document.querySelector('#cover-preview img').style.objectPosition = 'center ' + this.value + '%';"/>
+          <div class="flex justify-between text-[9px] text-gray-500 mt-2">
+            <span>⬆️ أعلى / Top</span>
+            <span>⬇️ أسفل / Bottom</span>
+          </div>
+        </div>
+
+        <!-- Colors -->
+        <div class="md:col-span-2 p-5 bg-black/20 border border-white/5 rounded-2xl">
+          <label class="form-label mb-4 text-sm font-bold flex items-center gap-2">
+             <span class="text-xl">🎨</span> {% trans "Couleurs de l'équipe" %} / ألوان الفريق
+          </label>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Primary Color -->
+            <div class="bg-white/5 p-4 rounded-xl border border-white/5">
+              <label class="text-[10px] uppercase font-bold text-gray-400 mb-2 block">Couleur principale (الرئيسي)</label>
+              <div class="flex items-center gap-3 bg-black/40 p-2 rounded-lg border border-white/10 shadow-inner">
+                <input type="color" id="primary_color_picker" name="color_primary" value="{{ form.color_primary.value|default:'#006233' }}" class="w-10 h-10 rounded cursor-pointer border-0 p-0 bg-transparent" onchange="document.getElementById('primary_hex').value = this.value">
+                <input type="text" id="primary_hex" value="{{ form.color_primary.value|default:'#006233' }}" class="bg-transparent border-none text-sm font-mono text-white focus:outline-none flex-1 uppercase" oninput="document.getElementById('primary_color_picker').value = this.value" placeholder="#006233">
+              </div>
+              
+              <div class="flex flex-wrap gap-2 mt-4">
+                <button type="button" onclick="setPrimaryColor('#E63946')" class="w-6 h-6 rounded-full border border-white/20 hover:scale-110 transition shadow-lg" style="background:#E63946" title="Rouge"></button>
+                <button type="button" onclick="setPrimaryColor('#1D3557')" class="w-6 h-6 rounded-full border border-white/20 hover:scale-110 transition shadow-lg" style="background:#1D3557" title="Bleu"></button>
+                <button type="button" onclick="setPrimaryColor('#2A9D8F')" class="w-6 h-6 rounded-full border border-white/20 hover:scale-110 transition shadow-lg" style="background:#2A9D8F" title="Vert"></button>
+                <button type="button" onclick="setPrimaryColor('#E9C46A')" class="w-6 h-6 rounded-full border border-white/20 hover:scale-110 transition shadow-lg" style="background:#E9C46A" title="Jaune"></button>
+                <button type="button" onclick="setPrimaryColor('#000000')" class="w-6 h-6 rounded-full border border-gray-600 hover:scale-110 transition shadow-lg" style="background:#000000" title="Noir"></button>
+                <button type="button" onclick="setPrimaryColor('#FFFFFF')" class="w-6 h-6 rounded-full border border-gray-400 hover:scale-110 transition shadow-lg" style="background:#FFFFFF" title="Blanc"></button>
+              </div>
+            </div>
+
+            <!-- Secondary Color -->
+            <div class="bg-white/5 p-4 rounded-xl border border-white/5">
+              <label class="text-[10px] uppercase font-bold text-gray-400 mb-2 block">Couleur secondaire (الثانوي)</label>
+              <div class="flex items-center gap-3 bg-black/40 p-2 rounded-lg border border-white/10 shadow-inner">
+                <input type="color" id="secondary_color_picker" name="color_secondary" value="{{ form.color_secondary.value|default:'#FFFFFF' }}" class="w-10 h-10 rounded cursor-pointer border-0 p-0 bg-transparent" onchange="document.getElementById('secondary_hex').value = this.value">
+                <input type="text" id="secondary_hex" value="{{ form.color_secondary.value|default:'#FFFFFF' }}" class="bg-transparent border-none text-sm font-mono text-white focus:outline-none flex-1 uppercase" oninput="document.getElementById('secondary_color_picker').value = this.value" placeholder="#FFFFFF">
+              </div>
+
+              <div class="flex flex-wrap gap-2 mt-4">
+                <button type="button" onclick="setSecondaryColor('#FFFFFF')" class="w-6 h-6 rounded-full border border-gray-400 hover:scale-110 transition shadow-lg" style="background:#FFFFFF" title="Blanc"></button>
+                <button type="button" onclick="setSecondaryColor('#000000')" class="w-6 h-6 rounded-full border border-gray-600 hover:scale-110 transition shadow-lg" style="background:#000000" title="Noir"></button>
+                <button type="button" onclick="setSecondaryColor('#E9C46A')" class="w-6 h-6 rounded-full border border-white/20 hover:scale-110 transition shadow-lg" style="background:#E9C46A" title="Jaune"></button>
+                <button type="button" onclick="setSecondaryColor('#E63946')" class="w-6 h-6 rounded-full border border-white/20 hover:scale-110 transition shadow-lg" style="background:#E63946" title="Rouge"></button>
+                <button type="button" onclick="setSecondaryColor('#1D3557')" class="w-6 h-6 rounded-full border border-white/20 hover:scale-110 transition shadow-lg" style="background:#1D3557" title="Bleu"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Phone -->
+        <div>
+          <label class="form-label">📱 {% trans "Téléphone" %} / الهاتف</label>
+          <input type="text" name="contact_phone" value="{{ form.contact_phone.value|default:'' }}"
+                 class="form-input" placeholder="0555 xx xx xx"/>
+        </div>
+
+        <!-- Email -->
+        <div>
+          <label class="form-label">✉️ Email</label>
+          <input type="email" name="contact_email" value="{{ form.contact_email.value|default:'' }}"
+                 class="form-input" placeholder="equipe@example.com"/>
+        </div>
+
+        <!-- Description -->
+        <div class="md:col-span-2">
+          <label class="form-label">📝 {% trans "Description" %} / وصف</label>
+          <textarea name="description" rows="3" class="form-input"
+                    placeholder="Présentez votre équipe... / قدّم فريقك...">{{ form.description.value|default:'' }}</textarea>
+        </div>
+
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="flex flex-wrap gap-3 mt-6 pt-5 border-t" style="border-color:var(--border)">
+        <button type="submit" class="btn btn-primary">
+          {% if action == 'create' %}➕ {% trans "Créer l'équipe" %} / إنشاء الفريق
+          {% else %}💾 {% trans "Enregistrer" %} / حفظ{% endif %}
+        </button>
+        {% if action == 'update' %}
+          <a href="{% url 'teams:detail' object.pk %}" class="btn btn-ghost">
+            ← {% trans "Retour" %} / رجوع
+          </a>
+          <button type="button"
+                  onclick="confirmDelete('{% trans "Supprimer l\'équipe" %}','{{ object.name }} - هل أنت متأكد من الحذف؟','{% url "teams:delete" object.pk %}')"
+                  class="btn btn-danger ms-auto no-print">
+            🗑️ {% trans "Supprimer" %} / حذف
+          </button>
+        {% else %}
+          <a href="{% url 'teams:list' %}" class="btn btn-ghost">← {% trans "Annuler" %} / إلغاء</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+function previewImage(input, previewId) {
+  const preview = document.getElementById(previewId);
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      preview.src = e.target.result;
+      preview.tagName === 'DIV' && (preview.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover rounded-xl"/>`);
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function setPrimaryColor(hex) {
+    document.getElementById('primary_color_picker').value = hex;
+    document.getElementById('primary_hex').value = hex;
+}
+
+function setSecondaryColor(hex) {
+    document.getElementById('secondary_color_picker').value = hex;
+    document.getElementById('secondary_hex').value = hex;
+}
+</script>
+{% endblock %}
+{% endblock %}

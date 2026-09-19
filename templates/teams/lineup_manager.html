@@ -1,0 +1,523 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Plan de Jeu & Effectif" %} | {{ team.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-[1400px] mx-auto space-y-6">
+
+    <!-- Header Section -->
+    <div class="bg-gray-900/40 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-6 shadow-2xl relative overflow-hidden flex flex-col md:flex-row justify-between items-center gap-6">
+        <div class="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent opacity-50"></div>
+        <div class="relative z-10 flex items-center gap-6">
+            {% if team.logo %}
+            <img src="{{ team.logo.url }}" alt="{{ team.name }}" class="w-16 h-16 rounded-full object-cover ring-2 ring-primary/50 shadow-[0_0_15px_rgba(var(--color-primary),0.3)]">
+            {% else %}
+            <div class="w-16 h-16 rounded-full bg-primary/20 border border-primary/50 flex items-center justify-center shadow-lg">
+                <span class="text-2xl font-bebas text-primary">{{ team.name|slice:":2" }}</span>
+            </div>
+            {% endif %}
+            <div>
+                <h1 class="font-bebas text-3xl md:text-4xl text-white tracking-widest">{{ team.name }}</h1>
+                <p class="text-sm text-gray-400 tracking-wide uppercase font-bold">{% trans "Tactical Board" %}</p>
+            </div>
+        </div>
+        
+        <div class="relative z-10 flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+            <div class="relative w-full sm:w-auto">
+                <select id="formation-select" class="bg-black/50 border border-white/10 text-white text-sm font-bold rounded-full focus:ring-primary focus:border-primary block w-full pl-6 pr-10 py-3 appearance-none cursor-pointer hover:bg-black/70 transition-all outline-none">
+                    {% for f in formations %}
+                    <option value="{{ f }}" {% if team.preferred_formation == f %}selected{% endif %}>Formation {{ f }}</option>
+                    {% endfor %}
+                </select>
+                <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+                    <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+            </div>
+            <button id="save-lineup-btn" class="w-full sm:w-auto bg-primary hover:bg-primary-dark text-black font-bebas text-xl tracking-wider py-2.5 px-8 rounded-full shadow-[0_0_20px_rgba(197,160,40,0.3)] hover:shadow-[0_0_30px_rgba(197,160,40,0.5)] transition-all active:scale-95 flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                {% trans "Enregistrer" %}
+            </button>
+        </div>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-6 h-[800px]">
+        
+        <!-- Center: The Pitch (takes up most space) -->
+        <div class="flex-1 bg-[#151c17] rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden flex flex-col">
+            <!-- Pitch Header -->
+            <div class="absolute top-0 left-0 right-0 p-4 flex justify-between z-20 pointer-events-none">
+                <div class="bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 text-xs font-bold text-white tracking-widest uppercase shadow-lg flex items-center">
+                    <span class="w-2 h-2 rounded-full bg-primary mr-2 animate-pulse"></span> Starting XI
+                </div>
+                <div class="bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 text-xs font-bold text-white tracking-widest shadow-lg">
+                    <span id="pitch-count">{{ starters.count }}</span> / 11
+                </div>
+            </div>
+
+            <!-- CSS Pitch -->
+            <div id="pitch" class="flex-1 w-full h-full relative bg-[#1a2920]" style="background-image: repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(0,0,0,0.1) 50px, rgba(0,0,0,0.1) 100px);" ondrop="drop(event)" ondragover="allowDrop(event)">
+                <!-- Pitch Markings -->
+                <div class="absolute inset-4 border-2 border-white/20 pointer-events-none z-0"></div>
+                <!-- Halfway line -->
+                <div class="absolute top-1/2 left-4 right-4 h-[2px] bg-white/20 pointer-events-none z-0"></div>
+                <!-- Center circle -->
+                <div class="absolute top-1/2 left-1/2 w-24 h-24 md:w-32 md:h-32 -mt-12 -ml-12 md:-mt-16 md:-ml-16 rounded-full border-2 border-white/20 pointer-events-none z-0"></div>
+                <div class="absolute top-1/2 left-1/2 w-2 h-2 -mt-1 -ml-1 rounded-full bg-white/40 pointer-events-none z-0"></div>
+                <!-- Penalty boxes -->
+                <div class="absolute top-4 left-1/2 w-48 h-24 md:w-64 md:h-32 -ml-24 md:-ml-32 border-2 border-white/20 border-t-0 pointer-events-none z-0"></div>
+                <div class="absolute bottom-4 left-1/2 w-48 h-24 md:w-64 md:h-32 -ml-24 md:-ml-32 border-2 border-white/20 border-b-0 pointer-events-none z-0"></div>
+                <!-- Goal areas -->
+                <div class="absolute top-4 left-1/2 w-24 h-10 md:w-32 md:h-12 -ml-12 md:-ml-16 border-2 border-white/20 border-t-0 pointer-events-none z-0"></div>
+                <div class="absolute bottom-4 left-1/2 w-24 h-10 md:w-32 md:h-12 -ml-12 md:-ml-16 border-2 border-white/20 border-b-0 pointer-events-none z-0"></div>
+                <!-- Corner arcs -->
+                <div class="absolute top-4 left-4 w-6 h-6 border-2 border-white/20 rounded-br-full border-t-0 border-l-0 pointer-events-none z-0"></div>
+                <div class="absolute top-4 right-4 w-6 h-6 border-2 border-white/20 rounded-bl-full border-t-0 border-r-0 pointer-events-none z-0"></div>
+                <div class="absolute bottom-4 left-4 w-6 h-6 border-2 border-white/20 rounded-tr-full border-b-0 border-l-0 pointer-events-none z-0"></div>
+                <div class="absolute bottom-4 right-4 w-6 h-6 border-2 border-white/20 rounded-tl-full border-b-0 border-r-0 pointer-events-none z-0"></div>
+                
+                <!-- Players on Pitch -->
+                {% for player in starters %}
+                <div id="player-{{ player.id }}" 
+                     class="player-on-pitch draggable absolute cursor-grab active:cursor-grabbing group z-10 transition-transform hover:scale-110 hover:z-50"
+                     style="left: {{ player.lineup_x }}%; top: {{ player.lineup_y }}%; transform: translate(-50%, -50%);"
+                     draggable="true" 
+                     ondragstart="drag(event)" 
+                     data-id="{{ player.id }}"
+                     data-pos="{{ player.position }}"
+                     data-name="{{ player.last_name }}"
+                     data-firstname="{{ player.first_name }}"
+                     data-jersey="{{ player.jersey_number }}"
+                     data-posdisplay="{{ player.get_position_display }}"
+                     data-suspended="{{ player.is_suspended|yesno:"true,false" }}"
+                     data-injured="{{ player.is_injured|yesno:"true,false" }}">
+                     
+                    <!-- Futuristic Ultimate Team Card -->
+                    <div class="relative w-16 h-20 md:w-20 md:h-24 flex flex-col items-center">
+                        <!-- Rating/Position Badge -->
+                        <div class="absolute -top-2 -left-2 w-6 h-6 md:w-7 md:h-7 rounded-full bg-black border border-white/20 flex items-center justify-center z-20 shadow-lg text-[10px] md:text-xs font-bold
+                            {% if player.position == 'GK' %}text-yellow-400 border-yellow-400/50
+                            {% elif player.position == 'DEF' %}text-blue-400 border-blue-400/50
+                            {% elif player.position == 'MID' %}text-emerald-400 border-emerald-400/50
+                            {% else %}text-red-400 border-red-400/50{% endif %}">
+                            {{ player.position }}
+                        </div>
+                        
+                        <!-- Status Overlays -->
+                        {% if player.is_suspended %}
+                        <div class="absolute -top-2 -right-2 bg-red-600 border border-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center z-30 shadow-lg" title="{% trans 'Suspendu / موقوف' %}">
+                            <span class="text-[9px]">🔒</span>
+                        </div>
+                        {% elif player.is_injured %}
+                        <div class="absolute -top-2 -right-2 bg-orange-600 border border-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center z-30 shadow-lg" title="{% trans 'Blessé / مصاب' %}">
+                            <span class="text-[9px]">🩹</span>
+                        </div>
+                        {% endif %}
+
+                        <!-- Avatar -->
+                        <div class="w-12 h-12 md:w-16 md:h-16 rounded-full overflow-hidden border-2 bg-gray-900 shadow-xl z-10
+                            {% if player.is_suspended %}border-red-500 ring-2 ring-red-500/50
+                            {% elif player.is_injured %}border-orange-500 ring-2 ring-orange-500/50
+                            {% else %}border-white/20{% endif %}">
+                            {% if player.photo %}
+                                <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                            {% else %}
+                                <div class="w-full h-full flex items-center justify-center bg-gray-800 text-gray-500"><svg xmlns="http://www.w3.org/2000/svg" class="w-3/4 h-3/4 opacity-50" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Name Plate -->
+                        <div class="absolute bottom-0 w-[120%] bg-black/80 backdrop-blur-sm border border-white/10 rounded-md py-0.5 px-1 shadow-lg z-20 text-center truncate pointer-events-none">
+                            <span class="text-[10px] md:text-[11px] font-bold text-white uppercase tracking-widest block truncate">{{ player.last_name }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Right: Bench Panel -->
+        <div class="w-full lg:w-[380px] bg-gray-900/60 backdrop-blur-2xl rounded-[2rem] border border-white/5 shadow-2xl flex flex-col overflow-hidden shrink-0 h-full">
+            <div class="p-6 border-b border-white/5 bg-white/5">
+                <h3 class="font-bebas text-2xl text-white tracking-widest flex items-center justify-between mb-4">
+                    <span>{% trans "Remplaçants" %}</span>
+                    <span class="text-sm font-sans bg-white/10 px-3 py-1 rounded-full" id="squad-count">{{ players.count }}</span>
+                </h3>
+                
+                <!-- Sleek Filters -->
+                <div class="flex gap-2 overflow-x-auto scrollbar-hide">
+                    <button class="filter-btn active flex-1 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-primary text-black transition whitespace-nowrap" data-filter="all">Tous</button>
+                    <button class="filter-btn flex-1 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition whitespace-nowrap" data-filter="GK">GK</button>
+                    <button class="filter-btn flex-1 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition whitespace-nowrap" data-filter="DEF">DEF</button>
+                    <button class="filter-btn flex-1 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition whitespace-nowrap" data-filter="MID">MID</button>
+                    <button class="filter-btn flex-1 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition whitespace-nowrap" data-filter="FWD">ATT</button>
+                </div>
+            </div>
+
+            <!-- Bench Draggable Area -->
+            <div id="bench" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar" ondrop="drop(event)" ondragover="allowDrop(event)">
+                {% for player in players %}
+                    {% if not player.is_starter %}
+                    <div id="player-{{ player.id }}" 
+                         class="player-card draggable group relative rounded-2xl p-3 flex items-center gap-4 cursor-grab active:cursor-grabbing transition-all shadow-sm
+                            {% if player.suspension_status.is_suspended %}border-red-500/50 bg-red-950/20 opacity-75{% elif player.is_injured %}border-orange-500/30 bg-orange-950/10 hover:bg-orange-950/20{% else %}border-white/5 hover:border-white/20 bg-black/40 hover:bg-black/60{% endif %}"
+                         draggable="{% if player.suspension_status.is_suspended %}false{% else %}true{% endif %}" 
+                         ondragstart="drag(event)" 
+                         data-id="{{ player.id }}" 
+                         data-pos="{{ player.position }}" 
+                         data-x="{{ player.lineup_x }}" 
+                         data-y="{{ player.lineup_y }}"
+                         data-name="{{ player.last_name }}"
+                         data-firstname="{{ player.first_name }}"
+                         data-jersey="{{ player.jersey_number }}"
+                         data-posdisplay="{{ player.get_position_display }}"
+                         data-suspended="{{ player.suspension_status.is_suspended|yesno:"true,false" }}"
+                         data-injured="{{ player.is_injured|yesno:"true,false" }}">
+                         
+                        <div class="w-12 h-12 rounded-full border bg-gray-800 flex items-center justify-center font-bebas text-lg shadow-inner overflow-hidden shrink-0 relative
+                            {% if player.suspension_status.is_suspended %}border-red-500/80{% elif player.is_injured %}border-orange-500/40{% else %}border-white/10{% endif %}">
+                            {% if player.photo %}
+                                <img src="{{ player.photo.url }}" alt="" class="w-full h-full object-cover">
+                            {% else %}
+                                <span class="text-white font-bold text-sm">#{{ player.jersey_number }}</span>
+                            {% endif %}
+                            {% if player.suspension_status.is_suspended %}
+                                <div class="absolute inset-0 bg-red-950/80 flex items-center justify-center font-bold text-white text-xs">🚫</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="flex-1 min-w-0 pointer-events-none">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <p class="text-white font-bold truncate text-sm">{{ player.first_name }} <span class="uppercase">{{ player.last_name }}</span></p>
+                                {% if player.suspension_status.is_suspended %}
+                                    <span class="px-1.5 py-0.5 text-[8px] font-extrabold uppercase rounded bg-red-500/20 text-red-400 border border-red-500/30 shrink-0">🚫 {{ player.suspension_status.short_reason }}</span>
+                                {% elif player.is_injured %}
+                                    <span class="px-1.5 py-0.5 text-[8px] font-extrabold uppercase rounded bg-orange-500/20 text-orange-400 border border-orange-500/30 shrink-0">{% trans "BLESSÉ" %}</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-[10px] font-bold tracking-wider uppercase mt-0.5 
+                                {% if player.position == 'GK' %}text-yellow-500{% elif player.position == 'DEF' %}text-blue-400{% elif player.position == 'MID' %}text-emerald-400{% else %}text-red-400{% endif %}">
+                                {{ player.get_position_display }} • #{{ player.jersey_number }}
+                            </p>
+                        </div>
+                        <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path></svg>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                
+                <div class="bench-empty-state hidden flex-col items-center justify-center py-20 text-center opacity-50 pointer-events-none">
+                    <svg class="w-12 h-12 text-gray-500 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    <p class="text-sm font-bold tracking-widest uppercase">Banc vide</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    /* Custom Scrollbar */
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+    
+    /* Drag & Drop Visuals */
+    .drag-over {
+        border: 2px dashed rgba(var(--color-primary), 0.5) !important;
+        background-color: rgba(var(--color-primary), 0.05);
+    }
+    .pitch-drag-over {
+        box-shadow: inset 0 0 0 4px rgba(var(--color-primary), 0.5);
+    }
+    .is-dragging {
+        opacity: 0.5;
+        transform: scale(0.95);
+    }
+</style>
+
+<script>
+    // Filtering Bench Players
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.classList.remove('active', 'bg-primary', 'text-black');
+                b.classList.add('bg-white/5', 'text-gray-400');
+            });
+            this.classList.add('active', 'bg-primary', 'text-black');
+            this.classList.remove('bg-white/5', 'text-gray-400');
+            
+            const filter = this.dataset.filter;
+            const players = document.querySelectorAll('#bench .player-card');
+            
+            players.forEach(p => {
+                if (filter === 'all' || p.dataset.pos === filter) {
+                    p.style.display = 'flex';
+                } else {
+                    p.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Drag and Drop Logic
+    function allowDrop(ev) {
+        ev.preventDefault();
+        if (ev.currentTarget.id === 'bench') ev.currentTarget.classList.add('drag-over');
+        if (ev.currentTarget.id === 'pitch') ev.currentTarget.classList.add('pitch-drag-over');
+    }
+
+    function drag(ev) {
+        ev.dataTransfer.setData("text", ev.currentTarget.id);
+        ev.dataTransfer.effectAllowed = "move";
+        setTimeout(() => ev.target.classList.add('is-dragging'), 0);
+    }
+
+    document.getElementById('bench').addEventListener('dragleave', function() { this.classList.remove('drag-over'); });
+    document.getElementById('pitch').addEventListener('dragleave', function() { this.classList.remove('pitch-drag-over'); });
+    document.addEventListener('dragend', function(e) {
+        if(e.target.classList) e.target.classList.remove('is-dragging');
+        document.getElementById('bench').classList.remove('drag-over');
+        document.getElementById('pitch').classList.remove('pitch-drag-over');
+    });
+
+    function drop(ev) {
+        ev.preventDefault();
+        const dropZone = ev.currentTarget;
+        dropZone.classList.remove('drag-over', 'pitch-drag-over');
+        
+        const data = ev.dataTransfer.getData("text");
+        const draggedElement = document.getElementById(data);
+        if (!draggedElement) return;
+
+        draggedElement.classList.remove('is-dragging');
+
+        if (dropZone.id === 'pitch') {
+            const currentPitchCount = document.querySelectorAll('.player-on-pitch').length;
+            const isComingFromBench = draggedElement.classList.contains('player-card');
+            
+            if (isComingFromBench && currentPitchCount >= 11) {
+                alert("Vous ne pouvez pas placer plus de 11 joueurs sur le terrain.");
+                return;
+            }
+
+            // Block suspended players from being placed on the pitch
+            if (isComingFromBench && draggedElement.dataset.suspended === 'true') {
+                alert("Ce joueur est suspendu et ne peut pas être aligné.");
+                return;
+            }
+
+            const rect = dropZone.getBoundingClientRect();
+            let x = ((ev.clientX - rect.left) / rect.width) * 100;
+            let y = ((ev.clientY - rect.top) / rect.height) * 100;
+            
+            x = Math.max(5, Math.min(x, 95));
+            y = Math.max(5, Math.min(y, 95));
+
+            if (isComingFromBench) {
+                morphToPitchPlayer(draggedElement, x, y);
+                dropZone.appendChild(draggedElement);
+            } else {
+                draggedElement.style.left = x + '%';
+                draggedElement.style.top = y + '%';
+                draggedElement.dataset.x = x;
+                draggedElement.dataset.y = y;
+            }
+            draggedElement.dataset.starter = 'true';
+            
+        } else if (dropZone.id === 'bench') {
+            const isComingFromPitch = draggedElement.classList.contains('player-on-pitch');
+            
+            if (isComingFromPitch) {
+                morphToBenchPlayer(draggedElement);
+                const emptyState = dropZone.querySelector('.bench-empty-state');
+                dropZone.insertBefore(draggedElement, emptyState);
+            }
+            draggedElement.dataset.starter = 'false';
+        }
+        
+        updateCounters();
+    }
+
+    function morphToPitchPlayer(el, x, y) {
+        el.className = 'player-on-pitch draggable absolute cursor-grab active:cursor-grabbing group z-10 transition-transform hover:scale-110 hover:z-50';
+        el.style.position = 'absolute';
+        el.style.left = x + '%';
+        el.style.top = y + '%';
+        el.style.transform = 'translate(-50%, -50%)';
+        
+        el.dataset.x = x;
+        el.dataset.y = y;
+        
+        const pos = el.dataset.pos;
+        const name = el.dataset.name;
+        const jersey = el.dataset.jersey;
+        const isSuspended = el.dataset.suspended === 'true';
+        const isInjured = el.dataset.injured === 'true';
+        
+        let photoEl = el.querySelector('img');
+        
+        let badgeColor = 'text-red-400 border-red-400/50';
+        if(pos === 'GK') badgeColor = 'text-yellow-400 border-yellow-400/50';
+        if(pos === 'DEF') badgeColor = 'text-blue-400 border-blue-400/50';
+        if(pos === 'MID') badgeColor = 'text-emerald-400 border-emerald-400/50';
+
+        let borderClass = 'border-white/20';
+        let overlayHTML = '';
+        if (isSuspended) {
+            borderClass = 'border-red-500 ring-2 ring-red-500/50';
+            overlayHTML = `<div class="absolute -top-2 -right-2 bg-red-600 border border-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center z-30 shadow-lg" title="Suspendu"><span class="text-[9px]">🔒</span></div>`;
+        } else if (isInjured) {
+            borderClass = 'border-orange-500 ring-2 ring-orange-500/50';
+            overlayHTML = `<div class="absolute -top-2 -right-2 bg-orange-600 border border-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center z-30 shadow-lg" title="Blessé"><span class="text-[9px]">🩹</span></div>`;
+        }
+
+        let innerHTML = `
+            <div class="relative w-16 h-20 md:w-20 md:h-24 flex flex-col items-center">
+                <div class="absolute -top-2 -left-2 w-6 h-6 md:w-7 md:h-7 rounded-full bg-black border border-white/20 flex items-center justify-center z-20 shadow-lg text-[10px] md:text-xs font-bold ${badgeColor}">
+                    ${pos}
+                </div>
+                ${overlayHTML}
+                <div class="w-12 h-12 md:w-16 md:h-16 rounded-full overflow-hidden border-2 ${borderClass} bg-gray-900 shadow-xl z-10">
+                    ${photoEl ? `<img src="${photoEl.src}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center bg-gray-800 text-gray-500"><svg xmlns="http://www.w3.org/2000/svg" class="w-3/4 h-3/4 opacity-50" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>`}
+                </div>
+                <div class="absolute bottom-0 w-[120%] bg-black/80 backdrop-blur-sm border border-white/10 rounded-md py-0.5 px-1 shadow-lg z-20 text-center truncate pointer-events-none">
+                    <span class="text-[10px] md:text-[11px] font-bold text-white uppercase tracking-widest block truncate">${name}</span>
+                </div>
+            </div>
+        `;
+        el.innerHTML = innerHTML;
+    }
+
+    function morphToBenchPlayer(el) {
+        const isSuspended = el.dataset.suspended === 'true';
+        const isInjured = el.dataset.injured === 'true';
+        
+        let borderClass = 'border-white/5 hover:border-white/20';
+        let bgClass = 'bg-black/40 hover:bg-black/60';
+        if (isSuspended) {
+            borderClass = 'border-red-500/30';
+            bgClass = 'bg-red-950/10 hover:bg-red-950/20';
+        } else if (isInjured) {
+            borderClass = 'border-orange-500/30';
+            bgClass = 'bg-orange-950/10 hover:bg-orange-950/20';
+        }
+
+        el.className = `player-card draggable group relative ${bgClass} border ${borderClass} rounded-2xl p-3 flex items-center gap-4 cursor-grab active:cursor-grabbing transition-all shadow-sm`;
+        el.style.position = '';
+        el.style.left = '';
+        el.style.top = '';
+        el.style.transform = '';
+
+        const pos = el.dataset.pos;
+        const name = el.dataset.name;
+        const firstname = el.dataset.firstname;
+        const jersey = el.dataset.jersey;
+        const posdisplay = el.dataset.posdisplay;
+        
+        let photoEl = el.querySelector('img');
+        
+        let textColorClass = 'text-red-400';
+        if(pos === 'GK') textColorClass = 'text-yellow-500';
+        if(pos === 'DEF') textColorClass = 'text-blue-400';
+        if(pos === 'MID') textColorClass = 'text-emerald-400';
+
+        let badgeHTML = '';
+        if (isSuspended) {
+            badgeHTML = `<span class="px-1.5 py-0.5 text-[8px] font-extrabold uppercase rounded bg-red-500/20 text-red-400 border border-red-500/30 shrink-0">SUSPENDU</span>`;
+        } else if (isInjured) {
+            badgeHTML = `<span class="px-1.5 py-0.5 text-[8px] font-extrabold uppercase rounded bg-orange-500/20 text-orange-400 border border-orange-500/30 shrink-0">BLESSÉ</span>`;
+        }
+
+        let innerHTML = `
+            <div class="w-12 h-12 rounded-full border bg-gray-800 flex items-center justify-center font-bebas text-lg shadow-inner overflow-hidden shrink-0 relative
+                ${isSuspended ? 'border-red-500/40' : isInjured ? 'border-orange-500/40' : 'border-white/10'}">
+                ${photoEl ? `<img src="${photoEl.src}" alt="" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center bg-gray-800 text-gray-500"><svg xmlns="http://www.w3.org/2000/svg" class="w-3/4 h-3/4 opacity-50" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>`}
+            </div>
+            <div class="flex-1 min-w-0 pointer-events-none">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    <p class="text-white font-bold truncate text-sm">${firstname} <span class="uppercase">${name}</span></p>
+                    ${badgeHTML}
+                </div>
+                <p class="text-[10px] font-bold tracking-wider uppercase mt-0.5 ${textColorClass}">
+                    ${posdisplay} • #${jersey}
+                </p>
+            </div>
+            <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path></svg>
+            </div>
+        `;
+        el.innerHTML = innerHTML;
+    }
+
+    function updateCounters() {
+        const pitchCount = document.querySelectorAll('.player-on-pitch').length;
+        document.getElementById('pitch-count').textContent = pitchCount;
+        
+        const benchCount = document.querySelectorAll('.player-card').length;
+        document.getElementById('squad-count').textContent = benchCount;
+        
+        const emptyState = document.querySelector('.bench-empty-state');
+        if (benchCount === 0) {
+            emptyState.classList.remove('hidden');
+            emptyState.classList.add('flex');
+        } else {
+            emptyState.classList.add('hidden');
+            emptyState.classList.remove('flex');
+        }
+    }
+    
+    updateCounters();
+
+    document.getElementById('save-lineup-btn').addEventListener('click', function() {
+        const btn = this;
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Sauvegarde...';
+        btn.disabled = true;
+
+        const formation = document.getElementById('formation-select').value;
+        const allDraggablePlayers = document.querySelectorAll('.draggable');
+        
+        let lineupData = [];
+        allDraggablePlayers.forEach(p => {
+            const isStarter = p.classList.contains('player-on-pitch');
+            lineupData.push({
+                id: p.dataset.id,
+                x: parseFloat(p.style.left) || 50,
+                y: parseFloat(p.style.top) || 50,
+                is_starter: isStarter
+            });
+        });
+
+        fetch('{% url "teams:lineup_manager" team.pk %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                formation: formation,
+                lineup: lineupData
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.status === 'success') {
+                window.location.reload();
+            } else {
+                alert("Erreur lors de la sauvegarde: " + data.message);
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("Une erreur s'est produite.");
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,1204 @@
+{% load i18n static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>بطاقات اللجنة المنظمة — {{ tournament.name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --green:      #1a5c2a;
+            --green-mid:  #2d7a3e;
+            --green-light:#4caf72;
+            --gold:       #C5A028;
+            --navy:       #0A1C3A;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: #f0f4f0;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        /* ── Controls ── */
+        .controls {
+            position: fixed; top: 0; right: 0; left: 0; z-index: 100;
+            background: var(--green);
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+        }
+        .controls a, .controls button {
+            font-family: 'Cairo', sans-serif;
+            font-size: 13px; font-weight: 700;
+            padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+            transition: transform 0.15s;
+        }
+        .controls a:hover, .controls button:hover { transform: scale(1.04); }
+        .btn-back  { background: rgba(255,255,255,0.15); color: #fff; }
+        .btn-print { background: var(--gold); color: #07170f; }
+
+        /* ── Card Selection Styles ── */
+        .card-select-toggle {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            z-index: 95;
+            background: rgba(10, 28, 58, 0.9);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11.5px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid var(--gold);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            backdrop-filter: blur(4px);
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+        .card-select-toggle:hover {
+            transform: scale(1.05);
+            background: #0a1c3a;
+        }
+        .card-select-toggle input {
+            cursor: pointer;
+            accent-color: var(--gold);
+            width: 15px;
+            height: 15px;
+        }
+
+        .id-card.unselected-card {
+            opacity: 0.25 !important;
+            filter: grayscale(90%) !important;
+            border: 2px dashed #ef4444 !important;
+            box-shadow: none !important;
+        }
+
+        @media print {
+            .controls, .card-select-toggle, .no-print { display: none !important; }
+            .id-card.unselected-card { display: none !important; }
+            body { background: #fff; padding: 0 !important; margin: 0 !important; }
+        }
+
+        /* ── Layout ── */
+        .page-wrapper {
+            max-width: 1100px;
+            margin: 90px auto 40px;
+            padding: 0 20px;
+        }
+        .page-title {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .page-title h1 {
+            font-size: 22px; font-weight: 900; color: var(--green);
+        }
+        .page-title p {
+            font-size: 13px; color: #64748b; font-weight: 600; margin-top: 4px;
+        }
+
+        /* ── Cards grid ── */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, 10.5cm);
+            justify-content: center;
+            gap: 24px;
+        }
+
+        /* ── Single card ── */
+        .id-card {
+            width: 10.5cm;
+            height: 8cm;
+            background: #fff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 6px 24px rgba(26,92,42,0.15);
+            border: 1px solid rgba(26,92,42,0.08);
+            page-break-inside: avoid;
+            break-inside: avoid;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* ─── STAMP & SIGNATURE ─── */
+        .official-stamp-container {
+            position: absolute;
+            bottom: 32px;
+            right: 115px;
+            width: 65px;
+            height: 65px;
+            z-index: 25;
+            cursor: move;
+            user-select: none;
+            touch-action: none;
+            mix-blend-mode: multiply;
+        }
+        .official-signature-container {
+            position: absolute;
+            bottom: 32px;
+            left: 30px;
+            width: 65px;
+            height: 45px;
+            z-index: 25;
+            cursor: move;
+            user-select: none;
+            touch-action: none;
+            mix-blend-mode: multiply;
+        }
+        .official-stamp-img, .official-signature-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: contrast(200%) brightness(1.1);
+            pointer-events: none;
+        }
+        .stamp-resizer {
+            position: absolute;
+            right: -2px;
+            bottom: -2px;
+            width: 12px;
+            height: 12px;
+            background-color: var(--gold);
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: se-resize;
+            z-index: 30;
+        }
+        .official-stamp-container .stamp-overlay,
+        .official-signature-container .stamp-overlay {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.7);
+            color: #fff; font-size: 9px; font-weight: 700;
+            padding: 3px 6px; border-radius: 5px;
+            display: none; pointer-events: none;
+            white-space: nowrap;
+        }
+        .official-stamp-container:hover .stamp-overlay,
+        .official-signature-container:hover .stamp-overlay {
+            display: block;
+        }
+
+        /* ─── SECURITY HOLOGRAM ─── */
+        .security-hologram {
+            margin-top: -5px;
+            width: 56px;
+            height: 16px;
+            background-color: #d4af37;
+            background-image: linear-gradient(135deg, #d4af37 0%, #fff2a3 25%, #aa7c11 50%, #fff2a3 75%, #d4af37 100%);
+            border-radius: 4px;
+            padding: 0 3px;
+            box-shadow: 0 2px 4px rgba(212,175,55,0.3), inset 0 0 3px rgba(255,255,255,0.9);
+            border: 0.5px solid #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            user-select: none;
+            overflow: hidden;
+        }
+        .hologram-icon {
+            font-size: 10px;
+            line-height: 1;
+            filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3));
+            flex-shrink: 0;
+        }
+        .hologram-text {
+            font-size: 5.5px;
+            font-weight: 900;
+            color: #0a1c3a;
+            letter-spacing: 0.2px;
+            line-height: 1.05;
+            font-family: 'Bebas Neue', 'Cairo', monospace;
+            text-align: left;
+        }
+
+        /* Header band */
+        .card-header {
+            background: linear-gradient(135deg, var(--green) 0%, var(--green-mid) 100%);
+            padding: 7px 14px 5px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        .card-header::after {
+            content: '';
+            position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--gold), #e8c35e, var(--gold));
+        }
+        .header-logo-wrap {
+            flex-shrink: 0;
+            width: 42px; height: 42px;
+            border-radius: 50% !important;
+            border: 2px solid var(--gold);
+            background: #ffffff;
+            overflow: hidden !important;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            aspect-ratio: 1 / 1;
+        }
+        .header-logo-wrap img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            border-radius: 50% !important;
+        }
+        .header-text { flex: 1; text-align: right; }
+        .org-name {
+            color: rgba(255,255,255,0.75);
+            font-size: 9px; font-weight: 700;
+            margin-bottom: 1px;
+            line-height: 1.1;
+        }
+        .tournament-name {
+            color: #fff;
+            font-size: 11px; font-weight: 900; line-height: 1.2;
+        }
+        .card-type-label {
+            color: var(--gold);
+            font-size: 8px; font-weight: 700;
+            margin-top: 1px;
+            line-height: 1.1;
+        }
+        .serial-badge {
+            background: var(--gold);
+            color: #07170f;
+            font-size: 9px; font-weight: 900;
+            border-radius: 5px;
+            padding: 2px 6px;
+            flex-shrink: 0;
+        }
+
+        /* Body */
+        .card-body {
+            position: relative;
+            padding: 6px 12px 4px;
+            background: #fff;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            z-index: 1;
+            flex: 1;
+            overflow: hidden;
+        }
+        .logo-overlay {
+            position: absolute;
+            top: 50%; left: 30%;
+            transform: translate(-50%, -50%);
+            width: 48%; height: 48%;
+            opacity: 0.16;
+            z-index: 0;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .logo-overlay img {
+            width: 100%; height: 100%; object-fit: contain; pointer-events: none;
+        }
+
+        /* Photo */
+        .photo-col {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .member-photo {
+            width: 105px; height: 130px;
+            border-radius: 8px;
+            border: 2px solid var(--green);
+            overflow: hidden;
+            background: #e8f5e9;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .member-photo img {
+            width: 100%; height: 100%; object-fit: cover;
+        }
+        .photo-placeholder {
+            width: 105px; height: 130px;
+            border-radius: 8px;
+            border: 2px dashed #94a3b8;
+            background: #f8fafc;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 6px;
+        }
+        .photo-placeholder svg { opacity: 0.3; width: 50px; height: 50px; }
+        .photo-placeholder span { font-size: 11px; color: #94a3b8; font-weight: 700; }
+
+        .qr-wrap {
+            flex-shrink: 0;
+            width: 56px; height: 56px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+            background: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .qr-wrap canvas { width: 52px !important; height: 52px !important; }
+
+        /* Info */
+        .info-col { flex: 1; min-width: 0; z-index: 2; }
+        .info-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 6px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding-bottom: 4px;
+        }
+        .name-role-wrap { flex: 1; min-width: 0; }
+        .member-fullname {
+            font-size: 17px; font-weight: 900; color: #0a1c3a;
+            line-height: 1.15; margin-bottom: 4px;
+        }
+        .member-role-badge {
+            display: inline-block;
+            background: var(--green);
+            color: #fff;
+            font-size: 10px; font-weight: 700;
+            border-radius: 20px;
+            padding: 2px 10px;
+            line-height: 1.2;
+        }
+        .info-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+            font-size: 12.5px;
+            line-height: 1.25;
+        }
+        .info-label {
+            color: #475569; font-weight: 800; min-width: 65px; flex-shrink: 0; font-size: 12px;
+        }
+        .info-value {
+            color: #0f172a; font-weight: 900; word-break: break-word; line-height: 1.25; font-size: 12.5px;
+        }
+        .card-signature {
+            margin-top: 4px; padding-top: 4px;
+            border-top: 1px dashed rgba(26,92,42,0.15);
+            display: flex; justify-content: space-between; align-items: flex-end;
+        }
+        .card-signature-text {
+            font-size: 9px; font-weight: 900; color: var(--green); line-height: 1.2; text-align: center;
+        }
+        .card-signature-placeholder {
+            width: 50px; height: 18px;
+            background: rgba(26,92,42,0.04); border-radius: 3px;
+            border: 1px solid rgba(26,92,42,0.1);
+        }
+
+        /* Footer */
+        .card-footer {
+            background: linear-gradient(135deg, var(--green) 0%, var(--navy) 100%);
+            padding: 5px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .card-footer-left  { font-size: 8px; color: rgba(255,255,255,0.7); font-weight: 700; }
+        .card-footer-right { font-size: 8px; color: var(--gold); font-weight: 900; letter-spacing: 0.5px; }
+
+        /* ── Back Side Card ── */
+        .id-card.back-side {
+            background: #fff;
+            color: #0f172a;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border: 1px solid rgba(26,92,42,0.08);
+            box-shadow: 0 6px 24px rgba(26,92,42,0.15);
+        }
+        .back-header {
+            background: linear-gradient(135deg, var(--green) 0%, var(--green-mid) 100%);
+            padding: 10px 14px 8px;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .back-header::after {
+            content: '';
+            position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--gold), #e8c35e, var(--gold));
+        }
+        .back-header-title { font-size: 15px; font-weight: 900; color: #fff; }
+        .back-header-sub   { font-size: 12px; font-weight: 700; color: var(--gold); }
+        .back-body {
+            padding: 12px 16px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+            z-index: 1;
+        }
+        .back-zones-title {
+            font-size: 12.5px; font-weight: 900; color: var(--green); margin-bottom: 4px;
+            display: flex; align-items: center; gap: 4px;
+        }
+        .back-zones {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        .zone-badge {
+            background: #f0f4f0;
+            border: 1px solid rgba(26,92,42,0.15);
+            border-radius: 6px;
+            padding: 6px 9px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .zone-num {
+            background: var(--gold);
+            color: #07170f;
+            font-weight: 900;
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-size: 12px;
+        }
+        .back-rules {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 4px;
+        }
+        .rule-item {
+            font-size: 11.5px;
+            color: #334155;
+            font-weight: 700;
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            line-height: 1.4;
+        }
+        .rule-bullet { color: var(--green); font-weight: 900; }
+        .back-lost {
+            margin-top: auto;
+            padding: 8px 10px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 3px solid var(--gold);
+            border-right: 3px solid var(--gold);
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #0f172a;
+            text-align: center;
+            line-height: 1.4;
+        }
+        .back-footer {
+            background: linear-gradient(135deg, var(--green) 0%, var(--navy) 100%);
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10.5px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 700;
+        }
+        .back-footer-highlight { color: var(--gold); font-weight: 900; letter-spacing: 0.5px; }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center; padding: 60px 20px;
+            color: #94a3b8; font-size: 15px; font-weight: 700;
+            background: #fff; border-radius: 16px;
+        }
+
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 6mm;
+            }
+            .page-title { display: none !important; }
+            .stamp-resizer, .stamp-overlay { display: none !important; }
+            .page-wrapper { margin: 0 !important; padding: 0 !important; max-width: 100% !important; }
+            
+            /* Cards grid for A4 paper saving (2 columns x 3 rows = 6 cards per page = 3 full members) */
+            .cards-grid {
+                display: grid !important;
+                grid-template-columns: repeat(2, 9.6cm) !important;
+                gap: 5mm 5mm !important;
+                justify-content: center !important;
+                margin: 0 auto !important;
+            }
+
+            /* Scale cards slightly to fit perfectly 6 per page */
+            .id-card {
+                width: 9.6cm !important;
+                height: 7.6cm !important;
+                box-shadow: none !important;
+                border: 1px solid #94a3b8 !important;
+                margin: 0 !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            /* Compact inner padding to match new dimensions perfectly */
+            .card-header { padding: 8px 12px 6px !important; }
+            .header-logo-wrap { width: 36px !important; height: 36px !important; border-radius: 50% !important; overflow: hidden !important; background: #ffffff !important; }
+            .header-logo-wrap img { border-radius: 50% !important; object-fit: cover !important; }
+            .tournament-name { font-size: 10px !important; }
+            .card-body { padding: 8px 10px !important; gap: 8px !important; }
+            .member-photo { width: 80px !important; height: 98px !important; }
+            .qr-wrap { width: 52px !important; height: 52px !important; }
+            .qr-wrap canvas { width: 50px !important; height: 50px !important; }
+            .member-fullname { font-size: 14px !important; margin-bottom: 3px !important; color: #0a1c3a !important; font-weight: 900 !important; }
+            .member-role-badge { font-size: 9.5px !important; padding: 1px 8px !important; margin-bottom: 4px !important; }
+            .info-row { margin-bottom: 4px !important; font-size: 10px !important; }
+            .info-label { color: #334155 !important; font-weight: 800 !important; }
+            .info-value { color: #0f172a !important; font-weight: 900 !important; }
+            .card-signature { margin-top: 4px !important; padding-top: 4px !important; }
+            .card-footer { padding: 5px 12px !important; }
+            .security-hologram { width: 52px !important; margin-top: 4px !important; padding: 3px 2px !important; }
+            .hologram-icon { font-size: 11px !important; }
+            .hologram-text { font-size: 6px !important; }
+            
+            /* Back side compacting */
+            .back-header { padding: 10px 14px 8px !important; }
+            .back-header-title { font-size: 13px !important; font-weight: 900 !important; }
+            .back-header-sub { font-size: 11px !important; font-weight: 700 !important; }
+            .back-body { padding: 10px 14px !important; gap: 8px !important; }
+            .back-zones-title { font-size: 11.5px !important; margin-bottom: 3px !important; font-weight: 900 !important; }
+            .zone-badge { font-size: 11px !important; padding: 4px 8px !important; font-weight: 700 !important; }
+            .zone-num { font-size: 11px !important; font-weight: 900 !important; }
+            .rule-item { font-size: 10.5px !important; gap: 5px !important; line-height: 1.35 !important; font-weight: 700 !important; }
+            .back-lost { padding: 6px 8px !important; font-size: 10.5px !important; margin-top: auto !important; font-weight: 700 !important; }
+            .back-footer { padding: 7px 14px !important; font-size: 10px !important; font-weight: 700 !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Controls -->
+    <div class="controls">
+        <a href="{% url 'tournaments:committee_list' tournament.pk %}" class="btn-back">◀ قائمة الأعضاء</a>
+        
+        <label class="btn-select-all" style="background: rgba(255,255,255,0.15); color: #fff; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; user-select: none;">
+            <input type="checkbox" id="select-all-checkbox" checked onchange="toggleSelectAll(this.checked)" style="accent-color: var(--gold); width: 16px; height: 16px; cursor: pointer;">
+            <span>☑️ تحديد الكل</span>
+        </label>
+
+        <button onclick="window.print()" class="btn-print" id="btn-print-main">
+            🖨️ <span id="btn-print-text">طباعة البطاقات المحددة (<span id="selected-cards-count">{{ members.count }}</span> / {{ members.count }})</span>
+        </button>
+
+        <button onclick="downloadAllCardsImages(event)" class="btn-print" style="background: #2563eb; color: #ffffff;">
+            📸 حفظ البطاقات المحددة (PNG)
+        </button>
+    </div>
+
+    <div class="page-wrapper">
+
+        <div class="page-title">
+            <h1>🪪 بطاقات أعضاء اللجنة المنظمة</h1>
+            <p>{{ tournament.name }} · {{ tournament.year }} · {{ members.count }} عضو</p>
+        </div>
+
+        {% if members %}
+        <!-- 📄 الصفحة 1: الجهة الأمامية لجميع البطاقات (Front Sides) -->
+        <div class="cards-grid front-pages">
+            {% for member in members %}
+            <!-- Front Side -->
+            <div class="id-card member-card-front-{{ member.pk }}" data-member-id="{{ member.pk }}">
+
+                <!-- Selection Checkbox -->
+                <label class="card-select-toggle no-print" title="تحديد/إلغاء تحديد هذه البطاقة للطباعة">
+                    <input type="checkbox" class="member-select-checkbox" data-member-id="{{ member.pk }}" checked onchange="toggleMemberCard('{{ member.pk }}', this.checked)">
+                    <span>🖨️ طباعة</span>
+                </label>
+
+                <!-- Draggable Official Stamp -->
+                <div class="official-stamp-container draggable-stamp" id="draggable-stamp-{{ member.pk }}" title="اسحب باليسار لتحريك الختم، واستخدم عجلة الماوس لتكبيره/تصغيره، واضغط لتغيير الصورة">
+                    <img src="/media/logos/stamp_esm_v2.png"
+                         class="official-stamp-img"
+                         id="official-stamp-img-{{ member.pk }}"
+                         alt="الختم الرسمي"
+                         crossorigin="anonymous"
+                         onerror="this.src='/media/logos/stamp_esm.png'; this.onerror=null;"
+                         draggable="false">
+                    <div class="stamp-overlay">
+                        <span>🔄 تغيير الختم</span>
+                    </div>
+                    <div class="stamp-resizer" id="stamp-resizer-handle-{{ member.pk }}"></div>
+                    <input type="file" id="stamp-file-input-{{ member.pk }}" accept="image/*" style="display: none;" onchange="loadCustomStamp(this, '{{ member.pk }}')">
+                </div>
+
+                <!-- Draggable Official Signature -->
+                <div class="official-signature-container draggable-signature" id="draggable-signature-{{ member.pk }}" title="اسحب باليسار لتحريك الإمضاء، واستخدم عجلة الماوس لتكبيره/تصغيره، واضغط لتغيير الصورة">
+                    <img src="/media/logos/signature_custom.jpg"
+                         class="official-signature-img"
+                         id="official-signature-img-{{ member.pk }}"
+                         alt="الإمضاء الرسمي"
+                         crossorigin="anonymous"
+                         draggable="false">
+                    <div class="stamp-overlay">
+                        <span>🔄 تغيير الإمضاء</span>
+                    </div>
+                    <div class="stamp-resizer" id="signature-resizer-handle-{{ member.pk }}"></div>
+                    <input type="file" id="signature-file-input-{{ member.pk }}" accept="image/*" style="display: none;" onchange="loadCustomSignature(this, '{{ member.pk }}')">
+                </div>
+
+                <!-- Header -->
+                <div class="card-header">
+                    <!-- Logo -->
+                    <div class="header-logo-wrap">
+                        {% if site_settings.app_logo %}
+                            <img src="{{ site_settings.app_logo.url }}" alt="Logo">
+                        {% else %}
+                            <span style="font-size:22px;">🏆</span>
+                        {% endif %}
+                    </div>
+                    <!-- Text -->
+                    <div class="header-text">
+                        <div class="org-name">نادي الوفاق مسلمون</div>
+                        <div class="tournament-name">{{ tournament.name }}</div>
+                        <div class="card-type-label">🪪 بطاقة عضو اللجنة</div>
+                    </div>
+                    <!-- Serial -->
+                    <div class="serial-badge">#{{ forloop.counter }}</div>
+                </div>
+
+                <!-- Body -->
+                <div class="card-body">
+                    <!-- Watermark -->
+                    {% if site_settings.app_logo %}
+                    <div class="logo-overlay">
+                        <img src="{{ site_settings.app_logo.url }}" alt="Watermark">
+                    </div>
+                    {% endif %}
+
+                    <!-- Photo + Hologram -->
+                    <div class="photo-col">
+                        {% if member.photo %}
+                            <div class="member-photo">
+                                <img src="{{ member.photo.url }}" alt="{{ member.full_name }}">
+                            </div>
+                        {% else %}
+                            <div class="photo-placeholder">
+                                <svg viewBox="0 0 24 24" fill="#94a3b8">
+                                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                                </svg>
+                                <span>صورة</span>
+                            </div>
+                        {% endif %}
+
+                        <!-- Security Hologram -->
+                        <div class="security-hologram" title="شارة أمنية معتمدة رسمياً">
+                            <span class="hologram-icon">🛡️</span>
+                            <span class="hologram-text">ACCREDITED<br>2026</span>
+                        </div>
+                    </div>
+
+                    <!-- Info -->
+                    <div class="info-col">
+                        <div class="info-header-row">
+                            <div class="name-role-wrap">
+                                <div class="member-fullname">{{ member.full_name }}</div>
+                                <div class="member-role-badge">{{ member.get_role_display }}</div>
+                            </div>
+                            <!-- QR Code moved to top left -->
+                            <div class="qr-wrap">
+                                <canvas id="qr-{{ member.pk }}"></canvas>
+                            </div>
+                        </div>
+
+                        {% if member.id_number %}
+                        <div class="info-row">
+                            <span class="info-label">رقم الهوية:</span>
+                            <span class="info-value" dir="ltr" style="display: inline-block;">{{ member.id_number }}</span>
+                        </div>
+                        {% endif %}
+
+                        {% if member.birth_date %}
+                        <div class="info-row">
+                            <span class="info-label">الميلاد:</span>
+                            <span class="info-value" dir="ltr" style="display: inline-block;">{{ member.birth_date|date:"d/m/Y" }}</span>
+                        </div>
+                        {% endif %}
+
+                        {% if member.join_date %}
+                        <div class="info-row">
+                            <span class="info-label">الانضمام:</span>
+                            <span class="info-value" dir="ltr" style="display: inline-block;">{{ member.join_date|date:"d/m/Y" }}</span>
+                        </div>
+                        {% endif %}
+
+                        {% if member.phone %}
+                        <div class="info-row">
+                            <span class="info-label">الهاتف:</span>
+                            <span class="info-value" dir="ltr">{{ member.phone }}</span>
+                        </div>
+                        {% endif %}
+
+                        {% if member.email %}
+                        <div class="info-row">
+                            <span class="info-label">البريد:</span>
+                            <span class="info-value" dir="ltr">{{ member.email }}</span>
+                        </div>
+                        {% endif %}
+
+                        <!-- Signature -->
+                        <div class="card-signature">
+                            <div class="card-signature-placeholder"></div>
+                            <div class="card-signature-text">
+                                إمضاء رئيس<br>الوفاق مسلمون
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="card-footer">
+                    <div class="card-footer-left">الموسم {{ tournament.year }} · النسخة 2</div>
+                    <div class="card-footer-right">TURN-ESM · MESSLMOUN</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- 📄 الصفحة 2: الجهة الخلفية لجميع البطاقات (Back Sides - Recto Verso) -->
+        <div class="cards-grid back-pages" style="page-break-before: always; break-before: page; margin-top: 20px;">
+            {% for member in members %}
+            <!-- Back Side -->
+            <div class="id-card back-side member-card-back-{{ member.pk }}" data-member-id="{{ member.pk }}">
+                <!-- Header -->
+                <div class="back-header">
+                    <div class="back-header-title">نادي الوفاق الرياضي مسلمون</div>
+                    <div class="back-header-sub">تعليمات تنظيمية 🛡️</div>
+                </div>
+
+                <!-- Body -->
+                <div class="back-body">
+                    <!-- Watermark -->
+                    {% if site_settings.app_logo %}
+                    <div class="logo-overlay" style="opacity: 0.04;">
+                        <img src="{{ site_settings.app_logo.url }}" alt="Watermark">
+                    </div>
+                    {% endif %}
+
+                    <div>
+                        <div class="back-zones-title">🛡️ مناطق التواجد المسموح بها:</div>
+                        <div class="back-zones">
+                            <div class="zone-badge"><span class="zone-num">1</span> أرضية الملعب</div>
+                            <div class="zone-badge"><span class="zone-num">2</span> غرف الملابس</div>
+                            <div class="zone-badge"><span class="zone-num">3</span> المنصة الشرفية</div>
+                            <div class="zone-badge"><span class="zone-num">4</span> المركز الإعلامي</div>
+                        </div>
+                    </div>
+
+                    <div class="back-rules">
+                        <div class="rule-item">
+                            <span class="rule-bullet">▪</span>
+                            <span>هذه البطاقة شخصية، عهدة لدى حاملها وغير قابلة للتحويل لأي شخص آخر.</span>
+                        </div>
+                        <div class="rule-item">
+                            <span class="rule-bullet">▪</span>
+                            <span>يجب تعليق البطاقة وإبرازها في مكان ظاهر طوال فترة التواجد في منشآت وملاعب البطولة.</span>
+                        </div>
+                        <div class="rule-item">
+                            <span class="rule-bullet">▪</span>
+                            <span>تحتفظ اللجنة المنظمة بالحق في سحب أو إلغاء البطاقة في حال انتهاك القوانين التنظيمية.</span>
+                        </div>
+                    </div>
+
+                    <div class="back-lost">
+                        في حال العثور على هذه البطاقة، يُرجى تسليمها إلى أقرب مسؤول في اللجنة المنظمة أو إدارة النادي.
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="back-footer">
+                    <div>الموسم {{ tournament.year }} · إدارة التنظيم</div>
+                    <div class="back-footer-highlight">TURN-ESM · MESSLMOUN</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            لا يوجد أعضاء مسجلون في هذه الدورة بعد.
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Helper to convert Arabic/UTF-16 string to UTF-8 bytes for QR generation
+            function toUTF8(str) {
+                try {
+                    return unescape(encodeURIComponent(str));
+                } catch (e) {
+                    return str;
+                }
+            }
+
+            const members = [
+                {% for member in members %}
+                {
+                    id: {{ member.pk }},
+                    text: "{{ member.full_name|escapejs }} | {{ member.get_role_display|escapejs }}{% if member.phone %} | {{ member.phone|escapejs }}{% endif %}{% if member.id_number %} | {{ member.id_number|escapejs }}{% endif %}"
+                }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ];
+
+            members.forEach(m => {
+                const el = document.getElementById('qr-' + m.id);
+                if (el) {
+                    new QRious({
+                        element: el,
+                        value: toUTF8(m.text),
+                        size: 58,
+                        foreground: '#1a5c2a',
+                        background: '#ffffff',
+                        level: 'M'
+                    });
+                }
+            });
+
+            // ─── DRAGGABLE STAMP & SIGNATURE LOGIC FOR MULTIPLE CARDS ───
+            let activeEl = null;
+            let activeAction = null; // 'drag' or 'resize'
+            let startX, startY, startLeft, startTop, startWidth, startHeight;
+
+            function setupInteractable(element, resizerEl, fileInput, isSquare = true) {
+                if (!element) return;
+                element.addEventListener('click', (e) => {
+                    if (e.target === resizerEl || e.target.classList.contains('stamp-resizer')) return;
+                    if (!element.dataset.dragged || element.dataset.dragged === 'false') {
+                        if (fileInput) fileInput.click();
+                    }
+                });
+
+                // Wheel resize
+                element.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    const currentWidth = parseFloat(window.getComputedStyle(element).width);
+                    const currentHeight = parseFloat(window.getComputedStyle(element).height);
+                    const aspect = currentHeight / currentWidth;
+                    const delta = e.deltaY < 0 ? 5 : -5;
+                    const newWidth = Math.max(25, Math.min(180, currentWidth + delta));
+                    element.style.width = `${newWidth}px`;
+                    if (isSquare) {
+                        element.style.height = `${newWidth}px`;
+                    } else {
+                        element.style.height = `${newWidth * aspect}px`;
+                    }
+                }, { passive: false });
+
+                // Drag start
+                const dragStart = (e) => {
+                    if (e.target === resizerEl) return;
+                    activeEl = element;
+                    activeAction = 'drag';
+                    element.dataset.dragged = 'false';
+                    
+                    const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+                    
+                    startX = clientX;
+                    startY = clientY;
+                    startLeft = element.offsetLeft;
+                    startTop = element.offsetTop;
+                    
+                    element.style.left = `${startLeft}px`;
+                    element.style.top = `${startTop}px`;
+                    element.style.right = 'auto';
+                    element.style.bottom = 'auto';
+                    
+                    element.style.cursor = 'grabbing';
+                    if (e.type === 'mousedown') e.preventDefault();
+                };
+
+                element.addEventListener('mousedown', dragStart);
+                element.addEventListener('touchstart', dragStart, { passive: true });
+
+                // Resize start
+                if (resizerEl) {
+                    const resizeStart = (e) => {
+                        activeEl = element;
+                        activeAction = 'resize';
+                        
+                        const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+                        startX = clientX;
+                        startWidth = parseFloat(window.getComputedStyle(element).width);
+                        startHeight = parseFloat(window.getComputedStyle(element).height);
+                        
+                        e.stopPropagation();
+                        if (e.type === 'mousedown') e.preventDefault();
+                    };
+
+                    resizerEl.addEventListener('mousedown', resizeStart);
+                    resizerEl.addEventListener('touchstart', resizeStart, { passive: true });
+                }
+            }
+
+            document.querySelectorAll('.draggable-stamp').forEach(stamp => {
+                const idSuffix = stamp.id.replace('draggable-stamp-', '');
+                const resizer = document.getElementById(`stamp-resizer-handle-${idSuffix}`);
+                const fileInput = document.getElementById(`stamp-file-input-${idSuffix}`);
+                setupInteractable(stamp, resizer, fileInput, true);
+            });
+
+            document.querySelectorAll('.draggable-signature').forEach(sig => {
+                const idSuffix = sig.id.replace('draggable-signature-', '');
+                const resizer = document.getElementById(`signature-resizer-handle-${idSuffix}`);
+                const fileInput = document.getElementById(`signature-file-input-${idSuffix}`);
+                setupInteractable(sig, resizer, fileInput, false);
+            });
+
+            const handleMove = (e) => {
+                if (!activeEl) return;
+                const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+                const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+
+                if (activeAction === 'drag') {
+                    activeEl.dataset.dragged = 'true';
+                    const dx = clientX - startX;
+                    const dy = clientY - startY;
+                    activeEl.style.left = `${startLeft + dx}px`;
+                    activeEl.style.top = `${startTop + dy}px`;
+                    e.preventDefault();
+                } else if (activeAction === 'resize') {
+                    const dx = clientX - startX;
+                    const newWidth = Math.max(25, Math.min(180, startWidth + dx));
+                    activeEl.style.width = `${newWidth}px`;
+                    if (activeEl.classList.contains('draggable-stamp')) {
+                        activeEl.style.height = `${newWidth}px`;
+                    } else {
+                        const aspect = startHeight / startWidth;
+                        activeEl.style.height = `${newWidth * aspect}px`;
+                    }
+                }
+            };
+
+            document.addEventListener('mousemove', handleMove);
+            document.addEventListener('touchmove', handleMove, { passive: false });
+
+            const handleRelease = () => {
+                if (activeEl) {
+                    activeEl.style.cursor = 'move';
+                    setTimeout(() => {
+                        if (activeEl) activeEl.dataset.dragged = 'false';
+                        activeEl = null;
+                        activeAction = null;
+                    }, 50);
+                }
+            };
+
+            document.addEventListener('mouseup', handleRelease);
+            document.addEventListener('touchend', handleRelease);
+        });
+
+        function loadCustomStamp(input, pk) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const stampImg = document.getElementById(`official-stamp-img-${pk}`);
+                    if (stampImg) {
+                        delete stampImg.dataset.bgRemoved;
+                        stampImg.src = e.target.result;
+                    }
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function loadCustomSignature(input, pk) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const sigImg = document.getElementById(`official-signature-img-${pk}`);
+                    if (sigImg) {
+                        delete sigImg.dataset.bgRemoved;
+                        sigImg.src = e.target.result;
+                    }
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function removeWhiteBackground(imgElement) {
+            if (!imgElement) return;
+            if (imgElement.dataset.bgRemoved === 'true') return;
+            
+            const proceed = () => {
+                if (imgElement.dataset.bgRemoved === 'true') return;
+                try {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                    let natWidth = imgElement.naturalWidth || imgElement.width || 300;
+                    let natHeight = imgElement.naturalHeight || imgElement.height || 300;
+                    
+                    let width = natWidth;
+                    let height = natHeight;
+                    let dx = 0;
+                    let dy = 0;
+
+                    // Ensure stamp canvas is a perfect square so html2canvas never distorts it into an oval
+                    if (imgElement.classList.contains('official-stamp-img')) {
+                        const maxDim = Math.max(natWidth, natHeight);
+                        width = maxDim;
+                        height = maxDim;
+                        dx = (width - natWidth) / 2;
+                        dy = (height - natHeight) / 2;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    ctx.drawImage(imgElement, dx, dy, natWidth, natHeight);
+                    const imgData = ctx.getImageData(0, 0, width, height);
+                    const data = imgData.data;
+                    
+                    let removedAny = false;
+                    for (let i = 0; i < data.length; i += 4) {
+                        const r = data[i];
+                        const g = data[i+1];
+                        const b = data[i+2];
+                        // Remove all white/light background, shadows, and light glare (anything > 140 brightness)
+                        if ((r + g + b) / 3 > 140) {
+                            data[i + 3] = 0; // Make fully transparent
+                            removedAny = true;
+                        }
+                    }
+                    
+                    if (removedAny) {
+                        ctx.putImageData(imgData, 0, 0);
+                        imgElement.dataset.bgRemoved = 'true';
+                        imgElement.src = canvas.toDataURL('image/png');
+                    }
+                } catch (e) {
+                    console.warn("Could not remove background:", e);
+                }
+            };
+
+            if (imgElement.complete && imgElement.naturalWidth > 0) {
+                proceed();
+            } else {
+                imgElement.onload = proceed;
+            }
+        }
+
+        window.addEventListener('load', () => {
+            document.querySelectorAll('.official-stamp-img, .official-signature-img').forEach(img => {
+                removeWhiteBackground(img);
+                img.addEventListener('load', () => removeWhiteBackground(img));
+            });
+        });
+
+        // ── CARD SELECTION LOGIC ──
+        function toggleMemberCard(memberId, isChecked) {
+            const frontCard = document.querySelector(`.member-card-front-${memberId}`);
+            const backCard = document.querySelector(`.member-card-back-${memberId}`);
+            
+            if (isChecked) {
+                if (frontCard) frontCard.classList.remove('unselected-card');
+                if (backCard) backCard.classList.remove('unselected-card');
+            } else {
+                if (frontCard) frontCard.classList.add('unselected-card');
+                if (backCard) backCard.classList.add('unselected-card');
+            }
+            updateSelectedCount();
+        }
+
+        function toggleSelectAll(checked) {
+            const checkboxes = document.querySelectorAll('.member-select-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = checked;
+                toggleMemberCard(cb.dataset.memberId, checked);
+            });
+        }
+
+        function updateSelectedCount() {
+            const checkedBoxes = document.querySelectorAll('.member-select-checkbox:checked');
+            const totalBoxes = document.querySelectorAll('.member-select-checkbox');
+            const countSpan = document.getElementById('selected-cards-count');
+            const selectAllCb = document.getElementById('select-all-checkbox');
+            
+            if (countSpan) countSpan.innerText = checkedBoxes.length;
+            if (selectAllCb) selectAllCb.checked = (checkedBoxes.length > 0 && checkedBoxes.length === totalBoxes.length);
+        }
+
+        async function downloadAllCardsImages(event) {
+            if (event) event.preventDefault();
+            const selectedCards = document.querySelectorAll('.front-pages .id-card:not(.unselected-card)');
+            if (selectedCards.length === 0) {
+                alert('يرجى تحديد بطاقة واحدة على الأقل لحفظها!');
+                return;
+            }
+
+            const btn = event.currentTarget;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '📸 جاري حفظ البطاقات المحددة...';
+            btn.style.opacity = '0.7';
+            btn.style.pointerEvents = 'none';
+
+            // Hide controls and resizers during capture
+            const controls = document.querySelector('.controls');
+            document.querySelectorAll('.stamp-resizer, .stamp-overlay, .card-select-toggle').forEach(el => el.style.display = 'none');
+            if (controls) controls.style.display = 'none';
+            
+            document.querySelectorAll('.official-stamp-img, .official-signature-img').forEach(img => removeWhiteBackground(img));
+            await new Promise(r => setTimeout(r, 300));
+
+            try {
+                for (let i = 0; i < selectedCards.length; i++) {
+                    const card = selectedCards[i];
+                    const nameEl = card.querySelector('.member-fullname');
+                    const name = nameEl ? nameEl.innerText.trim() : `عضو_${i+1}`;
+                    const canvas = await html2canvas(card, { 
+                        scale: 3, // High quality
+                        useCORS: true,
+                        letterRendering: false,
+                        backgroundColor: null
+                    });
+                    
+                    const link = document.createElement('a');
+                    link.download = `بطاقة_عضو_اللجنة_${name}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    
+                    // Small delay between downloads to prevent browser blocking multiple downloads
+                    await new Promise(r => setTimeout(r, 400));
+                }
+            } catch (err) {
+                console.error('Image Export Error:', err);
+                alert('حدث خطأ أثناء حفظ الصور، يرجى المحاولة مرة أخرى.');
+            } finally {
+                if (controls) controls.style.display = 'flex';
+                document.querySelectorAll('.stamp-resizer').forEach(el => el.style.display = 'block');
+                document.querySelectorAll('.stamp-overlay, .card-select-toggle').forEach(el => el.style.display = ''); // reset to hover/CSS rule
+                btn.innerHTML = originalText;
+                btn.style.opacity = '1';
+                btn.style.pointerEvents = 'auto';
+            }
+        }
+    </script>
+</body>
+</html>

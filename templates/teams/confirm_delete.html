@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block title %}{% trans "Confirmer la suppression" %} / تأكيد الحذف{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto mt-16">
+  <div class="card rounded-2xl overflow-hidden">
+    <div class="h-1" style="background:linear-gradient(90deg,#ef4444,#dc2626)"></div>
+    <div class="p-8 text-center">
+      <div class="text-5xl mb-4">⚠️</div>
+      <h1 class="text-xl font-bold mb-2 text-red-400">تأكيد الحذف / {% trans "Confirmer la suppression" %}</h1>
+      <p class="text-sm mb-2" style="color:var(--muted)">هل أنت متأكد من حذف {{ object_type }} :</p>
+      <p class="font-bold text-lg mt-2 mb-4">« {{ object }} »</p>
+      <p class="text-xs mb-6 p-3 rounded-lg" style="background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2)">
+        ⚠️ هذا الإجراء لا يمكن التراجع عنه / Action irréversible.
+      </p>
+      <div class="flex gap-3 justify-center">
+        <a href="javascript:history.back()" class="btn btn-ghost">← إلغاء / {% trans "Annuler" %}</a>
+        <form method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">🗑️ حذف / {% trans "Supprimer" %}</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

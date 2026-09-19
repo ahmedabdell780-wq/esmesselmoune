@@ -1,0 +1,1727 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شهادة تقدير للحكم - TurniQ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Reem+Kufi:wght@400;700;900&family=Tajawal:wght@400;500;700;900&family=Aref+Ruqaa:wght@400;700&display=swap" rel="stylesheet" crossorigin="anonymous">
+    <!-- Image Export Engine -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --navy:       #0c2340;
+            --gold:       #C5A028;
+            --gold-light: #F7D25E;
+            --gold-dark:  #997514;
+            --charcoal:   #2E2E2E;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #d1d5db;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+            font-family: 'Cairo', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* ─── PRINT CONTROLS BAR ─── */
+        .print-bar {
+            width: 1122px;
+            max-width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 12px;
+            background: #1e293b;
+            padding: 16px 20px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+            color: white;
+        }
+
+        .btn-print, .btn-pdf, .btn-png, .btn-back {
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 900;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-decoration: none;
+            font-family: 'Cairo', sans-serif;
+        }
+        .btn-print { background: #00b84c; color: white; }
+        .btn-print:hover { background: #009e41; transform: translateY(-2px); }
+        .btn-pdf { background: linear-gradient(135deg, var(--gold-dark), var(--gold)); color: white; }
+        .btn-pdf:hover { background: linear-gradient(135deg, var(--gold), var(--gold-light)); transform: translateY(-2px); }
+        .btn-png { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; }
+        .btn-png:hover { background: linear-gradient(135deg, #1d4ed8, #1e40af); transform: translateY(-2px); }
+        .btn-back { background: #334155; color: white; }
+        .btn-back:hover { background: #0f172a; transform: translateY(-2px); }
+
+        .btn-bg-change {
+            background: linear-gradient(135deg, #4f46e5, #3730a3);
+            color: white;
+            border: 1.5px solid #6366f1;
+            padding: 10px 18px;
+            border-radius: 50px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-bg-change:hover { transform: translateY(-2px); background: linear-gradient(135deg, #3730a3, #221c7a); }
+
+        .btn-watermark-mode {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            color: white;
+            border: 1.5px solid #f59e0b;
+            padding: 10px 18px;
+            border-radius: 50px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-watermark-mode:hover { transform: translateY(-2px); background: linear-gradient(135deg, #b45309, #78350f); }
+        .btn-watermark-mode.active { background: linear-gradient(135deg, #dc2626, #b91c1c); border-color: #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.5); }
+
+        .btn-watermark-change {
+            background: linear-gradient(135deg, #059669, #047857);
+            color: white;
+            border: 1.5px solid #10b981;
+            padding: 10px 18px;
+            border-radius: 50px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-watermark-change:hover { transform: translateY(-2px); background: linear-gradient(135deg, #047857, #065f46); }
+
+        .bg-control-slider {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 6px 14px;
+            border-radius: 50px;
+            color: white;
+            font-family: 'Cairo', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .bg-control-slider input[type="range"] {
+            cursor: pointer;
+            accent-color: var(--gold);
+        }
+
+        /* ─── CERTIFICATE CONTAINER (A4 LANDSCAPE 297mm x 210mm) ─── */
+        .certificate {
+            width: 297mm;
+            height: 210mm;
+            background: #ffffff;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 35px 90px rgba(0,0,0,0.3);
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            user-select: none;
+            color: #1a1a1a;
+            transition: width 0.3s ease, height 0.3s ease, padding 0.3s ease;
+        }
+
+        /* ─── PORTRAIT MODE OVERRIDES (210mm x 297mm) ─── */
+        .certificate.portrait-mode {
+            width: 210mm !important;
+            height: 297mm !important;
+            overflow: hidden !important;
+        }
+        .certificate.portrait-mode .certificate-inner {
+            padding: 160px 45px 50px 45px !important;
+        }
+        .certificate.portrait-mode .app-logo-wrapper:not([data-dragged="true"]) {
+            top: 45px !important;
+            right: 45px !important;
+            left: auto !important;
+        }
+        .certificate.portrait-mode .medal-seal:not([data-dragged="true"]) {
+            top: 45px !important;
+            left: 45px !important;
+            right: auto !important;
+        }
+        .certificate.portrait-mode .official-stamp-container:not([data-dragged="true"]) {
+            bottom: 50px !important;
+            right: 45px !important;
+            left: auto !important;
+        }
+        .certificate.portrait-mode .bottom-row:not([data-dragged="true"]) {
+            bottom: 50px !important;
+            left: 45px !important;
+            right: 45px !important;
+            width: auto !important;
+        }
+        .certificate.portrait-mode .watermark-wrapper {
+            max-width: 90% !important;
+        }
+
+        .bg-overlay {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background: url('/media/backgrounds/referee_certificate_border.jpg') no-repeat center center;
+            background-size: cover;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* ─── WATERMARK WRAPPER ─── */
+        .watermark-wrapper {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 450px;
+            opacity: 0.15;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .cert-watermark-img-element {
+            width: 100%;
+            height: auto;
+            display: block;
+            mix-blend-mode: multiply;
+        }
+        .watermark-overlay-controls {
+            position: absolute;
+            inset: 0;
+            background: rgba(10, 28, 58, 0.85);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 700;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            border: 2px dashed var(--gold);
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .watermark-resizer {
+            position: absolute;
+            right: -6px;
+            bottom: -6px;
+            width: 16px;
+            height: 16px;
+            background: var(--gold-light);
+            border: 2px solid var(--navy);
+            border-radius: 50%;
+            cursor: se-resize;
+            z-index: 20;
+            display: none;
+        }
+
+        /* ─── CERTIFICATE INNER CONTENT ─── */
+        .certificate-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 50px 100px;
+            text-align: center;
+        }
+
+        .state-header {
+            font-family: 'Amiri', serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--navy);
+            letter-spacing: 0px;
+            text-align: center;
+            width: 100%;
+            margin-bottom: 5px;
+            outline: none;
+            cursor: text;
+        }
+        .state-header:focus { background: rgba(197, 160, 40, 0.08); border-radius: 4px; }
+
+        .cert-header-title {
+            font-family: 'Reem Kufi', sans-serif;
+            font-size: 48px;
+            font-weight: 900;
+            color: #997514;
+            margin-bottom: 8px;
+            text-shadow: 1px 2px 3px rgba(0,0,0,0.06);
+            letter-spacing: 0px;
+            line-height: 1.1;
+            outline: none;
+            cursor: text;
+        }
+        .cert-header-title:focus { background: rgba(197, 160, 40, 0.08); border-radius: 4px; color: var(--gold-dark); }
+
+        .cert-intro {
+            font-family: 'Tajawal', sans-serif;
+            font-size: 19px;
+            color: #3f3f3f;
+            font-weight: 600;
+            margin-bottom: 8px;
+            outline: none;
+            cursor: text;
+        }
+        .cert-intro:focus { background: rgba(197, 160, 40, 0.08); border-radius: 4px; }
+
+        .recipient-name-wrapper {
+            margin: 8px 0 12px 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .recipient-name {
+            font-family: 'Reem Kufi', sans-serif;
+            font-size: 44px;
+            font-weight: 700;
+            color: var(--navy);
+            outline: none;
+            cursor: text;
+            line-height: 1.2;
+            padding: 2px 15px;
+            text-align: center;
+            max-width: 90%;
+        }
+        .recipient-name:focus { background: rgba(197, 160, 40, 0.08); border-radius: 6px; }
+
+        /* ─── DECORATIVE DIVIDER ─── */
+        .divider-wrapper {
+            margin: 10px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 60%;
+            gap: 12px;
+        }
+        .divider-line {
+            height: 1.5px;
+            flex-grow: 1;
+            background: linear-gradient(to right, rgba(153, 117, 20, 0), rgba(197, 160, 40, 0.7) 70%, rgba(197, 160, 40, 0.9));
+        }
+        .divider-line.right { background: linear-gradient(to left, rgba(153, 117, 20, 0), rgba(197, 160, 40, 0.7) 70%, rgba(197, 160, 40, 0.9)); }
+        .divider-diamond { font-size: 13px; color: var(--gold-dark); transform: scale(1.3); }
+
+        .cert-description {
+            font-family: 'Tajawal', sans-serif;
+            font-size: 20px;
+            color: #2e2e2e;
+            line-height: 1.8;
+            max-width: 780px;
+            font-weight: 600;
+            text-align: center;
+            margin-top: 6px;
+            margin-bottom: 12px;
+            outline: none;
+            padding: 6px 12px;
+        }
+        .cert-description:focus { background: rgba(197, 160, 40, 0.05); border-radius: 8px; }
+
+        .cert-appreciation {
+            font-family: 'Tajawal', sans-serif;
+            font-size: 16px;
+            color: #555555;
+            font-weight: 700;
+            margin-top: 4px;
+            margin-bottom: 8px;
+            outline: none;
+        }
+        .cert-appreciation:focus { background: rgba(197, 160, 40, 0.05); border-radius: 8px; }
+
+        .cert-slogan {
+            font-family: 'Amiri', serif;
+            font-size: 18px;
+            font-style: italic;
+            color: var(--gold-dark);
+            font-weight: 700;
+            margin-top: 2px;
+            margin-bottom: 14px;
+            outline: none;
+        }
+        .cert-slogan:focus { background: rgba(197, 160, 40, 0.05); border-radius: 8px; }
+
+        /* ─── DRAGGABLE LOGO & STAMP & MEDAL ─── */
+        .app-logo-wrapper {
+            position: absolute;
+            top: 45px;
+            right: 80px;
+            width: 90px;
+            height: 90px;
+            z-index: 60;
+            cursor: move;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: none;
+        }
+        .app-logo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            mix-blend-mode: multiply;
+            pointer-events: none;
+        }
+        .logo-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.85);
+            color: #0A1C3A;
+            font-size: 11px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+            border-radius: 8px;
+            border: 1px solid var(--gold);
+            text-align: center;
+            pointer-events: none;
+        }
+        .app-logo-wrapper:hover .logo-overlay,
+        .official-stamp-container:hover .logo-overlay,
+        .referee-photo-container:hover .logo-overlay,
+        .watermark-wrapper:hover .logo-overlay { opacity: 1; }
+
+        .logo-resizer-handle {
+            position: absolute;
+            bottom: -5px;
+            left: -5px;
+            width: 16px;
+            height: 16px;
+            background: var(--gold);
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: nesw-resize;
+            z-index: 70;
+            pointer-events: auto;
+        }
+
+        .referee-photo-container {
+            position: absolute;
+            bottom: 45px;
+            right: 85px;
+            width: 110px;
+            height: 110px;
+            z-index: 60;
+            cursor: move;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: none;
+            border-radius: 50%;
+            border: 3.5px solid var(--gold);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            background: transparent;
+        }
+        .referee-photo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            mix-blend-mode: multiply;
+            pointer-events: none;
+        }
+        .referee-photo-resizer {
+            position: absolute;
+            left: -5px;
+            top: -5px;
+            width: 16px;
+            height: 16px;
+            background: var(--gold-light);
+            border: 2px solid var(--navy);
+            border-radius: 50%;
+            cursor: nwse-resize;
+            z-index: 70;
+            pointer-events: auto;
+        }
+
+        .official-stamp-container {
+            position: absolute;
+            bottom: 40px;
+            left: 20px;
+            width: 130px;
+            height: 130px;
+            z-index: 60;
+            cursor: move;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: none;
+            mix-blend-mode: multiply;
+        }
+        .official-stamp-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: contrast(250%) brightness(1.1);
+            pointer-events: none;
+        }
+        .stamp-resizer {
+            position: absolute;
+            left: -5px;
+            top: -5px;
+            width: 16px;
+            height: 16px;
+            background: var(--gold-light);
+            border: 2px solid var(--navy);
+            border-radius: 50%;
+            cursor: nwse-resize;
+            z-index: 70;
+            pointer-events: auto;
+        }
+
+        .medal-seal {
+            position: absolute;
+            top: 45px;
+            left: 80px;
+            width: 100px;
+            height: 135px;
+            z-index: 60;
+            cursor: move;
+            user-select: none;
+            touch-action: none;
+        }
+        .medal-seal svg {
+            pointer-events: none;
+        }
+        .medal-resizer-handle {
+            position: absolute;
+            right: 5px;
+            bottom: 5px;
+            width: 16px;
+            height: 16px;
+            background-color: var(--gold-light);
+            border: 2px solid var(--navy);
+            border-radius: 50%;
+            cursor: se-resize;
+            z-index: 70;
+            pointer-events: auto;
+        }
+
+        /* ─── BOTTOM SIGNATURE & DATE ROW (DRAGGABLE IN ALL DIRECTIONS) ─── */
+        .bottom-row {
+            position: absolute;
+            bottom: 45px;
+            left: 90px;
+            right: 90px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            z-index: 30;
+            cursor: move;
+            user-select: none;
+            touch-action: none;
+            padding: 6px 12px;
+            border: 1.5px dashed transparent;
+            transition: border-color 0.2s;
+        }
+        .bottom-row:hover {
+            border-color: rgba(197, 160, 40, 0.5);
+            border-radius: 8px;
+        }
+        .bottom-row-resizer-handle {
+            position: absolute;
+            right: -6px;
+            top: -6px;
+            width: 15px;
+            height: 15px;
+            background: var(--gold);
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: nesw-resize;
+            z-index: 35;
+            display: none;
+        }
+        .bottom-row:hover .bottom-row-resizer-handle {
+            display: block;
+        }
+        .sig-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 220px;
+            text-align: center;
+        }
+        .sig-title {
+            font-family: 'Tajawal', sans-serif;
+            font-size: 15px;
+            font-weight: 800;
+            color: #64748b;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            outline: none;
+            cursor: text;
+        }
+        .sig-line {
+            font-family: 'Aref Ruqaa', serif;
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--navy);
+            width: 100%;
+            border-top: 2px dashed var(--gold);
+            padding-top: 5px;
+            margin-top: 2px;
+            line-height: 1.2;
+            outline: none;
+            cursor: text;
+        }
+        .sig-line:focus { background: rgba(197, 160, 40, 0.08); border-radius: 4px; }
+
+        /* ─── CONTENTEDITABLE TYPING & SELECTION OVERRIDES ─── */
+        [contenteditable="true"], [contenteditable="true"] * {
+            user-select: text !important;
+            -webkit-user-select: text !important;
+            cursor: text !important;
+            pointer-events: auto !important;
+        }
+
+        /* ─── PRINT MEDIA QUERIES ─── */
+        @page {
+            size: A4 landscape;
+            margin: 0;
+        }
+
+        @media print {
+            html, body {
+                background: #ffffff !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                min-height: 0 !important;
+                display: block !important;
+                overflow: hidden !important;
+                position: relative !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .no-print, .print-bar {
+                display: none !important;
+            }
+
+            .certificate {
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                float: none !important;
+                transform: none !important;
+                overflow: hidden !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .bg-overlay {
+                background-size: 100% 100% !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                letter-spacing: 0px !important;
+                word-spacing: normal !important;
+                font-variant-ligatures: normal !important;
+            }
+
+            .cert-header-title {
+                color: #997514 !important;
+                background: none !important;
+                -webkit-text-fill-color: #997514 !important;
+                -webkit-background-clip: initial !important;
+            }
+        }
+
+        @media print and (orientation: landscape) {
+            @page {
+                size: A4 landscape;
+                margin: 0;
+            }
+            html, body, .certificate {
+                width: 297mm !important;
+                height: 210mm !important;
+            }
+        }
+
+        @media print and (orientation: portrait) {
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+            html, body, .certificate {
+                width: 210mm !important;
+                height: 297mm !important;
+            }
+            .certificate .certificate-inner {
+                padding: 160px 45px 50px 45px !important;
+            }
+            .certificate .cert-description {
+                max-width: 100% !important;
+            }
+            .certificate .app-logo-wrapper:not([data-dragged="true"]) {
+                top: 45px !important;
+                right: 45px !important;
+                left: auto !important;
+            }
+            .certificate .medal-seal:not([data-dragged="true"]) {
+                top: 45px !important;
+                left: 45px !important;
+                right: auto !important;
+            }
+            .certificate .official-stamp-container:not([data-dragged="true"]) {
+                bottom: 50px !important;
+                right: 45px !important;
+                left: auto !important;
+            }
+            .certificate .bottom-row:not([data-dragged="true"]) {
+                bottom: 50px !important;
+                left: 45px !important;
+                right: 45px !important;
+                width: auto !important;
+            }
+            .certificate .watermark-wrapper {
+                max-width: 90% !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PRINT CONTROLS BAR -->
+    <div class="no-print print-bar" style="flex-wrap: wrap;">
+        <a href="{% url 'matches:detail' match.pk %}" class="btn-back">🏁 {% trans "Retour au match" %}</a>
+        <button class="btn-print" onclick="window.print()">🖨️ {% trans "Imprimer le certificat (A4)" %}</button>
+        <button class="btn-pdf" onclick="downloadPDF()">📄 {% trans "Télécharger le certificat PDF" %}</button>
+        <button class="btn-png" onclick="downloadPNG()">📸 {% trans "تحميل صورة (PNG 4K)" %}</button>
+        
+        <button class="btn-bg-change" onclick="document.getElementById('bg-file-input').click()">🖼️ {% trans "Changer l'arrière-plan" %} / تغيير الخلفية</button>
+        <input type="file" id="bg-file-input" accept="image/*" style="display: none;" onchange="loadCustomBackground(this)">
+        
+        <div class="bg-control-slider">
+            <label for="bg-opacity">💡 {% trans "Opacité" %} / البروز:</label>
+            <input type="range" id="bg-opacity" min="0.1" max="1" step="0.05" value="1" oninput="adjustBgOpacity(this.value)">
+        </div>
+        <div class="bg-control-slider">
+            <label for="bg-zoom">🔍 {% trans "Zoom" %} / التكبير والتصغير:</label>
+            <input type="range" id="bg-zoom" min="50" max="250" step="5" value="100" oninput="adjustBgZoom(this.value)">
+        </div>
+        
+        <button class="btn-watermark-mode" id="btn-watermark-mode" onclick="toggleWatermarkEditMode()">⚙️ {% trans "Ajuster le filigrane" %} / ضبط العلامة المائية</button>
+        <button class="btn-watermark-change" onclick="document.getElementById('watermark-file-input').click()">📷 {% trans "Changer le filigrane" %} / تغيير العلامة المائية</button>
+        <input type="file" id="watermark-file-input" accept="image/*" style="display: none;" onchange="loadCustomWatermark(this)">
+        
+        <button class="btn-bg-change" onclick="document.getElementById('logo-file-input').click()">⚜️ {% trans "Changer le logo" %} / تغيير الشعار</button>
+        <button class="btn-watermark-change" onclick="document.getElementById('referee-photo-input').click()">👤 {% trans "Changer la photo" %} / تغيير صورة الحكم</button>
+        <button class="btn-bg-change" onclick="document.getElementById('stamp-file-input').click()" style="background: linear-gradient(135deg, #be123c, #9f1239); border-color: #e11d48;">🔴 {% trans "Changer le cachet" %} / تغيير الختم</button>
+
+        <div class="bg-control-slider">
+            <label for="watermark-opacity">💡 {% trans "Opacité filigrane" %} / شفافية العلامة:</label>
+            <input type="range" id="watermark-opacity" min="0.05" max="0.8" step="0.05" value="0.15" oninput="adjustWatermarkOpacity(this.value)">
+        </div>
+        <div class="bg-control-slider">
+            <label for="watermark-zoom">🔍 {% trans "Zoom filigrane" %} / تكبير وتصغير العلامة:</label>
+            <input type="range" id="watermark-zoom" min="100" max="800" step="5" value="450" oninput="adjustWatermarkZoom(this.value)">
+        </div>
+        <div class="bg-control-slider">
+            <label for="cert-orientation">📐 {% trans "Orientation" %} / اتجاه الشهادة:</label>
+            <select id="cert-orientation" onchange="changeOrientation(this.value)" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 4px; font-family: 'Cairo', sans-serif; font-size: 13px; outline: none; cursor: pointer;">
+                <option value="landscape" style="color: black;" selected>🖼️ أفقي (Landscape - 297x210)</option>
+                <option value="portrait" style="color: black;">📄 عمودي (Portrait - 210x297)</option>
+            </select>
+        </div>
+        <div class="bg-control-slider">
+            <label for="description-font">🔤 {% trans "Police des textes" %} / خط النصوص:</label>
+            <select id="description-font" onchange="changeDescriptionFont(this.value)" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 4px; font-family: 'Cairo', sans-serif; font-size: 13px; outline: none; cursor: pointer;">
+                <option value="'Tajawal', sans-serif" style="color: black;" selected>Tajawal (حديث)</option>
+                <option value="'Amiri', serif" style="color: black;">Amiri (كلاسيكي)</option>
+                <option value="'Cairo', sans-serif" style="color: black;">Cairo (دائري)</option>
+                <option value="'Aref Ruqaa', serif" style="color: black;">Aref Ruqaa (رقعة)</option>
+                <option value="'Reem Kufi', sans-serif" style="color: black;">Reem Kufi (كوفي)</option>
+            </select>
+        </div>
+        <div class="bg-control-slider">
+            <label for="intro-font-size">📏 {% trans "Taille Intro" %} / حجم خط المقدمة:</label>
+            <input type="range" id="intro-font-size" min="14" max="36" step="1" value="19" oninput="changeIntroFontSize(this.value)">
+        </div>
+        <div class="bg-control-slider">
+            <label for="description-font-size">📏 {% trans "Taille description" %} / حجم خط الوصف:</label>
+            <input type="range" id="description-font-size" min="14" max="36" step="1" value="20" oninput="changeDescriptionFontSize(this.value)">
+        </div>
+        <div class="bg-control-slider">
+            <label for="appreciation-font-size">📏 {% trans "Taille appréciation" %} / حجم خط التقدير:</label>
+            <input type="range" id="appreciation-font-size" min="14" max="36" step="1" value="16" oninput="changeAppreciationFontSize(this.value)">
+        </div>
+        <div class="bg-control-slider">
+            <label for="signature-font-size">📏 {% trans "Taille signatures" %} / حجم خط التوقيعات والتاريخ:</label>
+            <input type="range" id="signature-font-size" min="12" max="36" step="1" value="15" oninput="changeSignatureFontSize(this.value)">
+        </div>
+    </div>
+
+    <!-- CERTIFICATE CONTAINER (A4 LANDSCAPE) -->
+    <div class="certificate">
+        
+        <!-- Background Frame -->
+        <div class="bg-overlay"></div>
+
+        <!-- Draggable Watermark Background -->
+        <div class="watermark-wrapper" id="draggable-watermark" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 450px; opacity: 0.15; z-index: 1; pointer-events: none;" title="العلامة المائية / Filigrane">
+            <img src="/media/backgrounds/referee_certificate_watermark.jpg"
+                 class="cert-watermark-img-element"
+                 id="cert-watermark-img"
+                 alt="Filigrane"
+                 onerror="this.src='/media/backgrounds/soccer_player_ink.jpg'; this.onerror=null;">
+            <div class="logo-overlay" id="watermark-overlay" style="display: none;">
+                <span>🔄 {% trans "Changer le filigrane" %} / تغيير العلامة المائية</span>
+            </div>
+            <div class="watermark-resizer" id="watermark-resizer-handle" style="display: none;"></div>
+        </div>
+
+        <!-- Draggable App Logo -->
+        <div class="app-logo-wrapper" id="draggable-logo" title="اسحب باليسار لتحريك الشعار، واستخدم عجلة الماوس لتكبيره/تصغيره، واضغط لتغيير الصورة">
+            <img src="{% if site_settings.app_logo %}{{ site_settings.app_logo.url }}{% else %}{% static 'img/app_logo.png' %}{% endif %}"
+                 class="app-logo-img"
+                 id="app-logo-img"
+                 alt="Logo"
+                 draggable="false"
+                 onerror="this.src='/static/img/app_logo.png'; this.onerror=function(){this.style.display='none'};">
+            <div class="logo-overlay">
+                <span>🔄 تغيير الشعار</span>
+            </div>
+            <div class="logo-resizer-handle" id="logo-resizer-handle"></div>
+            <input type="file" id="logo-file-input" accept="image/*" style="display: none;" onchange="loadCustomLogo(this)">
+        </div>
+
+        <!-- Draggable Gold Ribbon Medal Seal -->
+        <div class="medal-seal" id="draggable-medal" title="اسحب لتحريك الميدالية، واستخدم عجلة الماوس لتكبيرها/تصغيرها">
+            <svg width="100%" height="100%" viewBox="0 0 200 270" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="medalGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#FFE57F" />
+                        <stop offset="25%" stop-color="#D4AF37" />
+                        <stop offset="50%" stop-color="#FFF3B0" />
+                        <stop offset="75%" stop-color="#AA7C11" />
+                        <stop offset="100%" stop-color="#5B4000" />
+                    </linearGradient>
+                    <linearGradient id="medalGoldLight" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#FFF6CC" />
+                        <stop offset="50%" stop-color="#D4AF37" />
+                        <stop offset="100%" stop-color="#FFF6CC" />
+                    </linearGradient>
+                </defs>
+
+                <g transform="translate(100, 110)">
+                    <g stroke="url(#medalGold)" stroke-width="2">
+                        <path d="M -35,10 L -60,135 L -35,115 L -10,135 L -20,10 Z" fill="#0A1C3A" />
+                        <path d="M 20,10 L 10,135 L 35,115 L 60,135 L 35,10 Z" fill="#0A1C3A" />
+                    </g>
+                    <path d="M -47,45 L -41,122 L -47,117 L -53,121 Z" fill="url(#medalGoldLight)" />
+                    <path d="M 33,45 L 39,122 L 33,117 L 27,121 Z" fill="url(#medalGoldLight)" />
+                    <circle cx="0" cy="0" r="62" fill="url(#medalGold)" />
+                    <circle cx="0" cy="0" r="54" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.4" />
+                    <circle cx="0" cy="0" r="50" fill="none" stroke="#7A5600" stroke-width="1.5" stroke-opacity="0.4" />
+                    <circle cx="0" cy="0" r="46" fill="#0A1C3A" stroke="url(#medalGold)" stroke-width="3" />
+                    <text x="0.5" y="8.5" font-family="'Reem Kufi', sans-serif" font-weight="900" font-size="22" fill="#040a12" text-anchor="middle" letter-spacing="0.5" opacity="0.8">حكم</text>
+                    <text x="0" y="8" font-family="'Reem Kufi', sans-serif" font-weight="900" font-size="22" fill="url(#medalGoldLight)" text-anchor="middle" letter-spacing="0.5">حكم</text>
+                </g>
+            </svg>
+            <div class="medal-resizer-handle" id="medal-resizer-handle"></div>
+        </div>
+
+        <!-- Draggable Circular Referee Photo Container -->
+        <div class="referee-photo-container" id="draggable-referee-photo" title="اسحب لتحريك صورة الحكم، واستخدم عجلة الماوس لتكبيرها/تصغيرها">
+            <img src="{% if referee and referee.photo %}{{ referee.photo.url }}{% else %}{% static 'img/default_referee.jpg' %}{% endif %}"
+                 class="referee-photo-img"
+                 id="referee-photo-img"
+                 alt="صورة الحكم"
+                 draggable="false">
+            <div class="logo-overlay" style="border-radius: 50%;">
+                <span>🔄 صورة الحكم</span>
+            </div>
+            <div class="referee-photo-resizer" id="referee-photo-resizer-handle"></div>
+            <input type="file" id="referee-photo-input" accept="image/*" style="display: none;" onchange="loadCustomRefereePhoto(this)">
+        </div>
+
+        <!-- Draggable Official Stamp -->
+        <div class="official-stamp-container" id="draggable-stamp" title="اسحب باليسار لتحريك الختم، واستخدم عجلة الماوس لتكبيره/تصغيره، واضغط لتغيير الصورة">
+            <img src="/media/logos/stamp_esm_v2.png"
+                 class="official-stamp-img"
+                 id="official-stamp-img"
+                 alt="الختم الرسمي"
+                 onerror="this.src='/media/logos/stamp_esm.png'"
+                 draggable="false">
+            <div class="logo-overlay" style="border-radius: 50%;">
+                <span>🔄 تغيير الختم</span>
+            </div>
+            <div class="stamp-resizer" id="stamp-resizer-handle"></div>
+            <input type="file" id="stamp-file-input" accept="image/*" style="display: none;" onchange="loadCustomStamp(this)">
+        </div>
+
+        <div class="certificate-inner">
+            
+            <!-- State Header -->
+            <div class="state-header" contenteditable="true" spellcheck="false">الجمهورية الجزائرية الديمقراطية الشعبية</div>
+
+            <!-- Main Header Title -->
+            <h2 class="cert-header-title" contenteditable="true" spellcheck="false">شهادة تقدير للحكم</h2>
+
+            <!-- Intro text -->
+            <p class="cert-intro" contenteditable="true" spellcheck="false">تتقدم اللجنة التنظيمية للبطولة بخالص الشكر والتقدير إلى الحكم الفاضل:</p>
+
+            <!-- Recipient name -->
+            <div class="recipient-name-wrapper">
+                <div class="recipient-name" contenteditable="true" spellcheck="false">
+                    {% if referee %}
+                        {% if referee.user %}
+                            {{ referee.user.get_full_name|default:referee.user.username }}
+                        {% elif referee.full_name %}
+                            {{ referee.full_name }}
+                        {% else %}
+                            حكم اللقاء المتميز
+                        {% endif %}
+                    {% elif match.referee %}
+                        {% if match.referee.user %}
+                            {{ match.referee.user.get_full_name|default:match.referee.user.username }}
+                        {% elif match.referee.full_name %}
+                            {{ match.referee.full_name }}
+                        {% else %}
+                            حكم اللقاء المتميز
+                        {% endif %}
+                    {% else %}
+                        حكم اللقاء المتميز
+                    {% endif %}
+                </div>
+                
+                <!-- Diamond Golden Dividers -->
+                <div class="divider-wrapper">
+                    <div class="divider-line"></div>
+                    <div class="divider-diamond">♦</div>
+                    <div class="divider-line right"></div>
+                </div>
+            </div>
+
+            <!-- Description body -->
+            <div class="cert-description" contenteditable="true" spellcheck="false">
+                تقديراً لمساهمتكم القيمة وجهودكم المتميزة والاحترافية العالية في قيادة مباريات البطولة بكل عدالة وحيادية، والتي كان لها أثر إيجابي كبير في إنجاح فعالياتها وإشاعة الروح الرياضية.
+            </div>
+
+            <!-- Appreciation text -->
+            <div class="cert-appreciation" contenteditable="true" spellcheck="false">
+                فلكم منا جزيل الشكر وعظيم الامتنان، راجين لكم دوام الصحة والعافية، ومزيداً من التألق والتوفيق.
+            </div>
+
+            <!-- Slogan quote -->
+            <div class="cert-slogan" contenteditable="true" spellcheck="false">
+                “وفاءً لمن أدار اللقاء بالعدل والأمانة”
+            </div>
+
+            <!-- Bottom Row for Signatures (Draggable & Resizable in all directions) -->
+            <div class="bottom-row" id="draggable-bottom-row" title="اسحب لتحريك قسم التوقيعات والتاريخ في كل الاتجاهات، وانقر على أي نص للتعديل المباشر">
+                <div class="bottom-row-resizer-handle" id="bottom-row-resizer-handle"></div>
+                <!-- Date block -->
+                <div class="sig-block">
+                    <span class="sig-title" contenteditable="true" spellcheck="false">التاريخ والملعب</span>
+                    <div class="sig-line" contenteditable="true" spellcheck="false">
+                        {{ match.match_date|date:"Y / m / d"|default:"2026 / 07 / 31" }}
+                    </div>
+                </div>
+
+                <!-- Signature block -->
+                <div class="sig-block">
+                    <span class="sig-title" contenteditable="true" spellcheck="false">رئيس اللجنة التنظيمية</span>
+                    <div class="sig-line" contenteditable="true" spellcheck="false">
+                        التوقيع والختم
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- DRAG-AND-DROP & UTILS JAVASCRIPT ENGINE -->
+    <script>
+        // App Logo elements
+        const logoWrapper = document.getElementById('draggable-logo');
+        const logoImg = document.getElementById('app-logo-img');
+        const logoFileInput = document.getElementById('logo-file-input');
+        const logoResizer = document.getElementById('logo-resizer-handle');
+
+        // Stamp elements
+        const stamp = document.getElementById('draggable-stamp');
+        const stampResizer = document.getElementById('stamp-resizer-handle');
+
+        // Referee Photo elements
+        const refereePhoto = document.getElementById('draggable-referee-photo');
+        const refereePhotoResizer = document.getElementById('referee-photo-resizer-handle');
+        
+        // Medal element
+        const medal = document.getElementById('draggable-medal');
+        const medalResizer = document.getElementById('medal-resizer-handle');
+
+        // Dragging & Resizing States
+        let activeEl = null;
+        let activeAction = null; // 'drag' or 'resize'
+        let startX, startY, startLeft, startTop, startWidth, startHeight;
+
+        // Custom logo trigger
+        logoWrapper.addEventListener('click', (e) => {
+            if (e.target === logoResizer || e.target.classList.contains('logo-resizer-handle')) return;
+            if (!logoWrapper.dataset.dragged || logoWrapper.dataset.dragged === 'false') {
+                logoFileInput.click();
+            }
+        });
+
+        // Custom stamp trigger
+        stamp.addEventListener('click', (e) => {
+            if (e.target === stampResizer || e.target.classList.contains('stamp-resizer')) return;
+            if (!stamp.dataset.dragged || stamp.dataset.dragged === 'false') {
+                document.getElementById('stamp-file-input').click();
+            }
+        });
+
+        // Custom referee photo trigger
+        refereePhoto.addEventListener('click', (e) => {
+            if (e.target === refereePhotoResizer || e.target.classList.contains('referee-photo-resizer')) return;
+            if (!refereePhoto.dataset.dragged || refereePhoto.dataset.dragged === 'false') {
+                document.getElementById('referee-photo-input').click();
+            }
+        });
+
+        function loadCustomStamp(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const stampImg = document.getElementById('official-stamp-img');
+                    delete stampImg.dataset.bgRemoved;
+                    stampImg.src = e.target.result;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function loadCustomRefereePhoto(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const refereeImg = document.getElementById('referee-photo-img');
+                    delete refereeImg.dataset.bgRemoved;
+                    refereeImg.src = e.target.result;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function loadCustomBackground(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const bgOverlay = document.querySelector('.bg-overlay');
+                    if (bgOverlay) {
+                        bgOverlay.style.backgroundImage = `url('${e.target.result}')`;
+                        bgOverlay.style.backgroundRepeat = 'no-repeat';
+                        bgOverlay.style.backgroundPosition = 'center';
+                        bgOverlay.style.backgroundSize = '100% 100%';
+                    }
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function adjustBgOpacity(val) {
+            const bgOverlay = document.querySelector('.bg-overlay');
+            if (bgOverlay) {
+                bgOverlay.style.opacity = val;
+            }
+        }
+
+        function adjustBgZoom(val) {
+            const bgOverlay = document.querySelector('.bg-overlay');
+            if (bgOverlay) {
+                bgOverlay.style.backgroundSize = `${val}% ${val}%`;
+            }
+        }
+
+        function loadCustomLogo(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    delete logoImg.dataset.bgRemoved;
+                    logoImg.src = e.target.result;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Automatic background removal for logo/stamp images
+        function removeWhiteBackground(imgElement) {
+            if (!imgElement) return;
+            if (imgElement.dataset.bgRemoved === 'true') return;
+            
+            const proceed = () => {
+                if (imgElement.dataset.bgRemoved === 'true') return;
+                
+                try {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const width = imgElement.naturalWidth || imgElement.width || 300;
+                    const height = imgElement.naturalHeight || imgElement.height || 300;
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    ctx.drawImage(imgElement, 0, 0);
+                    const imgData = ctx.getImageData(0, 0, width, height);
+                    const data = imgData.data;
+                    
+                    const tolerance = 45;
+                    const visited = new Uint8Array(width * height);
+                    
+                    const corners = [
+                        {x: 0, y: 0},
+                        {x: width - 1, y: 0},
+                        {x: 0, y: height - 1},
+                        {x: width - 1, y: height - 1}
+                    ];
+                    
+                    let removedAny = false;
+                    
+                    for (const corner of corners) {
+                        const cIdx = (corner.y * width + corner.x);
+                        if (visited[cIdx]) continue;
+                        
+                        const rBg = data[cIdx * 4];
+                        const gBg = data[cIdx * 4 + 1];
+                        const bBg = data[cIdx * 4 + 2];
+                        const aBg = data[cIdx * 4 + 3];
+                        
+                        if (aBg < 50) continue;
+                        if (rBg < 200 || gBg < 200 || bBg < 200) continue;
+                        
+                        const queue = [[corner.x, corner.y]];
+                        visited[cIdx] = 1;
+                        
+                        let head = 0;
+                        while (head < queue.length) {
+                            const [cx, cy] = queue[head++];
+                            const idx = (cy * width + cx) * 4;
+                            data[idx + 3] = 0;
+                            removedAny = true;
+                            
+                            const neighbors = [
+                                [cx + 1, cy],
+                                [cx - 1, cy],
+                                [cx, cy + 1],
+                                [cx, cy - 1]
+                            ];
+                            
+                            for (const [nx, ny] of neighbors) {
+                                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                    const nIdx = ny * width + nx;
+                                    if (!visited[nIdx]) {
+                                        const pIdx = nIdx * 4;
+                                        const r = data[pIdx];
+                                        const g = data[pIdx+1];
+                                        const b = data[pIdx+2];
+                                        const a = data[pIdx+3];
+                                        
+                                        if (a >= 50 &&
+                                            Math.abs(r - rBg) <= tolerance &&
+                                            Math.abs(g - gBg) <= tolerance &&
+                                            Math.abs(b - bBg) <= tolerance) {
+                                            queue.push([nx, ny]);
+                                            visited[nIdx] = 1;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (removedAny) {
+                        ctx.putImageData(imgData, 0, 0);
+                        imgElement.dataset.bgRemoved = 'true';
+                        imgElement.src = canvas.toDataURL('image/png');
+                    }
+                } catch (e) {
+                    console.warn("Could not remove background:", e);
+                }
+            };
+
+            if (imgElement.complete && imgElement.naturalWidth > 0) {
+                proceed();
+            } else {
+                imgElement.onload = proceed;
+            }
+        }
+
+        removeWhiteBackground(logoImg);
+        
+        const stampImg = document.getElementById('official-stamp-img');
+        if (stampImg) {
+            removeWhiteBackground(stampImg);
+            stampImg.addEventListener('load', () => removeWhiteBackground(stampImg));
+        }
+        
+        if (logoImg) {
+            logoImg.addEventListener('load', () => removeWhiteBackground(logoImg));
+        }
+
+        // Generic Drag/Resize Handlers
+        function setupDraggable(element, resizerEl, type) {
+            if (!element) return;
+            
+            const dragStart = (e) => {
+                if (e.target.isContentEditable || (e.target.closest && e.target.closest('[contenteditable="true"]'))) return;
+                if (type === 'watermark' && !watermarkEditMode) return;
+                if (resizerEl && (e.target === resizerEl || resizerEl.contains(e.target))) return;
+                
+                activeEl = element;
+                activeAction = 'drag';
+                element.dataset.dragged = 'true';
+                
+                const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+                const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+                
+                startX = clientX;
+                startY = clientY;
+                
+                if (element.offsetParent) {
+                    const rect = element.getBoundingClientRect();
+                    const parentRect = element.offsetParent.getBoundingClientRect();
+                    startLeft = rect.left - parentRect.left;
+                    startTop = rect.top - parentRect.top;
+                } else {
+                    startLeft = element.offsetLeft;
+                    startTop = element.offsetTop;
+                }
+                
+                element.style.transform = 'none';
+                element.style.left = `${startLeft}px`;
+                element.style.top = `${startTop}px`;
+                element.style.right = 'auto';
+                element.style.bottom = 'auto';
+                element.style.cursor = 'grabbing';
+                
+                if (e.type === 'mousedown') {
+                    e.preventDefault();
+                }
+            };
+
+            element.addEventListener('mousedown', dragStart);
+            element.addEventListener('touchstart', dragStart, { passive: true });
+
+            if (resizerEl) {
+                const resizeStart = (e) => {
+                    if (type === 'watermark' && !watermarkEditMode) return;
+                    activeEl = element;
+                    activeAction = 'resize';
+                    
+                    const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+                    startX = clientX;
+                    startWidth = parseFloat(window.getComputedStyle(element).width);
+                    startHeight = parseFloat(window.getComputedStyle(element).height);
+                    
+                    e.stopPropagation();
+                    if (e.type === 'mousedown') {
+                        e.preventDefault();
+                    }
+                };
+
+                resizerEl.addEventListener('mousedown', resizeStart);
+                resizerEl.addEventListener('touchstart', resizeStart, { passive: true });
+            }
+        }
+
+        setupDraggable(logoWrapper, logoResizer, 'logo');
+        setupDraggable(stamp, stampResizer, 'stamp');
+        setupDraggable(refereePhoto, refereePhotoResizer, 'referee-photo');
+        setupDraggable(medal, medalResizer, 'medal');
+
+        // Bottom Row Drag & Resize
+        const bottomRow = document.getElementById('draggable-bottom-row');
+        const bottomRowResizer = document.getElementById('bottom-row-resizer-handle');
+        setupDraggable(bottomRow, bottomRowResizer, 'bottom-row');
+
+        // Watermark Drag & Resize & Upload Events
+        const watermark = document.getElementById('draggable-watermark');
+        const watermarkResizer = document.getElementById('watermark-resizer-handle');
+        const watermarkFileInput = document.getElementById('watermark-file-input');
+        
+        let watermarkEditMode = false;
+        
+        setupDraggable(watermark, watermarkResizer, 'watermark');
+
+        watermark.addEventListener('wheel', (e) => {
+            if (!watermarkEditMode) return;
+            e.preventDefault();
+            const currentWidth = parseFloat(window.getComputedStyle(watermark).width);
+            const delta = e.deltaY < 0 ? 10 : -10;
+            const newWidth = Math.max(100, Math.min(800, currentWidth + delta));
+            watermark.style.width = `${newWidth}px`;
+            const zoomSlider = document.getElementById('watermark-zoom');
+            if (zoomSlider) zoomSlider.value = newWidth;
+        }, { passive: false });
+
+        function toggleWatermarkEditMode() {
+            const wm = document.getElementById('draggable-watermark');
+            const overlay = document.getElementById('watermark-overlay');
+            const resizer = document.getElementById('watermark-resizer-handle');
+            const btn = document.getElementById('btn-watermark-mode');
+            
+            watermarkEditMode = !watermarkEditMode;
+            
+            if (watermarkEditMode) {
+                wm.style.pointerEvents = 'auto';
+                wm.style.zIndex = '9999';
+                wm.style.border = '2px dashed var(--gold)';
+                if (overlay) overlay.style.display = 'flex';
+                if (resizer) resizer.style.display = 'block';
+                if (btn) {
+                    btn.classList.add('active');
+                    btn.innerHTML = '✅ {% trans "Enregistrer la position" %} / حفظ الموضع';
+                }
+            } else {
+                wm.style.pointerEvents = 'none';
+                wm.style.zIndex = '1';
+                wm.style.border = 'none';
+                if (overlay) overlay.style.display = 'none';
+                if (resizer) resizer.style.display = 'none';
+                if (btn) {
+                    btn.classList.remove('active');
+                    btn.innerHTML = '⚙️ {% trans "Ajuster le filigrane" %} / ضبط العلامة المائية';
+                }
+            }
+        }
+
+        function loadCustomWatermark(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const wmImg = document.getElementById('cert-watermark-img');
+                    if (wmImg) wmImg.src = e.target.result;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        
+        function adjustWatermarkOpacity(val) {
+            document.getElementById('draggable-watermark').style.opacity = val;
+        }
+
+        function adjustWatermarkZoom(val) {
+            document.getElementById('draggable-watermark').style.width = `${val}px`;
+        }
+
+        function changeDescriptionFont(fontFamily) {
+            const elements = document.querySelectorAll('.cert-description, .cert-intro, .cert-appreciation, .recipient-name, .sig-title, .sig-line');
+            elements.forEach(el => {
+                el.style.fontFamily = fontFamily;
+            });
+        }
+
+        function changeIntroFontSize(val) {
+            const intros = document.querySelectorAll('.cert-intro');
+            intros.forEach(el => {
+                el.style.fontSize = `${val}px`;
+            });
+        }
+
+        function changeDescriptionFontSize(val) {
+            const descriptions = document.querySelectorAll('.cert-description');
+            descriptions.forEach(el => {
+                el.style.fontSize = `${val}px`;
+            });
+        }
+
+        function changeAppreciationFontSize(val) {
+            const elements = document.querySelectorAll('.cert-appreciation');
+            elements.forEach(el => {
+                el.style.fontSize = `${val}px`;
+            });
+        }
+
+        function changeSignatureFontSize(val) {
+            const titles = document.querySelectorAll('.sig-title');
+            const lines = document.querySelectorAll('.sig-line');
+            titles.forEach(el => {
+                el.style.fontSize = `${val}px`;
+            });
+            lines.forEach(el => {
+                el.style.fontSize = `${parseInt(val) + 10}px`;
+            });
+        }
+
+        // Global Move handler for Mouse & Touch
+        const handleMove = (e) => {
+            if (!activeEl) return;
+
+            const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+
+            if (activeAction === 'drag') {
+                activeEl.dataset.dragged = 'true';
+                const dx = clientX - startX;
+                const dy = clientY - startY;
+                
+                activeEl.style.left = `${startLeft + dx}px`;
+                activeEl.style.top = `${startTop + dy}px`;
+                activeEl.style.bottom = 'auto';
+                activeEl.style.right = 'auto';
+                
+                e.preventDefault();
+            } else if (activeAction === 'resize') {
+                const dx = clientX - startX;
+                
+                if (activeEl === logoWrapper || activeEl === stamp) {
+                    const newSize = Math.max(40, Math.min(300, startWidth + dx));
+                    activeEl.style.width = `${newSize}px`;
+                    activeEl.style.height = `${newSize}px`;
+                } else if (activeEl === medal) {
+                    const newWidth = Math.max(50, Math.min(300, startWidth + dx));
+                    const newHeight = newWidth * (270 / 200);
+                    activeEl.style.width = `${newWidth}px`;
+                    activeEl.style.height = `${newHeight}px`;
+                } else if (activeEl === watermark) {
+                    const newWidth = Math.max(100, Math.min(800, startWidth + dx));
+                    activeEl.style.width = `${newWidth}px`;
+                    const zoomSlider = document.getElementById('watermark-zoom');
+                    if (zoomSlider) zoomSlider.value = newWidth;
+                } else if (activeEl === bottomRow) {
+                    const newWidth = Math.max(250, Math.min(1000, startWidth + dx));
+                    activeEl.style.width = `${newWidth}px`;
+                }
+            }
+        };
+
+        document.addEventListener('mousemove', handleMove);
+        document.addEventListener('touchmove', handleMove, { passive: false });
+
+        // Global Release handler for Mouse & Touch
+        const handleRelease = () => {
+            if (activeEl) {
+                activeEl.style.cursor = 'move';
+                activeEl = null;
+                activeAction = null;
+            }
+        };
+
+        document.addEventListener('mouseup', handleRelease);
+        document.addEventListener('touchend', handleRelease);
+
+        // Scroll Wheel Zoom Resizing helper
+        function setupWheelResize(element, isMedal = false) {
+            if (!element) return;
+            element.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const currentWidth = parseFloat(window.getComputedStyle(element).width);
+                const delta = e.deltaY < 0 ? 8 : -8;
+                const newWidth = Math.max(40, Math.min(350, currentWidth + delta));
+                element.style.width = `${newWidth}px`;
+                if (isMedal) {
+                    element.style.height = `${newWidth * (270 / 200)}px`;
+                } else {
+                    element.style.height = `${newWidth}px`;
+                }
+            }, { passive: false });
+        }
+
+        setupWheelResize(logoWrapper);
+        setupWheelResize(stamp);
+        setupWheelResize(medal, true);
+        setupWheelResize(bottomRow, false);
+
+        // Clean paste for contenteditable fields
+        document.querySelectorAll('[contenteditable]').forEach(el => {
+            el.addEventListener('paste', e => {
+                e.preventDefault();
+                const text = e.clipboardData.getData('text/plain');
+                document.execCommand('insertText', false, text);
+            });
+        });
+
+        let currentOrientation = 'landscape';
+
+        function changeOrientation(mode) {
+            currentOrientation = mode;
+            const cert = document.querySelector('.certificate');
+            let styleTag = document.getElementById('dynamic-print-style');
+            if (!styleTag) {
+                styleTag = document.createElement('style');
+                styleTag.id = 'dynamic-print-style';
+                document.head.appendChild(styleTag);
+            }
+
+            // Reset non-dragged elements' inline position & width to avoid overflowing across orientation modes
+            document.querySelectorAll('.app-logo-wrapper, .medal-seal, .official-stamp-container, .bottom-row').forEach(el => {
+                if (el.dataset.dragged !== 'true') {
+                    el.style.left = '';
+                    el.style.right = '';
+                    el.style.top = '';
+                    el.style.bottom = '';
+                    el.style.width = '';
+                    el.style.height = '';
+                }
+            });
+
+            if (mode === 'portrait') {
+                cert.classList.add('portrait-mode');
+                styleTag.innerHTML = '@page { size: A4 portrait; margin: 0; }';
+            } else {
+                cert.classList.remove('portrait-mode');
+                styleTag.innerHTML = '@page { size: A4 landscape; margin: 0; }';
+            }
+        }
+
+        // Sync on beforeprint event
+        window.addEventListener('beforeprint', () => {
+            const cert = document.querySelector('.certificate');
+            const selectEl = document.getElementById('cert-orientation');
+            const mode = cert && cert.classList.contains('portrait-mode') ? 'portrait' : (selectEl ? selectEl.value : 'landscape');
+            changeOrientation(mode);
+        });
+
+        // Initialize orientation state on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const selectEl = document.getElementById('cert-orientation');
+            if (selectEl) {
+                changeOrientation(selectEl.value || 'landscape');
+            }
+        });
+
+        // Download PDF function
+        async function downloadPDF() {
+            const btn = event ? event.currentTarget : null;
+            const originalText = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.innerHTML = 'جاري التحميل...';
+                btn.style.opacity = '0.7';
+                btn.style.pointerEvents = 'none';
+            }
+
+            if (document.activeElement) document.activeElement.blur();
+
+            const element = document.querySelector('.certificate');
+            
+            const logoResizer = document.getElementById('logo-resizer-handle');
+            const stampResizer = document.getElementById('stamp-resizer-handle');
+            const medalResizer = document.getElementById('medal-resizer-handle');
+            const watermarkResizer = document.getElementById('watermark-resizer-handle');
+            const bottomRowResizer = document.getElementById('bottom-row-resizer-handle');
+            const watermarkOverlay = document.getElementById('watermark-overlay');
+            const watermarkWrapper = document.getElementById('draggable-watermark');
+
+            if (logoResizer) logoResizer.style.display = 'none';
+            if (stampResizer) stampResizer.style.display = 'none';
+            if (medalResizer) medalResizer.style.display = 'none';
+            if (watermarkResizer) watermarkResizer.style.display = 'none';
+            if (bottomRowResizer) bottomRowResizer.style.display = 'none';
+            if (watermarkOverlay) watermarkOverlay.style.display = 'none';
+            
+            let originalBorder = '';
+            if (watermarkWrapper) {
+                originalBorder = watermarkWrapper.style.border;
+                watermarkWrapper.style.border = 'none';
+            }
+
+            const editables = element.querySelectorAll('[contenteditable]');
+            editables.forEach(el => el.setAttribute('contenteditable', 'false'));
+
+            try {
+                let recipientName = document.querySelector('.recipient-name').innerText.trim().replace(/\s+/g, '_') || 'Referee';
+
+                const width = element.offsetWidth;
+                const height = element.offsetHeight;
+
+                // High-resolution SVG canvas rasterization preserving 100% Arabic typography & font ligatures
+                const canvas = await htmlToImage.toCanvas(element, {
+                    width: width,
+                    height: height,
+                    style: {
+                        transform: 'none',
+                        margin: '0',
+                        boxShadow: 'none',
+                        left: '0',
+                        top: '0'
+                    },
+                    pixelRatio: 3,
+                    cacheBust: true
+                });
+
+                const dataUrl = canvas.toDataURL('image/png', 1.0);
+
+                const { jsPDF } = window.jspdf;
+                const isPortrait = currentOrientation === 'portrait' || element.classList.contains('portrait-mode');
+                const pdfOrientation = isPortrait ? 'portrait' : 'landscape';
+                const pdfWidth = isPortrait ? 210 : 297;
+                const pdfHeight = isPortrait ? 297 : 210;
+
+                const pdf = new jsPDF({
+                    orientation: pdfOrientation,
+                    unit: 'mm',
+                    format: 'a4',
+                    compress: true
+                });
+
+                pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save(`شهادة_تقدير_حكم_${recipientName}.pdf`);
+
+            } catch (error) {
+                console.error('PDF Export Error:', error);
+                alert('حدث خطأ أثناء تحميل الملف، يرجى المحاولة مرة أخرى.');
+            } finally {
+                editables.forEach(el => el.setAttribute('contenteditable', 'true'));
+
+                if (logoResizer) logoResizer.style.display = '';
+                if (stampResizer) stampResizer.style.display = '';
+                if (medalResizer) medalResizer.style.display = '';
+                if (bottomRowResizer) bottomRowResizer.style.display = '';
+                if (watermarkEditMode) {
+                    if (watermarkResizer) watermarkResizer.style.display = 'block';
+                    if (watermarkOverlay) watermarkOverlay.style.display = 'flex';
+                    if (watermarkWrapper) watermarkWrapper.style.border = originalBorder;
+                }
+                if (btn) {
+                    btn.innerHTML = originalText;
+                    btn.style.opacity = '1';
+                    btn.style.pointerEvents = 'auto';
+                }
+            }
+        }
+
+        // Download PNG Function
+        async function downloadPNG() {
+            const btn = event ? event.currentTarget : null;
+            const originalText = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.innerHTML = 'جاري التحميل...';
+                btn.style.opacity = '0.7';
+                btn.style.pointerEvents = 'none';
+            }
+
+            if (document.activeElement) document.activeElement.blur();
+
+            const element = document.querySelector('.certificate');
+            
+            const logoResizer = document.getElementById('logo-resizer-handle');
+            const stampResizer = document.getElementById('stamp-resizer-handle');
+            const medalResizer = document.getElementById('medal-resizer-handle');
+            const watermarkResizer = document.getElementById('watermark-resizer-handle');
+            const bottomRowResizer = document.getElementById('bottom-row-resizer-handle');
+            const watermarkOverlay = document.getElementById('watermark-overlay');
+            const watermarkWrapper = document.getElementById('draggable-watermark');
+
+            if (logoResizer) logoResizer.style.display = 'none';
+            if (stampResizer) stampResizer.style.display = 'none';
+            if (medalResizer) medalResizer.style.display = 'none';
+            if (watermarkResizer) watermarkResizer.style.display = 'none';
+            if (bottomRowResizer) bottomRowResizer.style.display = 'none';
+            if (watermarkOverlay) watermarkOverlay.style.display = 'none';
+
+            let originalBorder = '';
+            if (watermarkWrapper) {
+                originalBorder = watermarkWrapper.style.border;
+                watermarkWrapper.style.border = 'none';
+            }
+
+            const editables = element.querySelectorAll('[contenteditable]');
+            editables.forEach(el => el.setAttribute('contenteditable', 'false'));
+
+            try {
+                const width = element.offsetWidth;
+                const height = element.offsetHeight;
+
+                const canvas = await htmlToImage.toCanvas(element, {
+                    width: width,
+                    height: height,
+                    style: {
+                        transform: 'none',
+                        margin: '0',
+                        boxShadow: 'none',
+                        left: '0',
+                        top: '0'
+                    },
+                    pixelRatio: 3,
+                    cacheBust: true
+                });
+
+                const dataUrl = canvas.toDataURL('image/png', 1.0);
+                const link = document.createElement('a');
+                let recipientName = document.querySelector('.recipient-name').innerText.trim().replace(/\s+/g, '_') || 'Referee';
+                link.download = `شهادة_تقدير_حكم_${recipientName}.png`;
+                link.href = dataUrl;
+                link.click();
+            } catch (error) {
+                console.error('PNG Export Error:', error);
+                alert('حدث خطأ أثناء تحميل الصورة.');
+            } finally {
+                editables.forEach(el => el.setAttribute('contenteditable', 'true'));
+
+                if (logoResizer) logoResizer.style.display = '';
+                if (stampResizer) stampResizer.style.display = '';
+                if (medalResizer) medalResizer.style.display = '';
+                if (bottomRowResizer) bottomRowResizer.style.display = '';
+                if (watermarkEditMode) {
+                    if (watermarkResizer) watermarkResizer.style.display = 'block';
+                    if (watermarkOverlay) watermarkOverlay.style.display = 'flex';
+                    if (watermarkWrapper) watermarkWrapper.style.border = originalBorder;
+                }
+                if (btn) {
+                    btn.innerHTML = originalText;
+                    btn.style.opacity = '1';
+                    btn.style.pointerEvents = 'auto';
+                }
+            }
+        }
+    </script>
+</body>
+</html>

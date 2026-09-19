@@ -1,0 +1,366 @@
+{% load i18n static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>{% trans "Liste des Joueurs" %} - {{ tournament.name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+    <style>
+        :root {
+            --charcoal: #0F172A;
+            --euro-gold: #C5A028;
+            --primary: #C5A028;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #e2e8f0;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .no-print-btn {
+            padding: 10px 20px;
+            background: #0f1e3d;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Cairo', sans-serif;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .no-print-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.15);
+        }
+
+        .print-page {
+            width: 210mm;
+            min-height: 297mm;
+            background-color: #fff;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 20px 20px 30px 20px;
+            box-sizing: border-box;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+            page-break-after: always;
+        }
+
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 15px;
+            padding: 0 10px;
+        }
+
+        .header-side {
+            width: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .header-center {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 0 15px;
+        }
+
+        .app-logo {
+            width: 85px;
+            height: 85px;
+            object-fit: contain;
+            background: transparent;
+            mix-blend-mode: multiply;
+        }
+
+        .tournament-trophy {
+            width: 95px;
+            height: 85px;
+            object-fit: contain;
+            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.15));
+        }
+
+        .tournament-title {
+            font-family: 'Cairo', sans-serif;
+            font-weight: 900;
+            font-size: 26px;
+            color: #0f1e3d;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .subtitle-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+            width: 90%;
+            justify-content: center;
+        }
+
+        .subtitle-line {
+            flex: 1;
+            height: 2px;
+            background-color: var(--euro-gold);
+            position: relative;
+        }
+
+        .subtitle-line.left-line::before, .subtitle-line.right-line::before {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: var(--euro-gold);
+            border-radius: 50%;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .subtitle-line.left-line::before { left: 0; }
+        .subtitle-line.right-line::before { right: 0; }
+
+        .subtitle-label {
+            color: #0f1e3d;
+            font-weight: 700;
+            margin: 0;
+            font-size: 14px;
+            text-transform: uppercase;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .players-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #0f1e3d;
+            table-layout: fixed;
+        }
+
+        .players-table th {
+            background-color: #0f1e3d;
+            color: #ffffff;
+            padding: 10px 5px;
+            font-size: 14px;
+            font-weight: 700;
+            text-align: center;
+            border-bottom: 2px solid var(--euro-gold);
+            line-height: 1.2;
+        }
+
+        .players-table td {
+            padding: 6px 10px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--charcoal);
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: middle;
+        }
+
+        .players-table tbody tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .players-table tbody tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+
+        .players-table td.col-number, .players-table th.col-number {
+            background-color: #0f1e3d;
+            color: #f59e0b;
+            font-size: 14px;
+            font-family: 'Bebas Neue', sans-serif;
+        }
+        
+        .players-table td.col-team {
+            background-color: rgba(197, 160, 40, 0.1);
+        }
+
+        .footer-note {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 11px;
+            color: #475569;
+            opacity: 0.8;
+            padding-top: 15px;
+            border-top: 1px solid rgba(0,0,0,0.06);
+            width: 100%;
+        }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .no-print { display: none !important; }
+            .print-page { 
+                box-shadow: none; 
+                margin: 0; 
+                padding: 10mm; 
+                min-height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="no-print" style="position: fixed; top: 25px; left: 25px; display: flex; gap: 10px; z-index: 1000;">
+        <button onclick="downloadPDF()" class="no-print-btn" style="background: var(--euro-gold); color: var(--charcoal);">
+            <span style="font-size: 16px;">📥</span>
+            <span>تحميل الـ PDF</span>
+        </button>
+        <a href="javascript:window.print()" class="no-print-btn">
+            <span style="font-size: 16px;">🖨️</span>
+            <span>{% trans "Imprimer" %} / طباعة</span>
+        </a>
+    </div>
+
+    <!-- Iterate through chunks of players to handle pagination for A4 size -->
+    <!-- Assuming ~40 rows fit per page -->
+    <div id="pdf-content">
+        {% for chunk in player_chunks %}
+            <div class="print-page">
+                {% if forloop.first %}
+                <div class="header-container">
+                    <div class="header-side">
+                        <img src="{% static 'img/trophy_new_transparent.png' %}" class="tournament-trophy" alt="Trophy">
+                    </div>
+                    
+                    <div class="header-center">
+                        <h1 class="tournament-title">{{ tournament.name }} {{ tournament.year }}</h1>
+                        <div class="subtitle-wrapper">
+                            <span class="subtitle-line left-line"></span>
+                            <p class="subtitle-label">
+                                {% trans "SÉCURITÉ SOCIALE" %} / قائمة الضمان الاجتماعي الشاملة
+                            </p>
+                            <span class="subtitle-line right-line"></span>
+                        </div>
+                    </div>
+
+                    <div class="header-side">
+                        {% if site_settings.app_logo %}
+                            <img src="{{ site_settings.app_logo.url }}" class="app-logo" alt="Logo">
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div style="height: 30px;"></div>
+                {% endif %}
+
+                <table class="players-table" dir="rtl">
+                    <thead>
+                        <tr>
+                            <th class="col-number" style="width: 6%;">#</th>
+                            <th style="width: 22%;">الفريق<br><span style="font-size: 10px; color: #cbd5e1;">Équipe</span></th>
+                            <th style="width: 32%;">الاسم و اللقب<br><span style="font-size: 10px; color: #cbd5e1;">Nom & Prénom</span></th>
+                            <th style="width: 18%;">تاريخ الميلاد<br><span style="font-size: 10px; color: #cbd5e1;">Date de Naiss</span></th>
+                            <th style="width: 22%;">رقم التعريف<br><span style="font-size: 10px; color: #cbd5e1;">N° Carte Nat</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for player in chunk.players %}
+                        <tr>
+                            <td class="col-number">{{ chunk.start_idx|add:forloop.counter|stringformat:"02d" }}</td>
+                            {% if player.chunk_is_first %}
+                            <td class="col-team" rowspan="{{ player.chunk_rowspan }}" style="vertical-align: middle; text-align: center;">
+                                <div style="writing-mode: vertical-rl; margin: 0 auto; font-weight: 900; font-size: 18px; letter-spacing: 1px; color: #0f1e3d;">
+                                    {{ player.team.name }}
+                                </div>
+                            </td>
+                            {% endif %}
+                            <td>
+                                {{ player.last_name|upper }} &nbsp;&nbsp;&nbsp; {{ player.first_name }}
+                            </td>
+                            <td>{{ player.date_of_birth|date:"d/m/Y"|default:"---" }}</td>
+                            <td style="font-family: monospace;">{{ player.display_national_id }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <div class="footer-note" style="margin-top: 40px; display: flex; justify-content: space-around;">
+                    <div>Visa de l'Organisateur / توقيع المنظم</div>
+                    <div>Cachet et Visa / الختم والمصادقة</div>
+                </div>
+                
+                <div class="footer-note" style="margin-top: auto;">
+                    {{ site_settings.site_name }} - {% trans "Document Officiel généré le" %} {{ now|date:"d/m/Y H:i" }} — {{ site_settings.app_name }} — Page {{ forloop.counter }}/{{ player_chunks|length }}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        async function downloadPDF() {
+            const btnContainer = document.querySelector('.no-print');
+            const originalDisplay = btnContainer.style.display;
+            btnContainer.style.display = 'none';
+            
+            const pages = document.querySelectorAll('.print-page');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+            
+            try {
+                for (let i = 0; i < pages.length; i++) {
+                    const element = pages[i];
+                    // Temporarily remove page-break for capture
+                    const origBreak = element.style.pageBreakAfter;
+                    element.style.pageBreakAfter = 'auto';
+                    
+                    const dataUrl = await htmlToImage.toPng(element, {
+                        pixelRatio: 2,
+                        cacheBust: true,
+                        style: {
+                            margin: '0',
+                            boxShadow: 'none',
+                            transform: 'none'
+                        }
+                    });
+                    
+                    element.style.pageBreakAfter = origBreak;
+                    
+                    const imgProps = pdf.getImageProperties(dataUrl);
+                    const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                    
+                    if (i > 0) {
+                        pdf.addPage();
+                    }
+                    pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, imgHeight);
+                }
+                
+                btnContainer.style.display = originalDisplay;
+                pdf.save('Assurance_Joueurs_{{ tournament.year }}.pdf');
+            } catch (error) {
+                btnContainer.style.display = originalDisplay;
+                console.error('Error generating PDF:', error);
+                alert('حدث خطأ أثناء إنشاء ملف PDF');
+            }
+        }
+    </script>
+</body>
+</html>

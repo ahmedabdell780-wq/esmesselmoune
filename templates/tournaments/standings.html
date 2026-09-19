@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+{% load i18n turniq_tags %}
+{% block title %}{% trans "Classement" %} / الترتيب{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+  <div>
+    <h1 class="font-bebas text-5xl tracking-widest leading-none mb-4">
+      الترتيب / <span style="color:var(--primary)">CLASSEMENT</span>
+    </h1>
+    
+    <!-- TOURNAMENT SELECTOR -->
+    <div class="relative max-w-xs">
+      <select onchange="if(this.value) window.location.href=this.value;" class="form-input py-2 pl-4 pr-10 appearance-none bg-no-repeat cursor-pointer text-sm font-bold w-full border-white/10 bg-black/40 backdrop-blur-md hover:border-primary/50 transition-colors shadow-lg" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 fill=%22%23C5A028%22><path d=%22M4 6l4 4 4-4H4z%22/></svg>'); background-position: right 1rem center;">
+        <option value="" disabled {% if not tournament %}selected{% endif %}>اختر البطولة / Choisir un tournoi</option>
+        {% for t in tournaments %}
+          <option value="{% url 'tournaments:standings_detail' t.pk %}" {% if tournament and tournament.pk == t.pk %}selected{% endif %}>
+            🏆 {{ t.name }} · {{ t.year }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="flex gap-2 no-print self-start sm:self-end flex-wrap items-center">
+    <span class="text-xs font-black text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1.5 rounded-xl">
+      🖼️ Template Pro (A4):
+    </span>
+    <a href="{% if tournament %}{% url 'tournaments:stage_summary_detail' tournament.pk %}{% else %}{% url 'tournaments:stage_summary' %}{% endif %}?stage=GROUP" target="_blank" class="btn btn-ghost btn-sm border border-emerald-500/40 hover:bg-emerald-500/10 text-emerald-400 font-bold">
+      🟢 المجموعات
+    </a>
+    <a href="{% if tournament %}{% url 'tournaments:stage_summary_detail' tournament.pk %}{% else %}{% url 'tournaments:stage_summary' %}{% endif %}?stage=QF" target="_blank" class="btn btn-ghost btn-sm border border-rose-500/40 hover:bg-rose-500/10 text-rose-400 font-bold">
+      🔴 الربع النهائي
+    </a>
+    <a href="{% if tournament %}{% url 'tournaments:stage_summary_detail' tournament.pk %}{% else %}{% url 'tournaments:stage_summary' %}{% endif %}?stage=SF" target="_blank" class="btn btn-ghost btn-sm border border-blue-500/40 hover:bg-blue-500/10 text-blue-400 font-bold">
+      🔵 النصف النهائي
+    </a>
+    <a href="{% if tournament %}{% url 'tournaments:stage_summary_detail' tournament.pk %}{% else %}{% url 'tournaments:stage_summary' %}{% endif %}?stage=FINAL" target="_blank" class="btn btn-ghost btn-sm border border-amber-500/40 hover:bg-amber-500/10 text-amber-300 font-bold">
+      🏆 النهائي
+    </a>
+    {% if user.is_authenticated %}
+    <a href="{% if tournament %}{% url 'tournaments:groups_print_detail' tournament.pk %}{% else %}{% url 'tournaments:groups_print' %}{% endif %}" target="_blank" class="btn btn-ghost btn-sm border border-primary/30 hover:bg-primary/10" style="color:var(--primary)">
+      🖼️ {% trans "Template Pro" %}
+    </a>
+    <button onclick="window.print()" class="btn btn-ghost btn-sm border border-white/5 hover:bg-white/5">🖨️ {% trans "Imprimer" %}</button>
+    {% endif %}
+    {% if tournament %}
+    <a href="{% url 'tournaments:best_xi' tournament.pk %}" class="btn btn-ghost btn-sm shadow-lg shadow-primary/10 border border-primary/20 hover:bg-primary/10" style="color:var(--primary)">
+      ⭐ {% trans "Le 11 Idéal" %}
+    </a>
+    {% if tournament.format != 'round_robin' %}
+    <a href="{% url 'tournaments:bracket_detail' tournament.pk %}" class="btn btn-ghost btn-sm shadow-lg shadow-primary/10 border border-primary/20 hover:bg-primary/10" style="color:var(--primary)">
+      🏆 {% trans "الأدوار" %} / Bracket
+    </a>
+    {% endif %}
+    {% if user.role == 'admin' and tournament %}
+    <a href="{% url 'tournaments:awards_dashboard' tournament.pk %}" class="btn btn-ghost btn-sm shadow-lg shadow-primary/10 border border-primary/20 hover:bg-primary/10" style="color:var(--primary)">
+      🏆 {% trans "Awards" %} / الجوائز
+    </a>
+    {% endif %}
+    <a href="{% url 'tournaments:tournament_book' tournament.pk %}" target="_blank" class="btn btn-sm font-bold shadow-lg" style="background:var(--primary);color:#000">
+      📥 كتاب الدورة / PDF
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+{% if tournament and groups %}
+  {% for group in groups %}
+  <div class="mb-10">
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-4 pb-2 border-b border-white/5">
+      <div class="group-header-card flex items-center gap-3.5 bg-gradient-to-r from-primary/15 via-white/[0.03] to-transparent p-2.5 pe-6 rounded-2xl border border-primary/25 shadow-[0_4px_20px_rgba(197,160,40,0.1)] transition-all duration-300 hover:border-primary/50">
+        <!-- 3D Letter Emblem Badge -->
+        <div class="relative w-11 h-11 rounded-xl bg-gradient-to-br from-primary via-amber-400 to-amber-600 flex items-center justify-center font-bebas text-2xl font-black text-slate-950 shadow-[0_4px_12px_rgba(197,160,40,0.35)] border border-white/30 flex-shrink-0 group-hover:scale-105 transition-transform">
+          <span class="drop-shadow-[0_1px_2px_rgba(255,255,255,0.4)]">{{ group.name|slice:"-1:" }}</span>
+        </div>
+        
+        <!-- Group Title & Metadata -->
+        <div class="flex flex-col">
+          <h2 class="text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-amber-100 to-primary tracking-wide flex items-center gap-2 leading-tight">
+            <span>{{ group.name }}</span>
+          </h2>
+          <div class="flex items-center gap-2 text-[10px] font-extrabold uppercase text-gray-400 tracking-wider mt-0.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>⚽ {{ group.sorted_standings|length }} {% trans "Équipes" %} / {{ group.sorted_standings|length }} فرق</span>
+            <span>•</span>
+            <span class="text-primary/90">🏆 {% trans "Phase de Groupes" %}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Button: Poster Export -->
+      <a href="{% url 'tournaments:group_poster_detail' tournament.pk %}?group_id={{ group.id }}" target="_blank" class="group relative inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500/20 via-emerald-500/10 to-teal-500/20 text-emerald-400 border border-emerald-500/30 hover:border-emerald-400 hover:bg-emerald-500/30 transition-all duration-300 text-xs font-black no-print shadow-[0_4px_15px_rgba(16,185,129,0.15)] hover:shadow-[0_6px_20px_rgba(16,185,129,0.3)] hover:-translate-y-0.5 active:translate-y-0">
+        <span class="text-sm transform group-hover:scale-110 transition-transform">📸</span>
+        <span>{% trans "Poster Officiel" %} / ملصق الترتيب كصورة</span>
+      </a>
+    </div>
+
+    <div class="glass-container rounded-3xl overflow-hidden border border-white/10 shadow-2xl relative">
+      <!-- Glow effect -->
+      <div class="absolute -top-10 -right-10 w-40 h-40 bg-primary/20 rounded-full blur-[60px] pointer-events-none"></div>
+      
+      <div class="overflow-x-auto relative z-10">
+        <table class="w-full text-sm min-w-[600px] text-white">
+          <thead>
+            <tr class="bg-black/50 text-gray-400 border-b border-white/10 text-[11px] uppercase tracking-widest font-bold">
+              <th class="text-center px-4 py-5 w-12">#</th>
+              <th class="text-left px-4 py-5">Équipe / الفريق</th>
+              <th class="px-3 py-5 text-center" title="Matchs joués / مباريات">J</th>
+              <th class="px-3 py-5 text-center text-green-400" title="Gagnés / فوز">G</th>
+              <th class="px-3 py-5 text-center" title="Nuls / تعادل">N</th>
+              <th class="px-3 py-5 text-center text-red-400" title="Perdus / خسارة">P</th>
+              <th class="px-3 py-5 text-center hidden sm:table-cell" title="Buts pour / أهداف له">BP</th>
+              <th class="px-3 py-5 text-center hidden sm:table-cell" title="Buts contre / أهداف عليه">BC</th>
+              <th class="px-3 py-5 text-center hidden md:table-cell" title="Clean Sheets / شباك نظيفة">CS</th>
+              <th class="px-3 py-5 text-center hidden lg:table-cell" title="Buts Marqués en Moyenne / معدل الأهداف المسجلة">BPM</th>
+              <th class="px-3 py-5 text-center hidden lg:table-cell" title="Buts Encaissés en Moyenne / معدل الأهداف المستقبلة">BCM</th>
+              <th class="px-3 py-5 text-center" title="Différence / الفارق">DIFF</th>
+              <th class="px-5 py-5 text-center text-yellow-400 text-sm" title="Points / نقاط">PTS</th>
+              <th class="px-4 py-5 text-center w-[120px]" title="Forme des 5 derniers matchs / آخر 5 مباريات">Form</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for standing in group.sorted_standings %}
+            <tr class="border-b border-white/5 transition-all duration-300 hover:bg-white/[0.03]
+                       {% if tournament.format != 'round_robin' and forloop.counter <= tournament.teams_advancing_per_group %}bg-green-500/[0.02]{% elif tournament.format == 'round_robin' and forloop.counter == 1 %}bg-yellow-500/[0.02]{% elif tournament.format == 'round_robin' and forloop.counter == 2 %}bg-gray-400/[0.015]{% endif %}">
+              <td class="px-4 py-4 text-center font-bebas text-2xl relative">
+                {% if tournament.format != 'round_robin' and forloop.counter <= tournament.teams_advancing_per_group %}
+                  <div class="absolute left-0 top-0 bottom-0 w-1 bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]"></div>
+                {% elif tournament.format == 'round_robin' and forloop.counter == 1 %}
+                  <div class="absolute left-0 top-0 bottom-0 w-1 bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.8)]"></div>
+                {% elif tournament.format == 'round_robin' and forloop.counter == 2 %}
+                  <div class="absolute left-0 top-0 bottom-0 w-1 bg-gray-400 shadow-[0_0_10px_rgba(156,163,175,0.5)]"></div>
+                {% endif %}
+                {% if forloop.counter == 1 %}<span class="text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]">1</span>
+                {% elif forloop.counter == 2 %}<span class="text-gray-300 drop-shadow-[0_0_5px_rgba(209,213,219,0.5)]">2</span>
+                {% elif forloop.counter == 3 %}<span class="text-amber-600 drop-shadow-[0_0_5px_rgba(217,119,6,0.5)]">3</span>
+                {% else %}<span class="text-gray-500">{{ forloop.counter }}</span>{% endif %}
+              </td>
+              <td class="px-4 py-4">
+                <a href="{% url 'teams:detail' standing.team.pk %}" class="flex items-center gap-4 group-hover:translate-x-1 transition-transform">
+                  <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 overflow-hidden shadow-lg"
+                       style="background:{{ standing.team.color_primary }}20;border:1px solid {{ standing.team.color_primary }}60;color:{{ standing.team.color_primary }}">
+                    {% if standing.team.logo %}<img src="{{ standing.team.logo.url }}" class="w-full h-full object-cover"/>
+                    {% else %}{{ standing.team.name|slice:":2"|upper }}{% endif %}
+                  </div>
+                  <div>
+                    <div class="font-bold text-base group-hover:text-primary transition-colors">{{ standing.team.name }}</div>
+                    <div class="text-xs font-normal text-gray-400">{{ standing.team.neighborhood }}</div>
+                  </div>
+                </a>
+              </td>
+              <td class="px-3 py-4 text-center font-mono text-gray-300">{{ standing.played }}</td>
+              <td class="px-3 py-4 text-center font-mono text-green-400">{{ standing.won }}</td>
+              <td class="px-3 py-4 text-center font-mono text-gray-400">{{ standing.drawn }}</td>
+              <td class="px-3 py-4 text-center font-mono text-red-400">{{ standing.lost }}</td>
+              <td class="px-3 py-4 text-center font-mono text-gray-300 hidden sm:table-cell">{{ standing.goals_for }}</td>
+              <td class="px-3 py-4 text-center font-mono text-gray-400 hidden sm:table-cell">{{ standing.goals_against }}</td>
+              <td class="px-3 py-4 text-center font-mono text-gray-300 hidden md:table-cell">{{ standing|get_team_clean_sheets }}</td>
+              <td class="px-3 py-4 text-center font-mono text-gray-400 hidden lg:table-cell">{{ standing|get_team_goals_scored_avg }}</td>
+              <td class="px-3 py-4 text-center font-mono text-gray-400 hidden lg:table-cell">{{ standing|get_team_goals_conceded_avg }}</td>
+              <td class="px-3 py-4 text-center font-mono font-bold
+                {% if standing.goal_difference > 0 %}text-green-400
+                {% elif standing.goal_difference < 0 %}text-red-400{% else %}text-gray-500{% endif %}">
+                {% if standing.goal_difference > 0 %}+{% endif %}{{ standing.goal_difference }}
+              </td>
+              <td class="px-5 py-4 text-center font-mono font-bold text-2xl text-yellow-400 drop-shadow-md">
+                {{ standing.points }}
+              </td>
+              <td class="px-4 py-4 text-center">
+                <div class="flex justify-center gap-1.5">
+                  {% for f in standing|get_team_form %}
+                    {% if f == 'W' %}
+                      <span class="w-5 h-5 rounded-full bg-green-500/20 text-green-400 border border-green-500/40 flex items-center justify-center font-bold text-[9px] shadow-[0_0_8px_rgba(34,197,94,0.15)]" title="Victoire / فوز">V</span>
+                    {% elif f == 'D' %}
+                      <span class="w-5 h-5 rounded-full bg-slate-500/20 text-slate-400 border border-slate-500/40 flex items-center justify-center font-bold text-[9px]" title="Nul / تعادل">N</span>
+                    {% else %}
+                      <span class="w-5 h-5 rounded-full bg-red-500/20 text-red-400 border border-red-500/40 flex items-center justify-center font-bold text-[9px] shadow-[0_0_8px_rgba(239,68,68,0.15)]" title="Défaite / خسارة">D</span>
+                    {% endif %}
+                  {% empty %}
+                    <span class="text-gray-500 text-xs">-</span>
+                  {% endfor %}
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="10" class="px-4 py-10 text-center text-gray-500 font-bold">لا مباريات بعد / Aucun match joué</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% if tournament.format != 'round_robin' %}
+    <p class="text-xs mt-3 flex items-center gap-2 text-gray-400 font-bold tracking-wider">
+      <span class="inline-block w-3 h-3 rounded-sm bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]"></span>
+      أفضل {{ tournament.teams_advancing_per_group }} فرق تتأله / Les {{ tournament.teams_advancing_per_group }} premiers se qualifient
+    </p>
+    {% else %}
+    <p class="text-xs mt-3 flex items-center gap-2 text-gray-400 font-bold tracking-wider">
+      <span class="inline-block w-3 h-3 rounded-sm bg-yellow-500 shadow-[0_0_5px_rgba(234,179,8,0.5)]"></span>
+      🏆 متصدر الترتيب النهائي يتوج بطلاً للدوري / Le leader du classement final est sacré champion
+    </p>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+  <!-- Mini Standings for Best Runners-Up / Best 3rd -->
+  {% if tournament.format != 'round_robin' and best_seconds %}
+  <div class="mt-16 mb-10">
+      <div class="flex items-center gap-3 mb-6">
+          <h2 class="font-bebas text-4xl tracking-widest leading-none">
+              الترتيب المصغر / <span style="color:var(--primary)">MINI CLASSEMENT</span>
+          </h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- Best Seconds -->
+          <div>
+              <h3 class="text-xl font-bold mb-3 flex items-center gap-2" style="color:var(--primary)">
+                  أفضل أصحاب المركز الثاني / Les Meilleurs 2èmes
+              </h3>
+              <div class="glass-container rounded-2xl overflow-hidden border border-white/10 shadow-xl relative">
+                  <div class="overflow-x-auto relative z-10">
+                      <table class="w-full text-sm text-white">
+                          <thead>
+                              <tr class="bg-black/50 text-gray-400 border-b border-white/10 text-[10px] uppercase tracking-widest font-bold">
+                                  <th class="text-center px-4 py-3">#</th>
+                                  <th class="text-left px-4 py-3">الفريق / Équipe</th>
+                                  <th class="px-2 py-3 text-center">المجموعة</th>
+                                  <th class="px-2 py-3 text-center">J</th>
+                                  <th class="px-2 py-3 text-center">DIFF</th>
+                                  <th class="px-4 py-3 text-center text-yellow-400">PTS</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              {% for standing in best_seconds %}
+                              <tr class="border-b border-white/5 transition-all duration-300 hover:bg-white/[0.03]">
+                                  <td class="px-4 py-3 text-center font-bebas text-xl text-gray-400">{{ forloop.counter }}</td>
+                                  <td class="px-4 py-3 font-bold flex items-center gap-3">
+                                      <div class="w-6 h-6 rounded-full overflow-hidden border border-white/20">
+                                          {% if standing.team.logo %}<img src="{{ standing.team.logo.url }}" class="w-full h-full object-cover">{% endif %}
+                                      </div>
+                                      {{ standing.team.name }}
+                                  </td>
+                                  <td class="px-2 py-3 text-center font-bold text-gray-300 text-xs">{{ standing.group_name }}</td>
+                                  <td class="px-2 py-3 text-center font-mono">{{ standing.played }}</td>
+                                  <td class="px-2 py-3 text-center font-mono font-bold {% if standing.goal_difference > 0 %}text-green-400{% elif standing.goal_difference < 0 %}text-red-400{% else %}text-gray-500{% endif %}">{% if standing.goal_difference > 0 %}+{% endif %}{{ standing.goal_difference }}</td>
+                                  <td class="px-4 py-3 text-center font-mono font-bold text-lg text-yellow-400">{{ standing.points }}</td>
+                              </tr>
+                              {% empty %}
+                              <tr><td colspan="6" class="px-4 py-5 text-center text-gray-500">لا يوجد / Aucun</td></tr>
+                              {% endfor %}
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+          </div>
+
+          <!-- Best Thirds (if exist) -->
+          {% if best_thirds %}
+          <div>
+              <h3 class="text-xl font-bold mb-3 flex items-center gap-2" style="color:var(--primary)">
+                  أفضل أصحاب المركز الثالث / Les Meilleurs 3èmes
+              </h3>
+              <div class="glass-container rounded-2xl overflow-hidden border border-white/10 shadow-xl relative">
+                  <div class="overflow-x-auto relative z-10">
+                      <table class="w-full text-sm text-white">
+                          <thead>
+                              <tr class="bg-black/50 text-gray-400 border-b border-white/10 text-[10px] uppercase tracking-widest font-bold">
+                                  <th class="text-center px-4 py-3">#</th>
+                                  <th class="text-left px-4 py-3">الفريق / Équipe</th>
+                                  <th class="px-2 py-3 text-center">المجموعة</th>
+                                  <th class="px-2 py-3 text-center">J</th>
+                                  <th class="px-2 py-3 text-center">DIFF</th>
+                                  <th class="px-4 py-3 text-center text-yellow-400">PTS</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              {% for standing in best_thirds %}
+                              <tr class="border-b border-white/5 transition-all duration-300 hover:bg-white/[0.03]">
+                                  <td class="px-4 py-3 text-center font-bebas text-xl text-gray-400">{{ forloop.counter }}</td>
+                                  <td class="px-4 py-3 font-bold flex items-center gap-3">
+                                      <div class="w-6 h-6 rounded-full overflow-hidden border border-white/20">
+                                          {% if standing.team.logo %}<img src="{{ standing.team.logo.url }}" class="w-full h-full object-cover">{% endif %}
+                                      </div>
+                                      {{ standing.team.name }}
+                                  </td>
+                                  <td class="px-2 py-3 text-center font-bold text-gray-300 text-xs">{{ standing.group_name }}</td>
+                                  <td class="px-2 py-3 text-center font-mono">{{ standing.played }}</td>
+                                  <td class="px-2 py-3 text-center font-mono font-bold {% if standing.goal_difference > 0 %}text-green-400{% elif standing.goal_difference < 0 %}text-red-400{% else %}text-gray-500{% endif %}">{% if standing.goal_difference > 0 %}+{% endif %}{{ standing.goal_difference }}</td>
+                                  <td class="px-4 py-3 text-center font-mono font-bold text-lg text-yellow-400">{{ standing.points }}</td>
+                              </tr>
+                              {% empty %}
+                              <tr><td colspan="6" class="px-4 py-5 text-center text-gray-500">لا يوجد / Aucun</td></tr>
+                              {% endfor %}
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+          </div>
+          {% endif %}
+      </div>
+  </div>
+  {% endif %}
+
+{% else %}
+  <div class="card rounded-2xl p-12 text-center">
+    <div class="text-4xl mb-4">📊</div>
+    <p class="text-lg font-bold mb-2">لا يوجد ترتيب حالياً / {% trans "Aucun classement disponible" %}</p>
+    <p style="color:var(--muted)">لم تبدأ مرحلة المجموعات بعد / La phase de groupes n'a pas encore commencé.</p>
+  </div>
+{% endif %}
+{% endblock %}

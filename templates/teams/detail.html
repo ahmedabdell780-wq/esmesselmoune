@@ -1,0 +1,308 @@
+{% extends 'base.html' %}
+{% load i18n turniq_tags %}
+{% block title %}{{ team.name }}{% endblock %}
+
+{% block content %}
+<!-- BREADCRUMB -->
+<div class="flex items-center gap-2 text-sm mb-6" style="color:var(--muted)">
+  <a href="{% url 'teams:list' %}" class="hover:underline" style="color:var(--primary)">⚽ {% trans "Équipes" %}</a>
+  <span>›</span>
+  <span>{{ team.name }}</span>
+</div>
+
+<!-- CINEMATIC E-SPORTS HERO -->
+<style>
+  @keyframes floatLogo {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+  .animate-float-logo {
+    animation: floatLogo 4s ease-in-out infinite;
+  }
+</style>
+<div class="relative rounded-[2rem] overflow-hidden mb-12 border border-white/10 bg-slate-900 shadow-2xl group flex items-end no-print" 
+     style="min-height: {{ team.banner_height|default:550 }}px;">
+  <!-- Cinematic Background Image -->
+  <div class="absolute inset-0 z-0">
+    {% if team.cover_photo %}
+      <img src="{{ team.cover_photo.url }}" 
+           class="w-full h-full object-cover opacity-100 transition-transform duration-[2000ms] ease-out" 
+           style="object-position: center {{ team.cover_offset_y|default:50 }}%;"
+           alt="Team Cover">
+    {% else %}
+      <img src="/static/img/default_cover.png" class="w-full h-full object-cover opacity-80 mix-blend-overlay transition-transform duration-[2000ms] ease-out" alt="Team Cover">
+    {% endif %}
+    <!-- Soft Vignette Overlay for Readability -->
+    <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
+    <div class="absolute inset-0 bg-black/30"></div>
+  </div>
+  
+  {% if can_manage %}
+  <!-- Admin Controls -->
+  <div class="absolute top-6 right-6 flex gap-3 z-30 no-print">
+    <a href="{% url 'teams:edit' team.pk %}" class="w-12 h-12 rounded-2xl bg-black/40 border border-white/10 text-white flex items-center justify-center backdrop-blur-md hover:bg-primary hover:text-black transition-colors" title="Modifier">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+      </svg>
+    </a>
+    <button onclick="confirmDelete('{% trans "Supprimer" %} {{ team.name|escapejs }}','هل أنت متأكد من حذف هذا الفريق نهائياً؟','{% url "teams:delete" team.pk %}')"
+            class="w-12 h-12 rounded-2xl bg-red-500/80 border border-red-500/50 text-white flex items-center justify-center backdrop-blur-md hover:bg-red-600 transition-colors" title="Supprimer">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+      </svg>
+    </button>
+  </div>
+  {% endif %}
+
+  <!-- Left-Aligned Content -->
+  <div class="relative z-20 flex flex-col md:flex-row items-center md:items-end text-center md:text-left rtl:md:text-right gap-8 px-6 md:px-12 pb-10 pt-10 w-full mt-auto">
+    <!-- Dynamic Logo with Glowing Effect & Light Float Animation -->
+    <div class="w-32 h-32 md:w-48 md:h-48 rounded-full border-[4px] border-white/20 flex items-center justify-center text-4xl font-bold shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden bg-white transition-all duration-500 hover:scale-105 relative shrink-0 animate-float-logo" style="box-shadow: 0 0 40px {{ team.color_primary|default:'#3b82f6' }}60;">
+      {% if team.logo %}
+        <img src="{{ team.logo.url }}" class="w-full h-full object-contain p-1"/>
+      {% else %}
+        <span style="color:{{ team.color_primary|default:'#3b82f6' }}" class="font-bebas text-6xl tracking-widest">{{ team.name|slice:":2"|upper }}</span>
+      {% endif %}
+    </div>
+    
+    <div class="flex flex-col items-center md:items-start rtl:md:items-end w-full">
+        <!-- 3D Bold Team Name -->
+        <h1 class="font-bebas text-6xl md:text-8xl lg:text-[7rem] tracking-widest text-white uppercase mb-2 transition-all leading-tight md:leading-none" 
+            style="text-shadow: 0px 6px 0px {{ team.color_primary|default:'#3b82f6' }}, 0px 12px 20px rgba(0,0,0,0.8);">
+          {{ team.name }}
+        </h1>
+        
+        <!-- Neighborhood & Details -->
+        <div class="flex flex-col md:flex-row items-center gap-4 md:gap-8 w-full">
+            <p class="text-gray-300 font-bold tracking-[0.3em] uppercase text-xs md:text-sm flex items-center gap-3">
+              <span class="w-2 h-2 rounded-full animate-pulse" style="background:{{ team.color_primary|default:'#3b82f6' }}"></span>
+              {{ team.neighborhood|default:"Quartier Inconnu" }}
+              <span class="w-2 h-2 rounded-full animate-pulse" style="background:{{ team.color_secondary|default:'#1d4ed8' }}"></span>
+            </p>
+
+            <!-- Stats Quick Badges -->
+            <div class="flex gap-4 md:ml-auto rtl:md:mr-auto mt-4 md:mt-0">
+                <div class="bg-black/50 backdrop-blur-xl border border-white/10 px-6 py-2 rounded-2xl shadow-2xl flex flex-col items-center">
+                    <span class="text-2xl font-bebas text-white" style="text-shadow: 0 2px 10px {{ team.color_primary|default:'#3b82f6' }}">{{ team.players.count }}</span>
+                    <span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-1">Joueurs / لاعب</span>
+                </div>
+                <div class="bg-black/50 backdrop-blur-xl border border-white/10 px-6 py-2 rounded-2xl shadow-2xl flex flex-col items-center">
+                    <span class="text-2xl font-bebas text-white" style="text-shadow: 0 2px 10px {{ team.color_secondary|default:'#1d4ed8' }}">{{ total_goals }}</span>
+                    <span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-1">Buts / أهداف</span>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+  <div class="col-span-1 lg:col-span-2 space-y-8">
+
+    <!-- Action bar -->
+    <div class="flex flex-wrap items-center gap-3 no-print bg-slate-800/50 p-3 rounded-2xl border border-white/5 shadow-inner">
+      {% if can_manage %}
+      <a href="{% url 'teams:lineup_manager' team.pk %}" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-700 text-white font-bold text-xs tracking-widest uppercase hover:scale-105 transition-transform shadow-lg shadow-emerald-500/20">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+        {% trans "Plan de Jeu (Tactique)" %}
+      </a>
+      <a href="{% url 'teams:player_create' team.pk %}" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 text-white font-bold text-xs tracking-widest uppercase hover:bg-white/20 transition-colors border border-white/5">
+        ➕ {% trans "Ajouter joueur" %}
+      </a>
+      <a href="{% url 'teams:edit' team.pk %}" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 text-white font-bold text-xs tracking-widest uppercase hover:bg-white/20 transition-colors border border-white/5">
+        ✏️ {% trans "Modifier" %}
+      </a>
+      {% endif %}
+      <a href="{% url 'teams:player_list' team.pk %}" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary/20 text-primary font-bold text-xs tracking-widest uppercase hover:bg-primary/30 transition-colors ml-auto rtl:ml-0 rtl:mr-auto border border-primary/20">
+        📋 {% trans "Tous les joueurs" %} →
+      </a>
+    </div>
+
+    {% if goalkeepers %}
+    <div class="card rounded-2xl overflow-hidden">
+      <div class="px-4 py-2 text-xs font-bold uppercase tracking-wider flex items-center justify-between"
+           style="background:rgba(245,158,11,.08);color:#fbbf24;border-bottom:1px solid var(--border)">
+        <span>🧤 {% trans "Gardiens" %} / حراس المرمى ({{ goalkeepers|length }})</span>
+      </div>
+      {% for player in goalkeepers %}
+        {% include 'teams/partials/player_row.html' with player=player can_manage=can_manage %}
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if defenders %}
+    <div class="card rounded-2xl overflow-hidden">
+      <div class="px-4 py-2 text-xs font-bold uppercase tracking-wider"
+           style="background:rgba(59,130,246,.08);color:#93c5fd;border-bottom:1px solid var(--border)">
+        🛡 {% trans "Défenseurs" %} / المدافعون ({{ defenders|length }})
+      </div>
+      {% for player in defenders %}
+        {% include 'teams/partials/player_row.html' with player=player can_manage=can_manage %}
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if midfielders %}
+    <div class="card rounded-2xl overflow-hidden">
+      <div class="px-4 py-2 text-xs font-bold uppercase tracking-wider"
+           style="background:rgba(16,185,129,.08);color:#34d399;border-bottom:1px solid var(--border)">
+        ⚙️ {% trans "Milieux" %} / لاعبو الوسط ({{ midfielders|length }})
+      </div>
+      {% for player in midfielders %}
+        {% include 'teams/partials/player_row.html' with player=player can_manage=can_manage %}
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if forwards %}
+    <div class="card rounded-2xl overflow-hidden">
+      <div class="px-4 py-2 text-xs font-bold uppercase tracking-wider"
+           style="background:rgba(239,68,68,.08);color:#f87171;border-bottom:1px solid var(--border)">
+        ⚡ {% trans "Attaquants" %} / المهاجمون ({{ forwards|length }})
+      </div>
+      {% for player in forwards %}
+        {% include 'teams/partials/player_row.html' with player=player can_manage=can_manage %}
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not goalkeepers and not defenders and not midfielders and not forwards %}
+    <div class="card rounded-2xl p-10 text-center">
+      <div class="text-4xl mb-3">🧑</div>
+      <p class="font-bold mb-2">لا يوجد لاعبون / {% trans "Aucun joueur" %}</p>
+      {% if can_manage %}
+      <a href="{% url 'teams:player_create' team.pk %}" class="btn btn-primary mt-2">➕ إضافة لاعب</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="space-y-6">
+
+    <!-- TEAM PERFORMANCE CARD (NEW) -->
+    <div class="relative bg-gradient-to-br from-[#0f172a] to-[#0a0f1c] border border-white/10 rounded-3xl p-6 overflow-hidden shadow-2xl group">
+        <!-- Glows -->
+        <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/20 rounded-full blur-[40px] pointer-events-none group-hover:bg-blue-500/30 transition-colors"></div>
+        <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-emerald-500/20 rounded-full blur-[40px] pointer-events-none group-hover:bg-emerald-500/30 transition-colors"></div>
+        
+        <h3 class="relative font-bebas text-2xl text-white tracking-widest mb-6 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400">📊</div>
+            أداء الفريق / <span class="text-blue-400">PERFORMANCE</span>
+        </h3>
+
+        <!-- Match Stats Grid -->
+        <div class="grid grid-cols-3 gap-3 mb-6 relative">
+            <div class="bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col items-center justify-center hover:border-emerald-500/50 transition-colors">
+                <span class="font-bebas text-3xl text-emerald-400 drop-shadow-md">{{ win_count }}</span>
+                <span class="text-[9px] font-black text-gray-500 uppercase tracking-widest mt-1">فوز / W</span>
+            </div>
+            <div class="bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col items-center justify-center hover:border-yellow-500/50 transition-colors">
+                <span class="font-bebas text-3xl text-yellow-400 drop-shadow-md">{{ draw_count }}</span>
+                <span class="text-[9px] font-black text-gray-500 uppercase tracking-widest mt-1">تعادل / D</span>
+            </div>
+            <div class="bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col items-center justify-center hover:border-red-500/50 transition-colors">
+                <span class="font-bebas text-3xl text-red-400 drop-shadow-md">{{ loss_count }}</span>
+                <span class="text-[9px] font-black text-gray-500 uppercase tracking-widest mt-1">خسارة / L</span>
+            </div>
+        </div>
+
+        <!-- Overall Rate/Progress -->
+        {% if total_matches > 0 %}
+        <div class="relative pt-2">
+            <div class="flex justify-between items-end mb-2">
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">نسبة الانتصارات / Win Rate</span>
+                <span class="font-bebas text-xl text-white">{% widthratio win_count total_matches 100 %}%</span>
+            </div>
+            <div class="h-2 w-full bg-slate-800 rounded-full overflow-hidden flex">
+                <div class="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)]" style="width: {% widthratio win_count total_matches 100 %}%"></div>
+                <div class="h-full bg-yellow-500" style="width: {% widthratio draw_count total_matches 100 %}%"></div>
+                <div class="h-full bg-red-500" style="width: {% widthratio loss_count total_matches 100 %}%"></div>
+            </div>
+            <div class="text-[9px] font-black text-gray-500 uppercase tracking-widest text-center mt-3">
+                إجمالي المباريات: <span class="text-white">{{ total_matches }}</span>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-4 bg-white/5 rounded-xl border border-dashed border-white/10 text-[10px] font-black text-gray-500 uppercase tracking-widest">
+            لا توجد مباريات مسجلة بعد
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Top scorer -->
+    {% if top_scorer %}
+    <div class="card rounded-2xl p-5">
+      <h3 class="font-bold text-sm mb-4 uppercase tracking-wider" style="color:var(--muted)">
+        ⚽ أفضل هداف / {% trans "Meilleur buteur" %}
+      </h3>
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm"
+             style="background:{{ team.color_primary }}20;color:{{ team.color_primary }}">
+          {{ top_scorer.player__first_name|first }}{{ top_scorer.player__last_name|first }}
+        </div>
+        <div class="flex-1">
+          <div class="font-bold">{{ top_scorer.player__first_name }} {{ top_scorer.player__last_name }}</div>
+          <div class="text-xs" style="color:var(--muted)">{{ team.name }}</div>
+        </div>
+        <div class="font-bebas text-3xl" style="color:var(--primary)">{{ top_scorer.goals }}</div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent matches -->
+    {% if recent_matches %}
+    <div class="card rounded-2xl p-5">
+      <h3 class="font-bold text-sm mb-3 uppercase tracking-wider flex items-center justify-between" style="color:var(--muted)">
+        <span>📋 آخر المباريات / {% trans "Derniers matchs" %}</span>
+        <span class="text-[10px] font-normal opacity-70">({{ recent_matches|length }} مباراة)</span>
+      </h3>
+      <div class="space-y-2">
+        {% for match in recent_matches %}
+        <a href="{% url 'matches:detail' match.pk %}"
+           class="block p-2.5 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/5 hover:border-primary/40 transition group">
+          <div class="flex items-center justify-between text-[10px] text-gray-400 font-semibold mb-1.5 pb-1 border-b border-white/5">
+            <span class="flex items-center gap-1 text-yellow-400/90 font-bold">
+              🏆 {{ match.tournament.name }}
+            </span>
+            <span class="px-2 py-0.5 rounded bg-white/5 text-gray-300 font-bold">
+              {% if match.group %}{{ match.group.name }}{% else %}{{ match.get_stage_display }}{% endif %}
+            </span>
+          </div>
+          <div class="flex items-center gap-2 text-xs">
+            <div class="flex-1 truncate text-right {% if match.team1 == team %}font-bold text-white{% else %}text-gray-300{% endif %}">{{ match.team1.name }}</div>
+            <div class="score-badge text-sm font-black flex-shrink-0 px-2.5 py-0.5 rounded-md bg-black/40
+              {% if match.winner == team %}text-green-400 border border-green-500/30
+              {% elif match.result == 'draw' %}text-yellow-400 border border-yellow-500/30
+              {% else %}text-red-400 border border-red-500/30{% endif %}">
+              {{ match.score_display }}
+            </div>
+            <div class="flex-1 truncate text-left {% if match.team2 == team %}font-bold text-white{% else %}text-gray-300{% endif %}">{{ match.team2.name }}</div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Contact info -->
+    {% if team.contact_phone or team.contact_email or team.manager %}
+    <div class="card rounded-2xl p-5">
+      <h3 class="font-bold text-sm mb-3 uppercase tracking-wider" style="color:var(--muted)">
+        📞 {% trans "Contact" %} / تواصل
+      </h3>
+      {% if team.manager %}
+        <p class="text-sm mb-1">👤 {{ team.manager.get_full_name }}</p>
+      {% endif %}
+      {% if team.contact_phone %}
+        <p class="text-sm mb-1">📱 {{ team.contact_phone }}</p>
+      {% endif %}
+      {% if team.contact_email %}
+        <p class="text-sm">✉️ <a href="mailto:{{ team.contact_email }}" class="hover:underline" style="color:var(--primary)">{{ team.contact_email }}</a></p>
+      {% endif %}
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

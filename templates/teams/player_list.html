@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+{% load i18n turniq_tags %}
+{% block title %}{{ team.name }} — {% trans "Joueurs" %}{% endblock %}
+
+{% block content %}
+
+<!-- BREADCRUMB -->
+<div class="flex items-center gap-2 text-sm mb-6" style="color:var(--muted)">
+  <a href="{% url 'teams:list' %}" class="hover:underline" style="color:var(--primary)">⚽ {% trans "Équipes" %}</a>
+  <span>›</span>
+  <a href="{% url 'teams:detail' team.pk %}" class="hover:underline" style="color:var(--primary)">{{ team.name }}</a>
+  <span>›</span>
+  <span>{% trans "Joueurs" %}</span>
+</div>
+
+<!-- HEADER -->
+<div class="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+  <div class="flex items-center gap-4">
+    <div class="w-14 h-14 rounded-2xl overflow-hidden flex items-center justify-center font-bold text-xl flex-shrink-0"
+         style="background:{{ team.color_primary }}20;color:{{ team.color_primary }};border:2px solid {{ team.color_primary }}40">
+      {% if team.logo %}<img src="{{ team.logo.url }}" class="w-full h-full object-cover"/>
+      {% else %}{{ team.name|slice:":2"|upper }}{% endif %}
+    </div>
+    <div>
+      <h1 class="font-bebas text-3xl tracking-wider">{{ team.name }}</h1>
+      <p class="text-sm" style="color:var(--muted)">
+        📍 {{ team.neighborhood }}
+        · {{ players|length }} {% trans "joueurs" %} / لاعب
+      </p>
+    </div>
+  </div>
+
+  {% if can_manage %}
+  <div class="sm:ms-auto flex gap-2 flex-wrap">
+    <a href="{% url 'teams:player_create' team.pk %}" class="btn btn-primary">
+      ➕ {% trans "Ajouter joueur" %} / إضافة لاعب
+    </a>
+    <a href="{% url 'teams:edit' team.pk %}" class="btn btn-ghost">✏️ {% trans "Modifier l'équipe" %}</a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- POSITION STATS BAR -->
+<div class="grid grid-cols-4 gap-3 mb-6">
+  {% for pos, count in position_counts.items %}
+  <div class="card rounded-xl p-3 text-center">
+    <div class="font-bebas text-2xl
+      {% if pos == 'GK' %}text-yellow-400{% elif pos == 'DEF' %}text-blue-400
+      {% elif pos == 'MID' %}text-green-400{% else %}text-red-400{% endif %}">
+      {{ count }}
+    </div>
+    <div class="text-xs mt-0.5" style="color:var(--muted)">
+      {% if pos == 'GK' %}🧤 Gardiens / حراس
+      {% elif pos == 'DEF' %}🛡 Défenseurs / مدافعون
+      {% elif pos == 'MID' %}⚙ Milieux / أوساط
+      {% else %}⚡ Attaquants / مهاجمون{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- SEARCH & FILTERS -->
+<div class="card rounded-2xl p-4 mb-4">
+  <form method="get" class="flex flex-wrap gap-3 items-end">
+    <div class="flex-1 min-w-48">
+      <label class="form-label">🔍 {% trans "Rechercher" %} / بحث</label>
+      <input type="text" name="q" value="{{ request.GET.q|default:'' }}"
+             class="form-input" placeholder="Nom, prénom, N° identité..."/>
+    </div>
+    <div>
+      <label class="form-label">⚽ {% trans "Poste" %}</label>
+      <select name="position" class="form-input">
+        <option value="">{% trans "Tous" %} / الكل</option>
+        <option value="GK"  {% if request.GET.position == 'GK' %}selected{% endif %}>🧤 Gardien / حارس</option>
+        <option value="DEF" {% if request.GET.position == 'DEF' %}selected{% endif %}>🛡 Défenseur / مدافع</option>
+        <option value="MID" {% if request.GET.position == 'MID' %}selected{% endif %}>⚙ Milieu / وسط</option>
+        <option value="FWD" {% if request.GET.position == 'FWD' %}selected{% endif %}>⚡ Attaquant / مهاجم</option>
+      </select>
+    </div>
+    <div>
+      <label class="form-label">⚙️ {% trans "Statut" %}</label>
+      <select name="status" class="form-input">
+        <option value="">{% trans "Tous" %}</option>
+        <option value="active"    {% if request.GET.status == 'active' %}selected{% endif %}>✅ Actifs / نشيطون</option>
+        <option value="suspended" {% if request.GET.status == 'suspended' %}selected{% endif %}>🚫 Suspendus / موقوفون</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-ghost">🔎 {% trans "Filtrer" %}</button>
+    {% if request.GET.q or request.GET.position or request.GET.status %}
+    <a href="{% url 'teams:player_list' team.pk %}" class="btn btn-ghost" style="color:var(--muted)">✕ Reset</a>
+    {% endif %}
+    <!-- Print button -->
+    <a href="{% url 'teams:player_print' team.pk %}" target="_blank" class="btn btn-ghost no-print" title="{% trans 'Imprimer la liste officielle' %}">
+        🖨️ {% trans "Imprimer la liste" %} / طباعة القائمة
+    </a>
+    <!-- PDF button -->
+    <a href="{% url 'teams:player_print' team.pk %}?pdf=1" target="_blank" class="btn btn-ghost no-print" style="color: #ef4444; font-family: 'Cairo', sans-serif; font-weight: 800;" title="{% trans 'Télécharger en PDF' %}">
+        📄 {% trans "Télécharger PDF" %} / تحميل الـ PDF
+    </a>
+    <!-- Blank List button -->
+    <a href="{% url 'teams:player_print' team.pk %}?pdf=1&blank=1" target="_blank" class="btn btn-ghost no-print" style="color: #64748b;" title="{% trans 'Liste vide (15 joueurs)' %}">
+        📝 قائمة فارغة (15)
+    </a>
+  </form>
+</div>
+
+<!-- PLAYERS TABLE -->
+{% if players %}
+<div class="card rounded-2xl overflow-hidden">
+  <table class="w-full text-sm">
+    <thead>
+      <tr style="background:var(--card2);color:var(--muted)">
+        <th class="text-left px-4 py-3 w-12">#</th>
+        <th class="text-left px-4 py-3">{% trans "Joueur" %} / اللاعب</th>
+        <th class="px-3 py-3 text-center hidden sm:table-cell">{% trans "Poste" %}</th>
+        <th class="px-3 py-3 text-center hidden md:table-cell">{% trans "Âge" %} / السن</th>
+        <th class="px-3 py-3 text-center hidden lg:table-cell">{% trans "Pied" %}</th>
+        <th class="px-3 py-3 text-center">{% trans "Statut" %}</th>
+        {% if can_manage %}
+        <th class="px-3 py-3 text-center no-print">{% trans "Actions" %}</th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for player in players %}
+      <tr class="border-t transition" style="border-color:var(--border)">
+
+        <!-- Jersey number -->
+        <td class="px-4 py-3">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold"
+               style="background:{{ team.color_primary }}15;color:{{ team.color_primary }};border:1px solid {{ team.color_primary }}30">
+            {{ player.jersey_number }}
+          </div>
+        </td>
+
+        <!-- Name & photo -->
+        <td class="px-4 py-3">
+          <a href="{% url 'teams:player_detail' player.pk %}" class="flex items-center gap-3 hover:underline">
+            <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold flex-shrink-0"
+                 style="background:var(--card2);color:var(--muted)">
+              {% if player.photo %}<img src="{{ player.photo.url }}" class="w-full h-full object-cover"/>
+              {% else %}{{ player.first_name|first }}{{ player.last_name|first }}{% endif %}
+            </div>
+            <div>
+              <div class="font-bold flex items-center gap-2 {% if player.is_suspended %}line-through text-red-400{% endif %}">
+                {{ player.full_name }}
+                {% if player.is_captain %}
+                  <span class="captain-badge badge badge-gold px-2 py-0.5 text-[9px] font-bold tracking-wider rounded-md uppercase" title="Capitaine d'équipe" style="background:linear-gradient(135deg, #c5a028 0%, #a4801b 100%); color:#fff; border:1px solid rgba(255,255,255,0.1);">
+                    © CAP
+                  </span>
+                {% endif %}
+              </div>
+              {% if player.date_of_birth %}
+              <div class="text-xs" style="color:var(--muted)">{{ player.date_of_birth|date:"d/m/Y" }} {% if player.age %}· {{ player.age }} ans{% endif %}</div>
+              {% endif %}
+            </div>
+          </a>
+        </td>
+
+        <!-- Position -->
+        <td class="px-3 py-3 text-center hidden sm:table-cell">
+          <span class="badge text-xs font-bold
+            {% if player.position == 'GK' %}badge-gold
+            {% elif player.position == 'DEF' %}badge-blue
+            {% elif player.position == 'MID' %}badge-green
+            {% else %}badge-red{% endif %}">
+            {% if player.position == 'GK' %}🧤{% elif player.position == 'DEF' %}🛡{% elif player.position == 'MID' %}⚙{% else %}⚡{% endif %}
+            {{ player.get_position_display }}
+          </span>
+        </td>
+
+        <!-- Age -->
+        <td class="px-3 py-3 text-center hidden md:table-cell font-mono" style="color:var(--muted)">
+          {{ player.age|default:'—' }}
+        </td>
+
+        <!-- Foot -->
+        <td class="px-3 py-3 text-center hidden lg:table-cell" style="color:var(--muted)">
+          {% if player.preferred_foot == 'R' %}➡️{% elif player.preferred_foot == 'L' %}⬅️{% else %}↔️{% endif %}
+        </td>
+
+        <!-- Status -->
+        <td class="px-3 py-3 text-center">
+          {% if player.is_suspended %}
+            <span class="badge badge-red">🚫 Suspendu</span>
+          {% elif player.is_active %}
+            <span class="badge badge-green">✅ Actif</span>
+          {% else %}
+            <span class="badge badge-gray">⏸ Inactif</span>
+          {% endif %}
+        </td>
+
+        <!-- Actions -->
+        {% if can_manage %}
+        <td class="px-3 py-3 text-center no-print">
+          <div class="flex items-center justify-center gap-1.5">
+            <a href="{% url 'teams:player_edit' player.pk %}"
+               class="btn btn-ghost btn-xs" title="{% trans 'Modifier' %}">✏️</a>
+            <button onclick="toggleSuspend({{ player.pk }}, this)"
+                    class="btn btn-xs {% if player.is_suspended %}btn-success{% else %}badge badge-red{% endif %}"
+                    title="{% trans 'Toggle suspension' %}"
+                    data-suspended="{{ player.is_suspended|lower }}">
+              {% if player.is_suspended %}✅{% else %}🚫{% endif %}
+            </button>
+            <button onclick="toggleCaptain({{ player.pk }}, this)"
+                    class="btn btn-xs {% if player.is_captain %}btn-primary{% else %}btn-ghost border border-white/10{% endif %}"
+                    title="{% trans 'Définir comme capitaine' %} / تعيين كقائد للفريق"
+                    data-captain="{{ player.is_captain|lower }}"
+                    style="{% if player.is_captain %}background:linear-gradient(135deg, #c5a028 0%, #a4801b 100%); border-color:#c5a028; color:#fff{% endif %}">
+              ©️
+            </button>
+            <button onclick="confirmDelete('Supprimer {{ player.full_name|escapejs }}','هل أنت متأكد من حذف اللاعب؟','{% url "teams:player_delete" player.pk %}')"
+                    class="btn btn-danger btn-xs" title="{% trans 'Supprimer' %}">🗑️</button>
+          </div>
+        </td>
+        {% endif %}
+
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% else %}
+<div class="card rounded-2xl p-12 text-center">
+  <div class="text-5xl mb-4">🧑</div>
+  <p class="font-bold text-lg mb-2">{% trans "Aucun joueur" %} / لا يوجد لاعبون</p>
+  <p class="text-sm mb-4" style="color:var(--muted)">
+    {% if request.GET.q %}لا نتائج للبحث «{{ request.GET.q }}» / Aucun résultat pour « {{ request.GET.q }} »
+    {% else %}لم يُسجَّل أي لاعب بعد / Aucun joueur enregistré.{% endif %}
+  </p>
+  {% if can_manage %}
+  <a href="{% url 'teams:player_create' team.pk %}" class="btn btn-primary">
+    ➕ {% trans "Ajouter un joueur" %} / إضافة لاعب
+  </a>
+  {% endif %}
+</div>
+{% endif %}
+
+{% block extra_js %}
+<script>
+async function toggleSuspend(playerId, btn) {
+  try {
+    const resp = await fetch(`/teams/player/${playerId}/toggle-suspend/`, {
+      method: 'POST',
+      headers: {'X-CSRFToken': getCsrf(), 'Content-Type': 'application/json'}
+    });
+    const data = await resp.json();
+    if (data.is_suspended) {
+      btn.innerHTML = '✅';
+      btn.className = 'btn btn-success btn-xs';
+      showToast(`اللاعب موقوف الآن / Joueur suspendu`, 'info');
+    } else {
+      btn.innerHTML = '🚫';
+      btn.className = 'btn badge badge-red btn-xs';
+      showToast(`اللاعب نشيط الآن / Joueur actif`, 'success');
+    }
+    // Update the status badge in same row
+    const row = btn.closest('tr');
+    const statusCell = row.querySelector('td:nth-child(6)');
+    if (statusCell) {
+      statusCell.innerHTML = data.is_suspended
+        ? '<span class="badge badge-red">🚫 Suspendu</span>'
+        : '<span class="badge badge-green">✅ Actif</span>';
+    }
+  } catch(e) {
+    showToast('Erreur / خطأ', 'error');
+  }
+}
+
+async function toggleCaptain(playerId, btn) {
+  try {
+    const resp = await fetch(`/teams/player/${playerId}/toggle-captain/`, {
+      method: 'POST',
+      headers: {'X-CSRFToken': getCsrf(), 'Content-Type': 'application/json'}
+    });
+    const data = await resp.json();
+    if (data.is_captain) {
+      showToast(`تم تعيين قائد الفريق بنجاح / Capitaine désigné`, 'success');
+    } else {
+      showToast(`تم إلغاء شارة القائد / Capitaine retiré`, 'info');
+    }
+    // Refresh page to safely propagate captain exclusivity on roster
+    window.location.reload();
+  } catch(e) {
+    showToast('Erreur / خطأ', 'error');
+  }
+}
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block title %}{% trans "Palmarès & Awards" %} / الجوائز والشهادات{% endblock %}
+
+{% block extra_head %}
+<style>
+    .awards-container {
+        padding: 4rem 1rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .award-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        padding: 2.5rem;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(12px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Shine Effect */
+    .award-card::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -60%;
+        width: 20%;
+        height: 200%;
+        background: rgba(255, 255, 255, 0.1);
+        transform: rotate(30deg);
+        transition: none;
+        pointer-events: none;
+    }
+
+    .award-card:hover::after {
+        left: 150%;
+        transition: all 0.8s ease;
+    }
+
+    /* Corner Star */
+    .award-card::before {
+        content: '★';
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        color: var(--primary);
+        font-size: 1.2rem;
+        opacity: 0.2;
+        transition: 0.3s;
+    }
+
+    .award-card:hover::before {
+        opacity: 1;
+        transform: rotate(360deg);
+    }
+
+    .award-card:hover {
+        transform: translateY(-15px) scale(1.02);
+        border-color: var(--primary);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 
+                    0 0 20px rgba(197, 160, 40, 0.2);
+    }
+
+    .award-icon {
+        width: 100px;
+        height: 100px;
+        margin-bottom: 1.5rem;
+        position: relative;
+        transition: all 0.5s ease;
+    }
+
+    .award-card:hover .award-icon {
+        transform: scale(1.1) rotate(5deg);
+        filter: drop-shadow(0 0 15px var(--primary));
+    }
+
+    .award-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .award-title {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 2rem;
+        color: var(--primary);
+        margin-bottom: 0.5rem;
+        letter-spacing: 1px;
+    }
+
+    .award-desc {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+        font-family: 'Cairo', sans-serif;
+    }
+
+    .award-btn {
+        background: var(--primary);
+        color: black;
+        padding: 0.8rem 2rem;
+        border-radius: 50px;
+        font-weight: 800;
+        text-decoration: none;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        transition: all 0.3s;
+    }
+
+    .award-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 10px 20px rgba(197, 160, 40, 0.3);
+    }
+
+    .stats-section {
+        margin-top: 4rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    .stat-box {
+        background: rgba(0,0,0,0.2);
+        border-radius: 20px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .stat-box h3 {
+        color: var(--primary);
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid rgba(197,160,40,0.2);
+        padding-bottom: 0.5rem;
+    }
+
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.8rem 0;
+        border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+
+    .stat-item:last-child { border: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="awards-container">
+    
+    <div class="text-center mb-16">
+        <h1 class="font-bebas text-6xl md:text-8xl tracking-tighter leading-none mb-2">
+            {% trans "AWARDS & HONORS" %} / <span style="color:var(--primary)">الجوائز</span>
+        </h1>
+        <p class="text-white/50 uppercase tracking-[0.3em] text-sm">Tournament Recognition System</p>
+    </div>
+
+    <!-- MAIN CERTIFICATES GRID -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        <!-- Final Champion Certificate -->
+        <div class="award-card">
+            <div class="award-icon">
+                <img src="{% static 'images/trophy_icon.png' %}" alt="Champion">
+                <div class="absolute inset-0 bg-primary/20 blur-2xl rounded-full -z-10"></div>
+            </div>
+            <h2 class="award-title">{% trans "CHAMPION CERTIFICATE" %}</h2>
+            <p class="award-desc">{% trans "Official certificate for the tournament winner with high-end design." %}</p>
+            <a href="{% url 'tournaments:final_certificate' tournament.pk %}" class="award-btn">
+                {% trans "Generate" %} / استخراج
+            </a>
+        </div>
+
+        <!-- Best Player (Man of the Match) -->
+        <div class="award-card">
+            <div class="award-icon">
+                <img src="{% static 'images/mvp_icon.png' %}" alt="MVP">
+                <div class="absolute inset-0 bg-primary/20 blur-2xl rounded-full -z-10"></div>
+            </div>
+            <h2 class="award-title">{% trans "MAN OF THE MATCH" %}</h2>
+            <p class="award-desc">{% trans "Individual recognition for outstanding performance in a single match." %}</p>
+            <a href="{% url 'matches:calendar' %}" class="award-btn">
+                {% trans "Browse Matches" %} / تصفح المباريات
+            </a>
+        </div>
+
+        <!-- Best XI -->
+        <div class="award-card">
+            <div class="award-icon">
+                <img src="{% static 'images/best_xi_icon.png' %}" alt="Best XI">
+                <div class="absolute inset-0 bg-primary/20 blur-2xl rounded-full -z-10"></div>
+            </div>
+            <h2 class="award-title">{% trans "TOURNAMENT BEST XI" %}</h2>
+            <p class="award-desc">{% trans "The elite dream team of the tournament based on overall stats." %}</p>
+            <a href="{% url 'tournaments:best_xi' tournament.pk %}" class="award-btn">
+                {% trans "View Team" %} / تشكيلة البطولة
+            </a>
+        </div>
+
+    </div>
+
+    <!-- TOP PERFORMERS STATS -->
+    <div class="stats-section">
+        
+        <!-- Golden Boot -->
+        <div class="stat-box">
+            <h3>⚽ {% trans "GOLDEN BOOT RACE" %} / الهدافين</h3>
+            {% for s in top_scorers %}
+            <div class="stat-item">
+                <span class="font-bold text-white/90">{{ s.player__first_name }} {{ s.player__last_name }}</span>
+                <span class="text-primary font-bebas text-xl">{{ s.goals_count }} {% trans "Goals" %}</span>
+            </div>
+            {% empty %}
+            <p class="text-white/30 text-sm">{% trans "No data yet." %}</p>
+            {% endfor %}
+        </div>
+
+        <!-- Highest Rated -->
+        <div class="stat-box">
+            <h3>⭐ {% trans "BEST RATED PLAYERS" %} / الأفضل تقييماً</h3>
+            {% for p in best_players %}
+            <div class="stat-item">
+                <span class="font-bold text-white/90">{{ p.player__first_name }} {{ p.player__last_name }}</span>
+                <span class="text-primary font-bebas text-xl">{{ p.avg_rating }} {% trans "Awards" %}</span>
+            </div>
+            {% empty %}
+            <p class="text-white/30 text-sm">{% trans "No data yet." %}</p>
+            {% endfor %}
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

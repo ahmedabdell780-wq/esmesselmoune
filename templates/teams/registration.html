@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+{% load i18n turniq_tags %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+
+  <!-- INFO HEADER -->
+  <div class="mb-8 text-center">
+    <h1 class="text-3xl font-extrabold mb-2" style="color:var(--primary)">{{ page_title }}</h1>
+    <p class="text-lg opacity-80">
+      {% trans "Rejoignez l'aventure" %} {{ tournament.name }} {{ tournament.year }}
+      <br/>
+      <span class="text-sm">سجل فريقك للمشاركة في دورة {{ tournament.name }}</span>
+    </p>
+    
+    <div class="flex justify-center gap-4 mt-6">
+      <div class="card p-3 px-5 flex items-center gap-3">
+        <span class="text-xl">📅</span>
+        <div class="text-left">
+          <p class="text-[10px] uppercase tracking-wider opacity-60">{% trans "Fin des inscriptions" %}</p>
+          <p class="font-bold text-sm">{{ tournament.registration_deadline|date:"d M Y" }}</p>
+        </div>
+      </div>
+      <div class="card p-3 px-5 flex items-center gap-3">
+        <span class="text-xl">🏟️</span>
+        <div class="text-left">
+          <p class="text-[10px] uppercase tracking-wider opacity-60">{% trans "Lieu" %}</p>
+          <p class="font-bold text-sm">{{ tournament.location }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card rounded-2xl overflow-hidden shadow-2xl" style="border: 1px solid var(--primary-glow)">
+    <!-- Header -->
+    <div class="px-8 py-5 border-b flex items-center justify-between" style="border-color:var(--border);background:var(--card2)">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-lg"
+             style="background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:white">⚽</div>
+        <div>
+          <h2 class="font-bold text-xl">{% trans "Fiche d'inscription" %}</h2>
+          <p class="text-xs opacity-60">استمارة التسجيل للفريق</p>
+        </div>
+      </div>
+      <div class="text-right">
+        <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter" 
+              style="background:var(--primary-glow); color:var(--primary); border:1px solid var(--primary)">
+          {{ tournament.get_status_display }}
+        </span>
+      </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="p-8">
+      {% csrf_token %}
+
+      {% if form.errors %}
+      <div class="mb-6 p-4 rounded-xl flex gap-3 items-start" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3)">
+        <span class="text-xl">⚠️</span>
+        <div>
+          <p class="font-bold text-sm text-red-400 mb-1">{% trans "Erreurs de validation" %} / أخطاء في البيانات :</p>
+          {% for field, errors in form.errors.items %}
+            {% for error in errors %}
+              <p class="text-xs text-red-300">• {{ field|capfirst }}: {{ error }}</p>
+            {% endfor %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+        <!-- SECTION: GENERAL INFO -->
+        <div class="md:col-span-2">
+           <h3 class="text-sm font-bold uppercase tracking-widest mb-4 flex items-center gap-2" style="color:var(--primary)">
+             <span class="w-2 h-2 rounded-full" style="background:var(--primary)"></span>
+             {% trans "Informations Générales" %} / معلومات عامة
+           </h3>
+        </div>
+
+        <!-- Nom -->
+        <div class="md:col-span-2">
+          <label class="form-label font-bold">🏷️ {% trans "Nom de l'équipe" %} / اسم الفريق <span class="text-red-400">*</span></label>
+          <input type="text" name="name" value="{{ form.name.value|default:'' }}"
+                 class="form-input text-xl font-black py-4 px-6 rounded-2xl" required
+                 style="background:var(--card2); border:2px solid var(--border)"
+                 placeholder="Ex: Hay El Wiam / حي الوئام"/>
+          <p class="text-[10px] mt-2 opacity-50">{% trans "Le nom qui sera affiché sur les tableaux de bord et calendriers." %}</p>
+        </div>
+
+        <!-- Quartier -->
+        <div>
+          <label class="form-label">📍 {% trans "Quartier" %} / الحي <span class="text-red-400">*</span></label>
+          <input type="text" name="neighborhood" value="{{ form.neighborhood.value|default:'' }}"
+                 class="form-input py-3 rounded-xl" required placeholder="Cité El Wiam"/>
+        </div>
+
+        <!-- Ville -->
+        <div>
+          <label class="form-label">🏙️ {% trans "Commune" %} / البلدية</label>
+          <input type="text" name="city" value="{{ form.city.value|default:'MESSLMOUNE' }}"
+                 class="form-input py-3 rounded-xl"/>
+        </div>
+
+        <!-- Wilaya -->
+        <div>
+          <label class="form-label">🗺️ {% trans "Wilaya" %} / الولاية</label>
+          <input type="text" name="wilaya" value="{{ form.wilaya.value|default:'Tipaza' }}"
+                 class="form-input py-3 rounded-xl"/>
+        </div>
+
+        <!-- SECTION: VISUALS -->
+        <div class="md:col-span-2 mt-4">
+           <h3 class="text-sm font-bold uppercase tracking-widest mb-4 flex items-center gap-2" style="color:var(--primary)">
+             <span class="w-2 h-2 rounded-full" style="background:var(--primary)"></span>
+             {% trans "Identité Visuelle" %} / الهوية البصرية
+           </h3>
+        </div>
+
+        <!-- Logo -->
+        <div class="md:col-span-2">
+          <label class="form-label">🖼️ {% trans "Logo du club" %} / شعار النادي</label>
+          <div class="flex items-center gap-6 p-4 rounded-2xl border-2 border-dashed" style="border-color:var(--border)">
+            <div class="w-24 h-24 rounded-2xl border flex items-center justify-center text-4xl shadow-inner overflow-hidden"
+                 style="border-color:var(--border);background:var(--card2)" id="logo-preview">
+                 {% if form.instance.logo %}
+                    <img src="{{ form.instance.logo.url }}" class="w-full h-full object-cover"/>
+                 {% else %}
+                    ⚽
+                 {% endif %}
+            </div>
+            <div class="flex-1">
+              <input type="file" name="logo" accept="image/*" class="form-input border-0 bg-transparent p-0"
+                     onchange="previewImage(this,'logo-preview')"/>
+              <p class="text-xs mt-2" style="color:var(--muted)">
+                {% trans "Format recommandé : Carré (1:1)" %} <br/>
+                PNG, JPG · Max 5MB
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Colors -->
+        <div class="md:col-span-2 p-5 bg-black/20 border border-white/5 rounded-2xl">
+          <label class="form-label mb-4 text-sm font-bold flex items-center gap-2">
+             <span class="text-xl">🎨</span> {% trans "Couleurs de l'équipe" %} / ألوان الفريق
+          </label>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Primary Color -->
+            <div class="bg-white/5 p-4 rounded-xl border border-white/5">
+              <label class="text-[10px] uppercase font-bold text-gray-400 mb-2 block">Couleur principale (الرئيسي)</label>
+              <div class="flex items-center gap-3 bg-black/40 p-2 rounded-lg border border-white/10 shadow-inner">
+                <input type="color" id="primary_color_picker" name="color_primary" value="{{ form.color_primary.value|default:'#006233' }}" class="w-10 h-10 rounded cursor-pointer border-0 p-0 bg-transparent" onchange="document.getElementById('primary_hex').value = this.value">
+                <input type="text" id="primary_hex" value="{{ form.color_primary.value|default:'#006233' }}" class="bg-transparent border-none text-sm font-mono text-white focus:outline-none flex-1 uppercase" oninput="document.getElementById('primary_color_picker').value = this.value" placeholder="#006233">
+              </div>
+              
+              <div class="flex flex-wrap gap-2 mt-4">
+                <button type="button" onclick="setPrimaryColor('#E63946')" class="w-6 h-6 rounded-full border border-white/20 hover:scale-110 transition shadow-lg" style="background:#E63946" title="Rouge"></button>
+                <button type="button" onclick="setPrimaryColor('#1D3557')" class="w-6 h-6 rounded-full border border-white/20 hover:scale-110 transition shadow-lg" style="background:#1D3557" title="Bleu"></button>
+                <button type="button" onclick="setPrimaryColor('#2A9D8F')" class="w-6 h-6 rounded-full border border-white/20 hover:scale-110 transition shadow-lg" style="background:#2A9D8F" title="Vert"></button>
+                <button type="button" onclick="setPrimaryColor('#E9C46A')" class="w-6 h-6 rounded-full border border-white/20 hover:scale-110 transition shadow-lg" style="background:#E9C46A" title="Jaune"></button>
+                <button type="button" onclick="setPrimaryColor('#000000')" class="w-6 h-6 rounded-full border border-gray-600 hover:scale-110 transition shadow-lg" style="background:#000000" title="Noir"></button>
+                <button type="button" onclick="setPrimaryColor('#FFFFFF')" class="w-6 h-6 rounded-full border border-gray-400 hover:scale-110 transition shadow-lg" style="background:#FFFFFF" title="Blanc"></button>
+              </div>
+            </div>
+
+            <!-- Secondary Color -->
+            <div class="bg-white/5 p-4 rounded-xl border border-white/5">
+              <label class="text-[10px] uppercase font-bold text-gray-400 mb-2 block">Couleur secondaire (الثانوي)</label>
+              <div class="flex items-center gap-3 bg-black/40 p-2 rounded-lg border border-white/10 shadow-inner">
+                <input type="color" id="secondary_color_picker" name="color_secondary" value="{{ form.color_secondary.value|default:'#FFFFFF' }}" class="w-10 h-10 rounded cursor-pointer border-0 p-0 bg-transparent" onchange="document.getElementById('secondary_hex').value = this.value">
+                <input type="text" id="secondary_hex" value="{{ form.color_secondary.value|default:'#FFFFFF' }}" class="bg-transparent border-none text-sm font-mono text-white focus:outline-none flex-1 uppercase" oninput="document.getElementById('secondary_color_picker').value = this.value" placeholder="#FFFFFF">
+              </div>
+
+              <div class="flex flex-wrap gap-2 mt-4">
+                <button type="button" onclick="setSecondaryColor('#FFFFFF')" class="w-6 h-6 rounded-full border border-gray-400 hover:scale-110 transition shadow-lg" style="background:#FFFFFF" title="Blanc"></button>
+                <button type="button" onclick="setSecondaryColor('#000000')" class="w-6 h-6 rounded-full border border-gray-600 hover:scale-110 transition shadow-lg" style="background:#000000" title="Noir"></button>
+                <button type="button" onclick="setSecondaryColor('#E9C46A')" class="w-6 h-6 rounded-full border border-white/20 hover:scale-110 transition shadow-lg" style="background:#E9C46A" title="Jaune"></button>
+                <button type="button" onclick="setSecondaryColor('#E63946')" class="w-6 h-6 rounded-full border border-white/20 hover:scale-110 transition shadow-lg" style="background:#E63946" title="Rouge"></button>
+                <button type="button" onclick="setSecondaryColor('#1D3557')" class="w-6 h-6 rounded-full border border-white/20 hover:scale-110 transition shadow-lg" style="background:#1D3557" title="Bleu"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION: CONTACT -->
+        <div class="md:col-span-2 mt-4">
+           <h3 class="text-sm font-bold uppercase tracking-widest mb-4 flex items-center gap-2" style="color:var(--primary)">
+             <span class="w-2 h-2 rounded-full" style="background:var(--primary)"></span>
+             {% trans "Contact & Détails" %} / معلومات التواصل
+           </h3>
+        </div>
+
+        <!-- Phone -->
+        <div>
+          <label class="form-label">📱 {% trans "Téléphone" %} / الهاتف <span class="text-red-400">*</span></label>
+          <input type="text" name="contact_phone" value="{{ form.contact_phone.value|default:'' }}"
+                 class="form-input py-3 rounded-xl" required placeholder="0555 xx xx xx"/>
+        </div>
+
+        <!-- Email -->
+        <div>
+          <label class="form-label">✉️ Email</label>
+          <input type="email" name="contact_email" value="{{ form.contact_email.value|default:'' }}"
+                 class="form-input py-3 rounded-xl" placeholder="equipe@example.com"/>
+        </div>
+
+        <!-- Description -->
+        <div class="md:col-span-2">
+          <label class="form-label">📝 {% trans "Description de l'équipe" %} / نبذة عن الفريق</label>
+          <textarea name="description" rows="3" class="form-input rounded-xl"
+                    placeholder="Présentez votre équipe, son histoire, ses ambitions... / قدّم فريقك، تاريخه وطموحاته...">{{ form.description.value|default:'' }}</textarea>
+        </div>
+
+        <!-- NEW: Registration Notes -->
+        <div class="md:col-span-2">
+            <label class="form-label font-bold" style="color:var(--primary)">📋 {% trans "Notes pour l'organisateur" %} / ملاحظات للمنظم</label>
+            <textarea name="registration_notes" rows="2" class="form-input rounded-xl" 
+                      style="border: 2px solid var(--primary-glow)"
+                      placeholder="{% trans "Ex: Disponibilité, équipements, ou tout autre détail important..." %}">{{ tt.notes|default:'' }}</textarea>
+            <p class="text-[10px] mt-2 opacity-50">{% trans "Ces informations aideront l'organisateur à valider votre participation." %}</p>
+        </div>
+
+      </div>
+
+      <!-- FOOTER INFO -->
+      <div class="mt-8 p-4 rounded-xl text-center text-sm" style="background:var(--card2); border:1px solid var(--border)">
+         <p class="opacity-70">
+           {% if is_update %}
+             {% trans "Vous mettez à jour les informations de votre équipe pour ce tournoi." %}
+           {% else %}
+             {% trans "En soumettant ce formulaire, vous demandez l'inscription de votre équipe au tournoi." %}
+           {% endif %}
+           <br/>
+           {% trans "L'organisateur devra confirmer votre participation avant qu'elle ne soit officielle." %}
+         </p>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="flex flex-col md:flex-row gap-4 mt-8 pt-6 border-t" style="border-color:var(--border)">
+        <button type="submit" class="btn btn-primary text-lg py-4 px-10 rounded-2xl shadow-xl hover:-translate-y-1 transition-all flex-1">
+          {% if is_update %}
+            🚀 {% trans "Mettre à jour et participer" %} / تحديث والمشاركة
+          {% else %}
+            🚀 {% trans "Confirmer l'inscription" %} / تأكيد التسجيل
+          {% endif %}
+        </button>
+        <a href="{% url 'teams:list' %}" class="btn btn-ghost py-4 px-8 rounded-2xl flex items-center justify-center">
+          ← {% trans "Annuler" %} / إلغاء
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+function previewImage(input, previewId) {
+  const preview = document.getElementById(previewId);
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      preview.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover rounded-xl"/>`;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function setPrimaryColor(hex) {
+    document.getElementById('primary_color_picker').value = hex;
+    document.getElementById('primary_hex').value = hex;
+}
+
+function setSecondaryColor(hex) {
+    document.getElementById('secondary_color_picker').value = hex;
+    document.getElementById('secondary_hex').value = hex;
+}
+</script>
+{% endblock %}
+{% endblock %}

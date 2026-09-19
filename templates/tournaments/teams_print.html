@@ -1,0 +1,628 @@
+{% load i18n static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>{% trans "Équipes" %} - {{ tournament.name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Bebas+Neue&family=Outfit:wght@800;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+    <style>
+        :root {
+            --blanc-casse: #FAF8F5;
+            --charcoal: #0F172A;
+            --slate-gray: #475569;
+            --euro-gold: #C5A028;
+            --gold-light: rgba(197, 160, 40, 0.08);
+            --gold-border: rgba(197, 160, 40, 0.25);
+            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            --card-border: rgba(0, 0, 0, 0.06);
+            --primary: #C5A028;
+        }
+
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #F1EFEA;
+            -webkit-print-color-adjust: exact;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .print-page {
+            width: 210mm;
+            min-height: 297mm;
+            position: relative;
+            overflow: hidden;
+            background: var(--blanc-casse);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-sizing: border-box;
+            padding: 45px;
+            color: var(--charcoal);
+            box-shadow: 0 15px 45px rgba(0,0,0,0.1);
+        }
+
+        .print-page::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 100 100"><text y="50" font-size="7" font-weight="bold" fill="rgb(197, 160, 40)" opacity="0.04" transform="rotate(-30, 50, 50)">MESSLMOUNE</text></svg>');
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .sports-bg-watermark {
+            position: absolute;
+            top: 5%;
+            left: 5%;
+            width: 90%;
+            height: 90%;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.025;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sports-bg-watermark svg {
+            width: 100%;
+            height: 100%;
+            color: var(--charcoal);
+        }
+
+        .content {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 0 5px;
+        }
+
+        .header-side {
+            width: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .header-center {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 0 10px;
+        }
+
+        .app-logo {
+            width: 65px;
+            height: 65px;
+            object-fit: contain;
+            background: transparent;
+            mix-blend-mode: multiply;
+        }
+
+        .tournament-trophy {
+            width: 75px;
+            height: 65px;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+        }
+
+        .tournament-title {
+            font-family: 'Cairo', sans-serif;
+            font-weight: 900;
+            font-size: 22px;
+            color: #0f1e3d;
+            margin: 0;
+            line-height: 1.1;
+        }
+
+        .subtitle-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 5px;
+            width: 85%;
+            justify-content: center;
+        }
+
+        .subtitle-line {
+            flex: 1;
+            height: 2px;
+            background-color: var(--euro-gold);
+            position: relative;
+        }
+
+        .subtitle-line.left-line::before {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: var(--euro-gold);
+            border-radius: 50%;
+            top: 50%;
+            transform: translateY(-50%);
+            left: 0;
+        }
+
+        .subtitle-line.right-line::before {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: var(--euro-gold);
+            border-radius: 50%;
+            top: 50%;
+            transform: translateY(-50%);
+            right: 0;
+        }
+
+        .subtitle-label {
+            color: #0f1e3d;
+            font-weight: 700;
+            margin: 0;
+            font-size: 14px;
+            text-transform: uppercase;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .teams-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 15px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #0f1e3d;
+            box-shadow: var(--card-shadow);
+            table-layout: fixed;
+        }
+
+        .teams-table th {
+            background-color: #0f1e3d;
+            color: #ffffff;
+            padding: 10px 5px;
+            font-size: 16px;
+            font-weight: 700;
+            text-align: center;
+            border-bottom: 2px solid var(--euro-gold);
+            line-height: 1.2;
+        }
+
+        .teams-table td {
+            padding: 8px 15px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--charcoal);
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: middle;
+        }
+
+        .teams-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .teams-table tbody tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .teams-table tbody tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+
+        .teams-table td.col-number, .teams-table th.col-number {
+            background-color: #0f1e3d;
+            color: #f59e0b;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            font-size: 18px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .teams-table th.col-number {
+            color: #ffffff;
+            border-bottom: 2px solid var(--euro-gold);
+        }
+
+        .team-name-cell {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 15px;
+            text-align: right;
+            padding-right: 15px;
+        }
+
+        .team-logo-sm {
+            width: 38px;
+            height: 38px;
+            object-fit: contain;
+            background: transparent;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+
+        .team-logo-sm.fallback {
+            background: #e2e8f0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 18px;
+            color: var(--slate-gray);
+        }
+
+        .team-name-text {
+            font-size: 16px;
+            font-weight: 900;
+            color: var(--charcoal);
+        }
+
+        .abbrev-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            font-size: 16px;
+            padding: 4px 16px;
+            border-radius: 6px;
+            min-width: 60px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        .no-print-btn {
+            position: fixed;
+            top: 25px;
+            left: 25px;
+            background: var(--charcoal);
+            color: #FAF8F5;
+            padding: 12px 25px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 14px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid var(--euro-gold);
+            z-index: 1000;
+            transition: all 0.2s ease;
+        }
+        
+        .no-print-btn:hover { 
+            transform: translateY(-2px); 
+            background: var(--euro-gold);
+            color: var(--charcoal);
+        }
+
+        @media print {
+            .no-print-btn { display: none; }
+            body { background: none; }
+            .print-page { box-shadow: none; padding: 40px; }
+        }
+
+        .footer-note {
+            margin-top: auto;
+            text-align: center;
+            font-size: 11px;
+            color: var(--slate-gray);
+            opacity: 0.8;
+            padding-top: 25px;
+            border-top: 1px solid rgba(0,0,0,0.06);
+            width: 100%;
+            position: relative;
+            z-index: 10;
+        }
+    </style>
+    <script>
+      function removeWhiteBackground(imgElement) {
+          if (!imgElement) return;
+          if (imgElement.dataset.bgRemoved === 'true') return;
+          const proceed = () => {
+              if (imgElement.dataset.bgRemoved === 'true') return;
+              try {
+                  const canvas = document.createElement('canvas');
+                  const ctx = canvas.getContext('2d');
+                  const width = imgElement.naturalWidth || imgElement.width || 300;
+                  const height = imgElement.naturalHeight || imgElement.height || 300;
+                  canvas.width = width;
+                  canvas.height = height;
+                  ctx.drawImage(imgElement, 0, 0);
+                  const imgData = ctx.getImageData(0, 0, width, height);
+                  const data = imgData.data;
+                  const tolerance = 45; 
+                  const visited = new Uint8Array(width * height);
+                  const corners = [ {x: 0, y: 0}, {x: width - 1, y: 0}, {x: 0, y: height - 1}, {x: width - 1, y: height - 1} ];
+                  let removedAny = false;
+                  for (const corner of corners) {
+                      const cIdx = (corner.y * width + corner.x);
+                      if (visited[cIdx]) continue;
+                      const rBg = data[cIdx * 4], gBg = data[cIdx * 4 + 1], bBg = data[cIdx * 4 + 2], aBg = data[cIdx * 4 + 3];
+                      if (aBg < 50) continue;
+                      const queue = [[corner.x, corner.y]];
+                      visited[cIdx] = 1;
+                      let head = 0;
+                      while (head < queue.length) {
+                          const [cx, cy] = queue[head++];
+                          const idx = (cy * width + cx) * 4;
+                          data[idx + 3] = 0;
+                          removedAny = true;
+                          const neighbors = [ [cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1] ];
+                          for (const [nx, ny] of neighbors) {
+                              if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                  const nIdx = ny * width + nx;
+                                  if (!visited[nIdx]) {
+                                      const pIdx = nIdx * 4;
+                                      const r = data[pIdx], g = data[pIdx+1], b = data[pIdx+2], a = data[pIdx+3];
+                                      if (a >= 50 && Math.abs(r - rBg) <= tolerance && Math.abs(g - gBg) <= tolerance && Math.abs(b - bBg) <= tolerance) {
+                                          queue.push([nx, ny]);
+                                          visited[nIdx] = 1;
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }
+                  if (removedAny) {
+                      ctx.putImageData(imgData, 0, 0);
+                      imgElement.dataset.bgRemoved = 'true';
+                      imgElement.src = canvas.toDataURL('image/png');
+                  }
+              } catch (e) {
+                  console.warn("Could not remove background:", e);
+              }
+          };
+          if (imgElement.complete && imgElement.naturalWidth > 0) proceed(); else imgElement.onload = proceed;
+      }
+    </script>
+</head>
+<body>
+
+    <div class="no-print" style="position: fixed; top: 25px; left: 25px; display: flex; gap: 10px; z-index: 1000;">
+        <button onclick="downloadPDF()" class="no-print-btn" style="position: relative; top: 0; left: 0; background: var(--euro-gold); color: var(--charcoal); cursor: pointer; border: none; font-family: 'Cairo', sans-serif; font-weight: 800;">
+            <span style="font-size: 16px;">📥</span>
+            <span>تحميل الـ PDF</span>
+        </button>
+        <button onclick="downloadImage()" class="no-print-btn" style="position: relative; top: 0; left: 0; background: #334155; color: #fff; cursor: pointer; border: none; font-family: 'Cairo', sans-serif; font-weight: 800;">
+            <span style="font-size: 16px;">🖼️</span>
+            <span>تحميل كصورة</span>
+        </button>
+        <a href="javascript:window.print()" class="no-print-btn" style="position: relative; top: 0; left: 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="direction: ltr;">
+                <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+                <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+            </svg>
+            <span>{% trans "Imprimer" %} / طباعة</span>
+        </a>
+    </div>
+
+    <div id="pdf-content">
+        {% for chunk in team_chunks %}
+        <div class="print-page">
+            <!-- SVG Sports Background Watermark -->
+            <div class="sports-bg-watermark">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300" fill="none" stroke="currentColor" stroke-width="0.8">
+                    <!-- Outer boundary -->
+                    <rect x="8" y="8" width="184" height="284" rx="1" />
+                    <!-- Center line -->
+                    <line x1="8" y1="150" x2="192" y2="150" />
+                    <!-- Center circle -->
+                    <circle cx="100" cy="150" r="28" />
+                    <circle cx="100" cy="150" r="1.5" fill="currentColor" />
+                    <!-- Penalty areas -->
+                    <rect x="36" y="8" width="128" height="42" />
+                    <rect x="36" y="250" width="128" height="42" />
+                    <!-- Goal areas -->
+                    <rect x="68" y="8" width="64" height="14" />
+                    <rect x="68" y="278" width="64" height="14" />
+                    <!-- Penalty arcs -->
+                    <path d="M 82,50 A 24,24 0 0,0 118,50" />
+                    <path d="M 82,250 A 24,24 0 0,1 118,250" />
+                    <!-- Corner arcs -->
+                    <path d="M 8,13 A 5,5 0 0,0 13,8" />
+                    <path d="M 192,13 A 5,5 0 0,1 187,8" />
+                    <path d="M 8,287 A 5,5 0 0,1 13,292" />
+                    <path d="M 192,287 A 5,5 0 0,0 187,292" />
+                </svg>
+            </div>
+
+            <div class="content">
+                {% if forloop.first %}
+                <div class="header-container">
+                    <div class="header-side">
+                        <img src="{% static 'img/trophy_new_transparent.png' %}" class="tournament-trophy" alt="Trophy">
+                    </div>
+                    
+                    <div class="header-center">
+                        <h1 class="tournament-title">{{ tournament.name }} {{ tournament.year }}</h1>
+                        <div class="subtitle-wrapper">
+                            <span class="subtitle-line left-line"></span>
+                            <p class="subtitle-label">
+                                {% trans "ÉQUIPES PARTICIPANTES" %} ({{ participating_teams|length }}) / الفرق المشاركة 
+                            </p>
+                            <span class="subtitle-line right-line"></span>
+                        </div>
+                    </div>
+
+                    <div class="header-side">
+                        {% if site_settings.app_logo %}
+                            <img src="{{ site_settings.app_logo.url }}" class="app-logo" alt="Logo" onload="removeWhiteBackground(this)">
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div style="height: 30px;"></div>
+                {% endif %}
+
+                <table class="teams-table" style="position: relative; z-index: 15;">
+                    <thead>
+                        <tr>
+                            <th class="col-number" style="width: 6%;">رقم</th>
+                            <th class="col-team" style="width: 44%;">اسم الفريق</th>
+                            <th class="col-french" style="width: 35%;">الاسم بالفرنسية</th>
+                            <th class="col-abbrev" style="width: 15%;">الإختصار</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tt in chunk.teams %}
+                        <tr>
+                            <td class="col-number">{{ chunk.start_idx|add:forloop.counter|stringformat:"02d" }}</td>
+                            <td class="col-team" style="border-right: 1px solid #e2e8f0;">
+                                <div class="team-name-cell">
+                                    {% if tt.team.logo %}
+                                        <img src="{{ tt.team.logo.url }}" class="team-logo-sm">
+                                    {% else %}
+                                        <div class="team-logo-sm fallback">{{ tt.team.name|slice:":1" }}</div>
+                                    {% endif %}
+                                    <span class="team-name-text" style="display: flex; align-items: center; gap: 8px;">
+                                        {{ tt.team.name }}
+                                        {% if tt.team.players.count == 0 %}
+                                        <span style="display: inline-block; width: 10px; height: 10px; background-color: #ef4444; border-radius: 50%; box-shadow: 0 0 4px rgba(239, 68, 68, 0.6);" title="بدون لاعبين"></span>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="col-french" style="border-right: 1px solid #e2e8f0; border-left: 1px solid #e2e8f0;" dir="ltr">
+                                {{ tt.team.french_name|default:"---" }}
+                            </td>
+                            <td class="col-abbrev" dir="ltr">
+                                <div class="abbrev-pill" style="background-color: {{ tt.team.color_primary|default:'#0a1c3a' }};">
+                                    {{ tt.team.abbreviation|default:"---" }}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <div class="footer-note">
+                    {{ site_settings.site_name }} - {% trans "Document Officiel généré le" %} {{ now|date:"d/m/Y H:i" }} — {{ site_settings.app_name }} — Page {{ forloop.counter }}/{{ team_chunks|length }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        async function downloadPDF() {
+            const btnContainer = document.querySelector('.no-print');
+            const originalDisplay = btnContainer.style.display;
+            btnContainer.style.display = 'none';
+            
+            const pages = document.querySelectorAll('.print-page');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+            
+            try {
+                for (let i = 0; i < pages.length; i++) {
+                    const element = pages[i];
+                    // Temporarily remove page-break for capture
+                    const origBreak = element.style.pageBreakAfter;
+                    element.style.pageBreakAfter = 'auto';
+                    
+                    const dataUrl = await htmlToImage.toPng(element, {
+                        pixelRatio: 2,
+                        cacheBust: true,
+                        style: {
+                            margin: '0',
+                            boxShadow: 'none',
+                            transform: 'none'
+                        }
+                    });
+                    
+                    element.style.pageBreakAfter = origBreak;
+                    
+                    const imgProps = pdf.getImageProperties(dataUrl);
+                    const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                    
+                    if (i > 0) {
+                        pdf.addPage();
+                    }
+                    pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, imgHeight);
+                }
+                
+                btnContainer.style.display = originalDisplay;
+                pdf.save('Equipes_Participantes_{{ tournament.year }}.pdf');
+            } catch (error) {
+                btnContainer.style.display = originalDisplay;
+                console.error('Error generating PDF:', error);
+                alert('حدث خطأ أثناء إنشاء ملف PDF');
+            }
+        }
+
+        async function downloadImage() {
+            const btnContainer = document.querySelector('.no-print');
+            const originalDisplay = btnContainer.style.display;
+            btnContainer.style.display = 'none';
+            
+            const pages = document.querySelectorAll('.print-page');
+            
+            try {
+                for (let i = 0; i < pages.length; i++) {
+                    const element = pages[i];
+                    // Temporarily remove page-break for capture
+                    const origBreak = element.style.pageBreakAfter;
+                    element.style.pageBreakAfter = 'auto';
+                    
+                    const dataUrl = await htmlToImage.toPng(element, {
+                        pixelRatio: 2,
+                        cacheBust: true,
+                        style: {
+                            margin: '0',
+                            boxShadow: 'none',
+                            transform: 'none'
+                        }
+                    });
+                    
+                    element.style.pageBreakAfter = origBreak;
+                    
+                    const link = document.createElement('a');
+                    link.download = `Equipes_Participantes_Page${i+1}.png`;
+                    link.href = dataUrl;
+                    link.click();
+                }
+                
+                btnContainer.style.display = originalDisplay;
+            } catch (error) {
+                btnContainer.style.display = originalDisplay;
+                console.error('Error generating Image:', error);
+                alert('حدث خطأ أثناء حفظ الصورة');
+            }
+        }
+    </script>
+</body>
+</html>

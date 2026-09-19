@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load i18n turniq_tags %}
+{% block title %}{% trans "Tournois" %} / البطولات{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+  <h1 class="font-bebas text-5xl tracking-widest leading-none">
+    البطولات / <span style="color:var(--primary)">TOURNOIS</span>
+  </h1>
+</div>
+<div class="space-y-4">
+  {% for tournament in tournaments %}
+  <div class="card rounded-2xl overflow-hidden">
+    <div class="px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-4">
+      <div class="flex-1">
+        <div class="flex items-center gap-3 mb-1">
+          <h2 class="font-bold text-lg">{{ tournament.name }}</h2>
+          <span class="badge text-xs
+            {% if tournament.status == 'draft' %}badge-gray
+            {% elif tournament.status == 'registration' %}badge-blue
+            {% elif tournament.status == 'group_stage' %}
+            {% elif tournament.status == 'knockout' %}badge-red
+            {% else %}badge-green{% endif %}"
+            style="{% if tournament.status == 'group_stage' %}background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3){% endif %}">
+            {{ tournament.get_status_display }}
+          </span>
+        </div>
+        <p class="text-sm" style="color:var(--muted)">
+          📍 {{ tournament.location }} · الإصدار {{ tournament.edition }} · {{ tournament.year }}
+          {% if tournament.start_date %} · 📅 {{ tournament.start_date|date:"d/m/Y" }}{% endif %}
+        </p>
+        {% if tournament.winner %}
+          <p class="text-sm mt-1 text-yellow-400">🏆 الفائز : <strong>{{ tournament.winner.name }}</strong></p>
+        {% endif %}
+      </div>
+      <div class="flex gap-2 flex-shrink-0">
+        <a href="{% url 'tournaments:standings_detail' tournament.pk %}" class="btn btn-ghost btn-sm">📊 {% trans "Classement" %}</a>
+        {% if tournament.status in 'knockout finished' and tournament.format != 'round_robin' %}
+        <a href="{% url 'tournaments:bracket_detail' tournament.pk %}" class="btn btn-ghost btn-sm" style="color:var(--primary)">🏆 Bracket</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="card rounded-2xl p-12 text-center">
+    <div class="text-4xl mb-4">🏆</div>
+    <p class="text-lg font-bold mb-2">لا توجد بطولات / {% trans "Aucun tournoi" %}</p>
+    {% if user.is_authenticated and user.role in 'admin organizer' %}
+    <a href="/admin/tournaments/tournament/add/" class="btn btn-primary mt-4">+ إنشاء بطولة</a>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

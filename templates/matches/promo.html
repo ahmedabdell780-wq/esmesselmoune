@@ -1,0 +1,1318 @@
+{% load i18n static turniq_tags %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MATCHDAY: {{ match.team1.name }} vs {{ match.team2.name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,900;1,900&family=Bebas+Neue&family=Cairo:wght@700;900&family=Noto+Sans+Arabic:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ccapture.js/1.1.0/CCapture.all.min.js"></script>
+    <style>
+        @font-face {
+            font-family: 'Algerian';
+            src: local('Algerian'),
+                 url("{% static 'fonts/Algerian.ttf' %}") format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        :root {
+            --bg-dark:   #05101a;
+            --bg-accent: #1ecbe1;
+            --bg-box:    rgba(10, 30, 46, 0.95);
+            --gold:      #f0c93a;
+            --white:     #ffffff;
+            --text-muted: rgba(255, 255, 255, 0.6);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #020c14;
+            font-family: 'Noto Sans Arabic','Barlow Condensed',sans-serif;
+            display: flex; align-items: flex-start; justify-content: flex-start;
+            min-height: 100vh; color: #fff; overflow: hidden;
+        }
+
+        /* — POSTER CONTAINER — */
+        .promo-wrapper {
+            flex: 1; display: flex; align-items: flex-start; justify-content: center;
+            height: 100vh; padding-right: 420px; overflow: hidden;
+        }
+        .promo-container {
+            width: 1080px; height: 1080px;
+            position: relative; overflow: hidden;
+            background: var(--bg-dark);
+            transform-origin: center center;
+            box-shadow: 0 0 120px rgba(0,0,0,0.8);
+        }
+
+        /* — BACKGROUND LAYERS — */
+        .layer-bg {
+            position: absolute; inset: 0; z-index: 1;
+            background-size: cover; background-position: center;
+            opacity: 0.4; filter: saturate(0.5) brightness(0.6);
+        }
+        
+        /* Vertical Lines Pattern */
+        .layer-lines {
+            position: absolute; inset: 0; z-index: 2;
+            background-image: repeating-linear-gradient(90deg, transparent, transparent 15px, rgba(30, 203, 225, 0.05) 15px, rgba(30, 203, 225, 0.05) 16px);
+            mask-image: radial-gradient(circle at center, black, transparent 80%);
+        }
+
+        .layer-vignette {
+            position: absolute; inset: 0; z-index: 3;
+            background: radial-gradient(circle at center, transparent 20%, rgba(5, 16, 26, 0.8) 100%);
+        }
+
+        /* Central Glow/Lightning */
+        .central-glow {
+            position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%);
+            width: 600px; height: 600px;
+            background: radial-gradient(circle at center, rgba(30, 203, 225, 0.15) 0%, transparent 70%);
+            z-index: 4; filter: blur(40px);
+        }
+
+        /* — MATCHDAY TEXT — */
+        .matchday-title {
+            position: absolute;
+            top: 130px;
+            left: 50%;
+            transform: translateX(-50%) skewX(-12deg);
+            z-index: 5;
+            width: 100%;
+            text-align: center;
+            pointer-events: none;
+        }
+        .matchday-text {
+            font-family: 'Barlow Condensed', 'Bebas Neue', sans-serif;
+            font-size: 165px;
+            font-weight: 900;
+            font-style: italic;
+            line-height: 0.8;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            animation: text-glow-pulse 6s infinite ease-in-out;
+        }
+        .matchday-text .text-match {
+            color: #ffffff;
+            text-shadow: 0 4px 25px rgba(3, 105, 124, 0.95), 0 0 35px rgba(165, 243, 252, 0.75);
+        }
+        .matchday-text .text-day {
+            color: transparent;
+            -webkit-text-stroke: 2.5px rgba(30, 203, 225, 0.85);
+            filter: drop-shadow(0 0 15px rgba(30, 203, 225, 0.5));
+            margin-left: 6px;
+        }
+        @keyframes text-glow-pulse {
+            0%, 100% { 
+                opacity: 0.85; 
+                filter: brightness(1) drop-shadow(0 0 15px rgba(30, 203, 225, 0.3));
+            }
+            50% { 
+                opacity: 1; 
+                filter: brightness(1.25) drop-shadow(0 0 35px rgba(30, 203, 225, 0.6));
+            }
+        }
+
+        /* — TOP-RIGHT TOURNAMENT LOGO — */
+        .tournament-hero-logo {
+            position: absolute;
+            top: 40px;
+            right: 40px; /* Moved to right */
+            z-index: 150;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle at center, #0a1e2e 0%, #05101a 100%);
+            backdrop-filter: blur(10px);
+            border-radius: 50%;
+            border: 3px solid var(--bg-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            animation: app-logo-pulse 4s infinite alternate ease-in-out;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(30, 203, 225, 0.4);
+        }
+        @keyframes app-logo-pulse {
+            from { box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(30,203,225,0.4); border-color: var(--bg-accent); }
+            to   { box-shadow: 0 10px 40px rgba(0,0,0,0.7), 0 0 40px rgba(30,203,225,0.8); border-color: #fff; }
+        }
+        .hero-logo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            filter: drop-shadow(0 0 10px rgba(30, 203, 225, 0.3));
+        }
+
+        /* — CENTER REFEREE UNDER TIME — */
+        .center-referee-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 15px;
+            gap: 10px;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+        .center-referee-divider {
+            width: 100px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            box-shadow: 0 0 15px var(--gold);
+        }
+        .center-referee-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(10, 30, 46, 0.75);
+            border: 1.5px solid var(--gold);
+            padding: 6px 18px;
+            border-radius: 30px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 2px 8px rgba(240, 201, 58, 0.25);
+            backdrop-filter: blur(5px);
+        }
+        .center-referee-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+            flex-shrink: 0;
+            background: #05101a;
+        }
+        .center-referee-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .center-referee-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .center-referee-label {
+            font-family: 'Cairo', 'Noto Sans Arabic', sans-serif;
+            font-size: 8px;
+            font-weight: 900;
+            color: var(--text-muted);
+            letter-spacing: 1.5px;
+            line-height: 1;
+        }
+        .center-referee-name {
+            font-family: 'Algerian', 'Bebas Neue', sans-serif;
+            font-size: 24px;
+            font-weight: 400;
+            color: var(--gold);
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 0 10px rgba(240, 201, 58, 0.4);
+            line-height: 1.1;
+            margin-top: 1px;
+            text-transform: uppercase;
+        }
+
+        /* — CENTER INFO (Date/Time) — */
+        .center-info {
+            position: absolute; top: 42%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 50; display: flex; flex-direction: column; align-items: center; gap: 15px;
+        }
+        .info-block {
+            display: flex; flex-direction: column; align-items: center; gap: 5px;
+        }
+        .info-icon { width: 32px; height: 32px; fill: var(--bg-accent); opacity: 0.8; }
+        .center-date {
+            font-family: 'Algerian', 'Bebas Neue', sans-serif; font-size: 58px; font-weight: 400;
+            color: var(--white); letter-spacing: 4px;
+            text-shadow: 0 0 15px rgba(255,255,255,0.2);
+            opacity: 0.95;
+        }
+        .center-time {
+            font-family: 'Algerian', 'Bebas Neue', sans-serif; font-size: 84px; font-weight: 400;
+            color: #ffffff;
+            text-shadow: 0 0 25px rgba(30, 203, 225, 0.9), 0 5px 15px rgba(0,0,0,0.8);
+            line-height: 0.9;
+            letter-spacing: 2px;
+        }
+        .center-divider {
+            width: 140px; height: 2px; 
+            background: linear-gradient(90deg, transparent, var(--bg-accent), transparent);
+            box-shadow: 0 0 20px var(--bg-accent);
+            margin: 10px 0;
+        }
+
+        /* — PLAYERS — */
+        .player-wrapper { position: absolute; inset: 0; z-index: 30; }
+        .player-img {
+            position: absolute; height: 85%; width: auto; object-fit: contain;
+            filter: drop-shadow(0 20px 60px rgba(0,0,0,0.9));
+            cursor: grab; transition: opacity 0.3s;
+            bottom: 120px;
+        }
+
+        /* — 🏆 RETRO BROADCAST SCOREBOARD STYLE — */
+        .retro-scoreboard-container {
+            position: absolute;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 95%;
+            max-width: 1040px;
+            height: 160px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0px;
+            box-sizing: border-box;
+        }
+
+        /* 1. GREEN SCORE BADGES */
+        .retro-score-badge {
+            width: 110px;
+            height: 95px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, #1bd177 0%, #0a7340 100%);
+            border: 2px solid #ffffff;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.6), inset 0 2px 10px rgba(255,255,255,0.4);
+            z-index: 20;
+            box-sizing: border-box;
+        }
+        .retro-score-badge.left {
+            border-radius: 8px 0 0 8px;
+            transform: skewX(-12deg);
+            margin-right: -10px;
+            padding-right: 4px;
+        }
+        .retro-score-badge.right {
+            border-radius: 0 8px 8px 0;
+            transform: skewX(12deg);
+            margin-left: -10px;
+            padding-left: 4px;
+        }
+        .retro-score-text {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 60px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6), 0 0 15px rgba(255, 255, 255, 0.4);
+            display: block;
+        }
+        .retro-score-badge.left .retro-score-text {
+            transform: skewX(12deg);
+        }
+        .retro-score-badge.right .retro-score-text {
+            transform: skewX(-12deg);
+        }
+
+        /* 2. TEAM BANNERS */
+        .retro-team-banner {
+            flex: 1;
+            height: 85px;
+            background: linear-gradient(180deg, #222c37 0%, #0e1319 100%);
+            border-top: 2px solid #3c4b5c;
+            border-bottom: 2px solid #0d1218;
+            display: flex;
+            align-items: center;
+            z-index: 10;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+            box-sizing: border-box;
+        }
+        .retro-team-banner.left {
+            justify-content: center;
+            padding: 0 25px;
+            transform: skewX(-12deg);
+            margin-left: -15px;
+            border-left: 2px solid #3c4b5c;
+        }
+        .retro-team-banner.right {
+            justify-content: center;
+            padding: 0 25px;
+            transform: skewX(12deg);
+            margin-right: -15px;
+            border-right: 2px solid #3c4b5c;
+        }
+        .retro-team-name {
+            font-family: 'Barlow Condensed', 'Cairo', sans-serif;
+            font-size: 34px;
+            font-weight: 900;
+            font-style: italic;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 320px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            text-align: center;
+            line-height: 1.1 !important;
+            white-space: normal !important;
+            word-wrap: break-word;
+            margin: 0;
+            padding: 0;
+        }
+        .retro-team-banner.left .retro-team-name {
+            transform: skewX(0deg); /* Left text is naturally slanted to the right by -12deg */
+        }
+        .retro-team-banner.right .retro-team-name {
+            transform: skewX(-24deg); /* Right text is counter-skewed to also slant to the right by -12deg */
+        }
+        .retro-team-name.long-text {
+            font-size: 26px;
+        }
+        
+        /* Arabic Text Optimization: keeps Arabic text upright, centered, readable, and highly professional */
+        .retro-team-banner.left .retro-team-name.arabic-text {
+            transform: skewX(12deg) !important;
+            font-family: 'Cairo', 'Noto Sans Arabic', sans-serif !important;
+            font-style: normal !important;
+            letter-spacing: 0px !important;
+        }
+        .retro-team-banner.right .retro-team-name.arabic-text {
+            transform: skewX(-12deg) !important;
+            font-family: 'Cairo', 'Noto Sans Arabic', sans-serif !important;
+            font-style: normal !important;
+            letter-spacing: 0px !important;
+        }
+
+        /* Team Logos Integration */
+        .retro-team-logo-container {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            border: 2.5px solid #ffffff;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.4);
+            background: #0e1319;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            z-index: 12;
+        }
+        .retro-team-logo-container.left {
+            transform: skewX(12deg); /* Counter-skew to maintain a perfect circle */
+            margin-right: 16px;
+        }
+        .retro-team-logo-container.right {
+            transform: skewX(-12deg); /* Counter-skew to maintain a perfect circle */
+            margin-left: 16px;
+        }
+        .retro-team-logo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 3. CENTER BADGE (TIMER & TOURNAMENT) */
+        .retro-center-badge {
+            width: 240px;
+            height: 125px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            z-index: 30;
+            margin: 0 -22px;
+            box-sizing: border-box;
+        }
+        .retro-tab-top {
+            background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+            border: 1.5px solid #ffffff;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+            padding: 2px 20px;
+            clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%);
+            z-index: 32;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+            margin-bottom: -1px;
+        }
+        .retro-tab-top span {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 13px;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 1.5px;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+            white-space: nowrap;
+        }
+        .retro-timer-outer {
+            width: 100%;
+            height: 75px;
+            background: #ffffff;
+            clip-path: polygon(0 0, 100% 0, 85% 100%, 15% 100%);
+            padding: 2px;
+            box-sizing: border-box;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+            z-index: 31;
+        }
+        .retro-timer-inner {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #151c24 0%, #090d12 100%);
+            clip-path: polygon(0 0, 100% 0, 85% 100%, 15% 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .retro-timer-text {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 42px;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.4), 0 0 20px rgba(30, 203, 225, 0.2);
+            line-height: 1;
+        }
+        .retro-timer-text.pulse-live {
+            color: #ff4757;
+            text-shadow: 0 0 12px rgba(255, 71, 87, 0.6);
+            animation: live-pulse-glow 1.5s infinite alternate ease-in-out;
+        }
+        @keyframes live-pulse-glow {
+            from { opacity: 0.7; }
+            to { opacity: 1; filter: drop-shadow(0 0 6px rgba(255, 71, 87, 0.8)); }
+        }
+
+        /* 4. FLOATING SOCCER BALL & SHADOW */
+        .retro-floating-ball-container {
+            position: absolute;
+            bottom: -62px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 105px;
+            height: 105px;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: none;
+        }
+        .retro-soccer-ball-svg {
+            width: 82px;
+            height: 82px;
+            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.6));
+            animation: ball-float-levitate 3.5s infinite ease-in-out;
+        }
+        .retro-soccer-shadow {
+            width: 58px;
+            height: 8px;
+            background: radial-gradient(ellipse at center, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 70%);
+            margin-top: -6px;
+            border-radius: 50%;
+            animation: shadow-scale-pulse 3.5s infinite ease-in-out;
+        }
+        @keyframes ball-float-levitate {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes shadow-scale-pulse {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(0.75); opacity: 0.45; }
+        }
+
+        /* — BOTTOM BRANDING — */
+        .bottom-branding {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 90%; display: flex; align-items: center; justify-content: center; gap: 20px;
+            z-index: 60; opacity: 0.8;
+        }
+        .brand-logo { height: 35px; width: auto; filter: brightness(1.2); }
+        .brand-text { font-size: 14px; color: var(--text-muted); }
+
+
+
+        /* — Upload overlay — */
+        .upload-overlay {
+            position: absolute; inset: 0; z-index: 200;
+            display: none; flex-direction: column;
+            align-items: center; justify-content: center; gap: 14px;
+            background: rgba(5,16,26,0.8); backdrop-filter: blur(8px);
+        }
+        .upload-overlay.visible { display: flex; }
+        .spinner {
+            width: 54px; height: 54px; border-radius: 50%;
+            border: 4px solid rgba(30,203,225,0.15);
+            border-top-color: var(--bg-accent);
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* — CONTROLS PANEL — */
+        .panel {
+            position: fixed; right: 0; top: 0; bottom: 0; width: 400px;
+            background: #07131d; border-left: 1px solid rgba(30,203,225,0.1);
+            padding: 18px 16px; z-index: 1000; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
+        }
+        .panel-title {
+            font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 900;
+            color: var(--bg-accent); letter-spacing: 3px; text-transform: uppercase;
+            padding-bottom: 10px; border-bottom: 1px solid rgba(30,203,225,0.15);
+            margin-bottom: 4px;
+        }
+        .panel-title span { font-size: 13px; opacity: 0.5; margin-left: 6px; }
+        .flip-btn {
+            background: rgba(30,203,225,0.08); border: 1px solid rgba(30,203,225,0.2);
+            color: var(--bg-accent); font-family: 'Barlow Condensed', sans-serif;
+            font-size: 13px; font-weight: 900; letter-spacing: 1px;
+            border-radius: 6px; padding: 4px 10px; cursor: pointer;
+            transition: all 0.2s; flex-shrink: 0;
+        }
+        .flip-btn:hover { background: var(--bg-accent); color: #000; }
+        .upload-row-label {
+            font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700;
+            color: rgba(255,255,255,0.7); letter-spacing: 0.5px; flex: 1;
+        }
+        .upload-row-fname {
+            font-size: 10px; color: var(--bg-accent); font-weight: 700;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px;
+        }
+        .card { background: rgba(30,203,225,0.03); border: 1px solid rgba(30,203,225,0.08); border-radius: 12px; padding: 13px; }
+        .card-label { font-size: 8px; font-weight: 900; color: var(--bg-accent); letter-spacing: 0.35em; text-transform: uppercase; display: block; margin-bottom: 10px; }
+        .bg-grid, .p-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 5px; }
+        .bg-btn, .p-btn { aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 2px solid transparent; cursor: pointer; background: rgba(255,255,255,0.04); padding: 0; }
+        .bg-btn img, .p-btn img { width: 100%; height: 100%; object-fit: cover; }
+        .upload-row { position: relative; overflow: hidden; display: flex; align-items: center; gap: 8px; background: rgba(30,203,225,0.05); border: 1px solid rgba(30,203,225,0.13); border-radius: 8px; padding: 8px 11px; cursor: pointer; margin-bottom: 8px; }
+        .upload-row input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+        .sl-row { display: flex; align-items: center; gap: 8px; }
+        .sl-lbl { font-size: 9px; font-weight: 900; color: rgba(255,255,255,0.28); width: 28px; }
+        .export-btn { width: 100%; background: linear-gradient(135deg, var(--bg-accent) 0%, #0e9ab0 100%); color: #000; font-family: 'Barlow Condensed'; font-size: 20px; font-weight: 900; letter-spacing: 2px; border: none; border-radius: 11px; padding: 15px; cursor: pointer; margin-top: auto; transition: transform 0.2s; }
+        .export-btn:active { transform: scale(0.98); }
+        .save-btn { width: 100%; background: rgba(30, 203, 225, 0.05); color: var(--bg-accent); border: 1px solid rgba(30, 203, 225, 0.3); font-family: 'Barlow Condensed'; font-size: 18px; font-weight: 900; letter-spacing: 1px; border-radius: 11px; padding: 12px; cursor: pointer; margin-bottom: 10px; transition: all 0.3s; }
+        .save-btn:hover { background: var(--bg-accent); color: #000; }
+
+        .status-bar { display: none; align-items: center; gap: 8px; background: rgba(30,203,225,0.05); border-radius: 8px; padding: 7px 11px; font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.5); margin-top: 8px; }
+        .status-bar.on { display: flex; }
+        .status-bar.err { color: #ff6b6b; background: rgba(255,50,50,0.07); }
+        .status-bar.ok  { color: #48c78e; background: rgba(72,199,142,0.07); }
+        .ms { width: 12px; height: 12px; border-radius: 50%; border: 2px solid rgba(30,203,225,0.2); border-top-color: var(--bg-accent); animation: spin .8s linear infinite; flex-shrink: 0; }
+
+        @media (max-width:900px) { .panel { display: none; } .promo-wrapper { padding-right: 0; } }
+    </style>
+</head>
+<body>
+
+<div class="promo-wrapper">
+    <div id="promoPoster" class="promo-container">
+        <!-- Background -->
+        <div class="layer-bg" id="posterBg" style="background-image:url('{% static 'img/player_silhouette_bg.png' %}')"></div>
+        <div class="layer-lines"></div>
+        <div class="layer-vignette"></div>
+        <div class="central-glow"></div>
+
+        <!-- MATCHDAY -->
+        <div class="matchday-title" dir="ltr">
+            <div class="matchday-text">
+                <span class="text-match">MATCH</span><span class="text-day">DAY</span>
+            </div>
+        </div>
+
+        <!-- Tournament Main Logo -->
+        <div class="tournament-hero-logo">
+            <img id="heroLogoImg" src="{% static 'img/trophy.png' %}" class="hero-logo-img" alt="Tournament Logo" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'">
+        </div>
+
+        <!-- Center Info -->
+        <div class="center-info">
+            <div class="info-block">
+                <svg class="info-icon" viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></svg>
+                <div class="center-date">{{ match.match_date|date:"d F Y"|upper|default:"18 OCAK 2024" }}</div>
+            </div>
+            <div class="info-divider-container" style="display:flex; flex-direction:column; align-items:center;">
+                <div class="center-divider"></div>
+                <div class="info-block">
+                    <svg class="info-icon" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                    <div class="center-time">{{ match.match_date|date:"H:i"|default:"23:30" }}</div>
+                </div>
+            </div>
+            
+            <!-- Referee Display under the Time -->
+            <div class="center-referee-container" id="refereeBadgeContainer" {% if not match.referee %}style="display:none;"{% endif %}>
+                <div class="center-referee-divider"></div>
+                <div class="center-referee-content">
+                    <div class="center-referee-avatar">
+                        <img id="refereeHeroImg" src="{% if match.referee %}{{ match.referee.photo_url }}{% else %}{% static 'img/default_referee.jpg' %}{% endif %}" class="center-referee-img" alt="Referee Avatar" onerror="this.src='{% static 'img/default_referee.jpg' %}'">
+                    </div>
+                    <div class="center-referee-info">
+                        <span class="center-referee-label">ARBITRE / الحكم</span>
+                        <span class="center-referee-name" id="refereeNameTag">{% if match.referee and match.referee.user %}{{ match.referee.user.get_full_name|default:match.referee.user.username|upper }}{% else %}SANS ARBITRE{% endif %}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Players -->
+        <div class="player-wrapper">
+            <img id="player1_img"
+                 src="{% if match.featured_player1.photo %}{{ match.featured_player1.photo.url }}{% else %}data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7{% endif %}"
+                 class="player-img" style="z-index:31; left:50px;"
+                 onerror="this.style.opacity='0'">
+            <img id="player2_img"
+                 src="{% if match.featured_player2.photo %}{{ match.featured_player2.photo.url }}{% else %}data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7{% endif %}"
+                 class="player-img" style="z-index:32; right:50px;"
+                 onerror="this.style.opacity='0'">
+        </div>
+
+
+
+
+
+
+        <!-- Scoreboard -->
+        <div class="retro-scoreboard-container">
+            <div class="retro-score-badge left">
+                <span class="retro-score-text">{% if match.status == 'finished' or match.is_forfeit or match.status == 'live' %}{{ match.score_team1|default:0 }}{% else %}-{% endif %}</span>
+            </div>
+            <div class="retro-team-banner left">
+                <div class="retro-team-logo-container left">
+                    <img class="retro-team-logo" src="{% if match.team1.logo %}{{ match.team1.logo.url }}{% else %}data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7{% endif %}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'">
+                </div>
+                <span class="retro-team-name {% if match.team1.name|length > 10 %}long-text{% endif %}">
+                    {{ match.team1.name|default:"TEAM 1"|split_team_name }}
+                </span>
+            </div>
+            <div class="retro-center-badge">
+                <div class="retro-tab-top">
+                    <span>{{ match.tournament.name|upper|truncatechars:18|default:"MATCHDAY" }}</span>
+                </div>
+                <div class="retro-timer-outer">
+                    <div class="retro-timer-inner">
+                        {% if match.status == 'live' %}
+                            <span class="retro-timer-text pulse-live">LIVE</span>
+                        {% elif match.status == 'finished' %}
+                            <span class="retro-timer-text">END</span>
+                        {% else %}
+                            <span class="retro-timer-text">{{ match.match_date|date:"H:i"|default:"00:00" }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="retro-team-banner right">
+                <span class="retro-team-name {% if match.team2.name|length > 10 %}long-text{% endif %}">
+                    {{ match.team2.name|default:"TEAM 2"|split_team_name }}
+                </span>
+                <div class="retro-team-logo-container right">
+                    <img class="retro-team-logo" src="{% if match.team2.logo %}{{ match.team2.logo.url }}{% else %}data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7{% endif %}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'">
+                </div>
+            </div>
+            <div class="retro-score-badge right">
+                <span class="retro-score-text">{% if match.status == 'finished' or match.is_forfeit or match.status == 'live' %}{{ match.score_team2|default:0 }}{% else %}-{% endif %}</span>
+            </div>
+            <div class="retro-floating-ball-container">
+                <svg viewBox="0 0 100 100" class="retro-soccer-ball-svg">
+                    <circle cx="50" cy="50" r="48" fill="#ffffff" stroke="#111" stroke-width="2.5" />
+                    <polygon points="50,38 61,46 57,59 43,59 39,46" fill="#17202a" />
+                    <polygon points="50,5 42,16 50,26 58,16" fill="#17202a" />
+                    <polygon points="18,72 28,64 24,51 12,54 10,67" fill="#17202a" />
+                    <polygon points="82,72 72,64 76,51 88,54 90,67" fill="#17202a" />
+                    <polygon points="20,26 29,36 21,48 10,43 11,31" fill="#17202a" />
+                    <polygon points="80,26 71,36 79,48 90,43 89,31" fill="#17202a" />
+                    <polygon points="50,95 38,87 42,74 58,74 62,87" fill="#17202a" />
+                    <line x1="50" y1="38" x2="50" y2="26" stroke="#111" stroke-width="2" />
+                    <line x1="61" y1="46" x2="71" y2="36" stroke="#111" stroke-width="2" />
+                    <line x1="57" y1="59" x2="62" y2="74" stroke="#111" stroke-width="2" />
+                    <line x1="43" y1="59" x2="38" y2="74" stroke="#111" stroke-width="2" />
+                    <line x1="39" y1="46" x2="29" y2="36" stroke="#111" stroke-width="2" />
+                    <line x1="58" y1="16" x2="71" y2="21" stroke="#111" stroke-width="2" />
+                    <line x1="42" y1="16" x2="29" y2="21" stroke="#111" stroke-width="2" />
+                    <line x1="80" y1="26" x2="79" y2="48" stroke="#111" stroke-width="2" />
+                    <line x1="20" y1="26" x2="21" y2="48" stroke="#111" stroke-width="2" />
+                    <line x1="88" y1="54" x2="76" y2="51" stroke="#111" stroke-width="2" />
+                    <line x1="12" y1="54" x2="24" y2="51" stroke="#111" stroke-width="2" />
+                    <line x1="82" y1="72" x2="62" y2="87" stroke="#111" stroke-width="2" />
+                    <line x1="18" y1="72" x2="38" y2="87" stroke="#111" stroke-width="2" />
+                    <circle cx="50" cy="50" r="48" fill="url(#ballShading)" style="mix-blend-mode: multiply;" />
+                    <defs>
+                        <radialGradient id="ballShading" cx="35%" cy="35%" r="65%">
+                            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.6" />
+                            <stop offset="40%" stop-color="#cccccc" stop-opacity="0.2" />
+                            <stop offset="80%" stop-color="#333333" stop-opacity="0.6" />
+                            <stop offset="100%" stop-color="#000000" stop-opacity="0.95" />
+                        </radialGradient>
+                    </defs>
+                </svg>
+                <div class="retro-soccer-shadow"></div>
+            </div>
+        </div>
+
+        <!-- Branding -->
+        <div class="bottom-branding">
+            <img class="brand-logo" src="{% static 'img/app_logo.png' %}" onerror="this.style.display='none'">
+            <span class="brand-text">Alembahis & Curacao E-Gaming Dynamic Group N.V.</span>
+        </div>
+
+        <!-- Upload Spinners -->
+        <div id="upSpin1" class="upload-overlay"><div class="spinner"></div></div>
+        <div id="upSpin2" class="upload-overlay"><div class="spinner"></div></div>
+        {{ match.promo_config|json_script:"promo-config-json" }}
+    </div>
+</div>
+ 
+ 
+<!-- ═══════ PANEL ═══════ -->
+<div class="panel" dir="ltr">
+    <p class="panel-title">⚡ MATCHDAY EDITOR <span>v2</span></p>
+ 
+    <!-- Background -->
+    <div class="card">
+        <span class="card-label">Background</span>
+ 
+        <!-- Upload custom bg -->
+        <div class="upload-row">
+            <span class="upload-row-label">📁 Upload custom background</span>
+            <span class="upload-row-fname" id="bgFName">No file</span>
+            <input type="file" accept="image/*" onchange="handleBgUpload(this)">
+        </div>
+ 
+        <!-- Preset BGs -->
+        <div class="bg-grid">
+            <button class="bg-btn" onclick="changeBg('{% static 'img/player_silhouette_bg.png' %}')" title="Player Silhouette">
+                <img src="{% static 'img/player_silhouette_bg.png' %}" alt="Silhouette">
+            </button>
+            <button class="bg-btn" onclick="changeBg('{% static 'img/bracket_bg.png' %}')" title="Tournament Bracket">
+                <img src="{% static 'img/bracket_bg.png' %}" alt="Bracket">
+            </button>
+            <button class="bg-btn" onclick="changeBg('{% static 'img/final_bg.png' %}')" title="Final Match">
+                <img src="{% static 'img/final_bg.png' %}" alt="Final">
+            </button>
+            <button class="bg-btn" onclick="changeBg('{% static 'img/default_cover.png' %}')" title="Stadium Lights">
+                <img src="{% static 'img/default_cover.png' %}" alt="Cover">
+            </button>
+        </div>
+    </div>
+ 
+    <!-- Tournament Logo upload -->
+    <div class="card">
+        <span class="card-label">Tournament Logo (Top-Center)</span>
+        <div class="upload-row">
+            <span class="upload-row-label">⚽ Replace tournament logo</span>
+            <span class="upload-row-fname" id="tourLogoFName">No file</span>
+            <input type="file" accept="image/*" onchange="handleTournamentLogoUpload(this)">
+        </div>
+    </div>
+ 
+    <!-- Player 1 -->
+    <div class="card">
+        <span class="card-label">Hero 1 — Left</span>
+        <div class="p-grid" id="grid1">
+            {% for p in team1_players %}
+            <button class="p-btn" onclick="changePlayer(1,'{% if p.photo %}{{ p.photo.url }}{% else %}{% static 'img/player_kick.png' %}{% endif %}',this)">
+                <img src="{% if p.photo %}{{ p.photo.url }}{% else %}{% static 'img/player_kick.png' %}{% endif %}" alt="{{ p.name }}">
+            </button>
+            {% endfor %}
+        </div>
+        <div class="upload-row">
+            <span class="upload-row-label">📤 Upload (auto BG remove)</span>
+            <span class="upload-row-fname" id="p1FName">No file</span>
+            <input type="file" accept="image/*" onchange="handleLocalUpload(1,this)">
+        </div>
+        <div id="status1" class="status-bar"><div class="ms"></div><span id="statusTxt1">Processing…</span></div>
+        <div class="space-y-2 mt-2">
+            <div class="sl-row"><span class="sl-lbl">X</span><input type="range" min="-600" max="600" value="-180" id="p1_x" oninput="setManual(1,'x',this.value)"></div>
+            <div class="sl-row"><span class="sl-lbl">Y</span><input type="range" min="-400" max="400" value="0"    id="p1_y" oninput="setManual(1,'y',this.value)"></div>
+            <div class="sl-row">
+                <span class="sl-lbl">SIZE</span>
+                <input type="range" min="0.3" max="3" step="0.01" value="1" id="p1_s" oninput="setManual(1,'scale',this.value)">
+                <button class="flip-btn" onclick="flipPlayer(1)">⟷ FLIP</button>
+            </div>
+        </div>
+    </div>
+ 
+    <!-- Player 2 -->
+    <div class="card">
+        <span class="card-label">Hero 2 — Right</span>
+        <div class="p-grid" id="grid2">
+            {% for p in team2_players %}
+            <button class="p-btn" onclick="changePlayer(2,'{% if p.photo %}{{ p.photo.url }}{% else %}{% static 'img/player_kick.png' %}{% endif %}',this)">
+                <img src="{% if p.photo %}{{ p.photo.url }}{% else %}{% static 'img/player_kick.png' %}{% endif %}" alt="{{ p.name }}">
+            </button>
+            {% endfor %}
+        </div>
+        <div class="upload-row">
+            <span class="upload-row-label">📤 Upload (auto BG remove)</span>
+            <span class="upload-row-fname" id="p2FName">No file</span>
+            <input type="file" accept="image/*" onchange="handleLocalUpload(2,this)">
+        </div>
+        <div id="status2" class="status-bar"><div class="ms"></div><span id="statusTxt2">Processing…</span></div>
+        <div class="space-y-2 mt-2">
+            <div class="sl-row"><span class="sl-lbl">X</span><input type="range" min="-600" max="600" value="180"  id="p2_x" oninput="setManual(2,'x',this.value)"></div>
+            <div class="sl-row"><span class="sl-lbl">Y</span><input type="range" min="-400" max="400" value="0"    id="p2_y" oninput="setManual(2,'y',this.value)"></div>
+            <div class="sl-row">
+                <span class="sl-lbl">SIZE</span>
+                <input type="range" min="0.3" max="3" step="0.01" value="1" id="p2_s" oninput="setManual(2,'scale',this.value)">
+                <button class="flip-btn" onclick="flipPlayer(2)">⟷ FLIP</button>
+            </div>
+        </div>
+    </div>
+ 
+    <!-- Official Referee Selection -->
+    <div class="card">
+        <span class="card-label">Official Referee / حكم اللقاء</span>
+        
+        <!-- Toggle Referee Badge -->
+        <div class="sl-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <span class="sl-lbl" style="width: auto; font-size: 11px; color: #fff;">Show on Poster / عرض على البوستر</span>
+            <input type="checkbox" id="toggleRefereeShow" onchange="toggleRefereeBadge(this.checked)" checked style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--bg-accent);">
+        </div>
+
+        <!-- Select Referee -->
+        <div class="sl-row" style="flex-direction: column; align-items: stretch; gap: 6px;">
+            <span class="sl-lbl" style="width: auto; font-size: 9px; color: rgba(255,255,255,0.4);">Select Referee / اختر الحكم</span>
+            <select id="refereeSelect" onchange="changeReferee(this)" class="bg-[#121c27] text-white border border-white/10 rounded-lg p-2.5 text-sm w-full font-bold focus:outline-none focus:border-[var(--bg-accent)]">
+                <option value="none" data-photo="{% static 'img/default_referee.jpg' %}" data-name="SANS ARBITRE" {% if not match.referee %}selected{% endif %}>-- No Referee / بدون حكم --</option>
+                {% for ref in all_referees %}
+                    <option value="{{ ref.pk }}" 
+                            data-photo="{{ ref.photo_url }}" 
+                            data-name="{{ ref.user.get_full_name|default:ref.user.username }}" 
+                            {% if match.referee == ref %}selected{% endif %}>
+                        {{ ref.user.get_full_name|default:ref.user.username }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <button class="save-btn" onclick="saveMatchConfig(this)">💾 SAVE CONFIGURATION</button>
+    <button class="export-btn" onclick="downloadPoster(this)">⬇ EXPORT 4K PNG</button>
+    <button class="export-btn" style="background: var(--gold); color: #000;" onclick="exportVideo(this)">🎥 EXPORT VIDEO (5s)</button>
+</div>
+ 
+ 
+<script>
+// ── State ─────────────────────────────────────────────────────
+const PS = {
+    1: { x: -180, y: 0, scale: 1, flip: true  },
+    2: { x:  180, y: 0, scale: 1, flip: false }
+};
+
+// ── Referee ─────────────────────────────────────────────────────
+function toggleRefereeBadge(show) {
+    const container = document.getElementById('refereeBadgeContainer');
+    if (show) {
+        const select = document.getElementById('refereeSelect');
+        if (select.value !== 'none') {
+            container.style.display = 'flex';
+        } else {
+            container.style.display = 'none';
+        }
+    } else {
+        container.style.display = 'none';
+    }
+}
+
+function changeReferee(select) {
+    const option = select.options[select.selectedIndex];
+    const photo = option.getAttribute('data-photo');
+    const name = option.getAttribute('data-name');
+    
+    const container = document.getElementById('refereeBadgeContainer');
+    const img = document.getElementById('refereeHeroImg');
+    const nameTag = document.getElementById('refereeNameTag');
+    const toggleCheckbox = document.getElementById('toggleRefereeShow');
+    
+    if (select.value === 'none') {
+        container.style.display = 'none';
+    } else {
+        img.src = photo;
+        nameTag.textContent = name.toUpperCase();
+        if (toggleCheckbox.checked) {
+            container.style.display = 'flex';
+        } else {
+            container.style.display = 'none';
+        }
+    }
+}
+ 
+function updateTransform(id) {
+    const img = document.getElementById(`player${id}_img`);
+    const s = PS[id], fx = s.flip ? -1 : 1;
+    img.style.transform = `translate(${s.x}px,${s.y}px) scale(${s.scale*fx},${s.scale})`;
+}
+function setManual(id, axis, val) { PS[id][axis] = parseFloat(val); updateTransform(id); }
+function flipPlayer(id) { PS[id].flip = !PS[id].flip; updateTransform(id); }
+ 
+// ── Status helpers ─────────────────────────────────────────────
+function setStatus(id, msg, type='') {
+    const el = document.getElementById(`status${id}`);
+    el.className = 'status-bar on' + (type ? ' '+type : '');
+    document.getElementById(`statusTxt${id}`).textContent = msg;
+}
+function clearStatus(id, delay=0) {
+    setTimeout(() => { document.getElementById(`status${id}`).className = 'status-bar'; }, delay);
+}
+function showSpinner(id) { document.getElementById(`upSpin${id}`).classList.add('visible'); }
+function hideSpinner(id) { document.getElementById(`upSpin${id}`).classList.remove('visible'); }
+ 
+// ── Player preset ──────────────────────────────────────────────
+function changePlayer(id, url, btn) {
+    document.querySelectorAll(`#grid${id} .p-btn`).forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    const img = document.getElementById(`player${id}_img`);
+    img.style.opacity = '0';
+    setTimeout(() => {
+        img.src = url;
+        img.onload  = () => { img.style.opacity = '1'; updateTransform(id); };
+        img.onerror = () => { img.style.opacity = '0'; };
+    }, 250);
+}
+ 
+// ── BG ─────────────────────────────────────────────────────────
+function handleBgUpload(input) {
+    const file = input.files[0]; if (!file) return;
+    document.getElementById('bgFName').textContent = file.name;
+    const r = new FileReader();
+    r.onload = e => { document.getElementById('posterBg').style.backgroundImage = `url('${e.target.result}')`; };
+    r.readAsDataURL(file);
+}
+function changeBg(url) {
+    document.getElementById('posterBg').style.backgroundImage = `url('${url}')`;
+}
+ 
+// ── App logo upload ────────────────────────────────────────────
+function handleTournamentLogoUpload(input) {
+    const file = input.files[0]; if (!file) return;
+    document.getElementById('tourLogoFName').textContent = file.name;
+    const r = new FileReader();
+    r.onload = e => {
+        const img = document.getElementById('heroLogoImg');
+        img.src = e.target.result;
+    };
+    r.readAsDataURL(file);
+}
+ 
+// ── Player upload + BG removal ─────────────────────────────────
+async function handleLocalUpload(id, input) {
+    const file = input.files[0]; if (!file) return;
+    document.getElementById(`p${id}FName`).textContent = file.name;
+ 
+    const img = document.getElementById(`player${id}_img`);
+    img.style.opacity = '0.15';
+    showSpinner(id);
+    setStatus(id, 'Removing background…');
+ 
+    const fd = new FormData();
+    fd.append('image', file);
+    fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+ 
+    try {
+        const resp = await fetch('{% url "matches:process_cutout" %}', { method: 'POST', body: fd });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+ 
+        if (data.status === 'success' && data.image) {
+            img.src = data.image;
+            img.onload = () => {
+                img.style.opacity = '1'; updateTransform(id);
+                hideSpinner(id);
+                setStatus(id, '✓ Background removed!', 'ok');
+                clearStatus(id, 3000);
+            };
+        } else {
+            fallback(id, img, file, data.message || 'BG removal failed.');
+        }
+    } catch(err) {
+        fallback(id, img, file, 'Server unavailable — original shown.');
+    }
+}
+ 
+function fallback(id, img, file, msg) {
+    const r = new FileReader();
+    r.onload = e => {
+        img.src = e.target.result; img.style.opacity = '1';
+        updateTransform(id); hideSpinner(id);
+        setStatus(id, '⚠ ' + msg, 'err');
+        clearStatus(id, 5000);
+    };
+    r.readAsDataURL(file);
+}
+ 
+// ── Drag ──────────────────────────────────────────────────────
+let AP = null, sx, sy;
+function initDrag(id) {
+    const img = document.getElementById(`player${id}_img`);
+    img.addEventListener('mousedown', e => {
+        AP = id; sx = e.clientX - PS[id].x; sy = e.clientY - PS[id].y;
+        img.style.cursor = 'grabbing'; e.preventDefault();
+    });
+    img.addEventListener('touchstart', e => {
+        AP = id; const t = e.touches[0];
+        sx = t.clientX - PS[id].x; sy = t.clientY - PS[id].y;
+        e.preventDefault();
+    }, { passive: false });
+}
+document.addEventListener('mousemove', e => {
+    if (AP === null) return;
+    PS[AP].x = e.clientX - sx; PS[AP].y = e.clientY - sy;
+    updateTransform(AP); syncSliders(AP);
+});
+document.addEventListener('touchmove', e => {
+    if (AP === null) return;
+    const t = e.touches[0];
+    PS[AP].x = t.clientX - sx; PS[AP].y = t.clientY - sy;
+    updateTransform(AP); syncSliders(AP);
+}, { passive: false });
+document.addEventListener('mouseup',  () => { AP = null; });
+document.addEventListener('touchend', () => { AP = null; });
+ 
+function syncSliders(id) {
+    const xEl = document.getElementById(`p${id}_x`);
+    const yEl = document.getElementById(`p${id}_y`);
+    if (xEl) xEl.value = PS[id].x;
+    if (yEl) yEl.value = PS[id].y;
+}
+ 
+function saveMatchConfig(btn) {
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<div class="ms" style="display:inline-block; margin-right:8px;"></div> SAVING TO SERVER…';
+    btn.style.opacity = '0.7';
+    btn.style.pointerEvents = 'none';
+
+    // Collect all configuration data
+    const config = {
+        players: PS,
+        background: document.getElementById('posterBg').style.backgroundImage,
+        tournamentLogo: document.getElementById('heroLogoImg').src,
+        p1_src: document.getElementById('player1_img').src,
+        p2_src: document.getElementById('player2_img').src,
+        referee_id: document.getElementById('refereeSelect').value,
+        show_referee: document.getElementById('toggleRefereeShow').checked,
+    };
+    
+    fetch('{% url "matches:save_promo_config" match.pk %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ config: config })
+    })
+    .then(resp => {
+        if (!resp.ok) return resp.text().then(t => { throw new Error(t || resp.statusText) });
+        return resp.json();
+    })
+    .then(data => {
+        if (data.status === 'success') {
+            btn.innerHTML = '✅ CONFIGURATION SAVED';
+            btn.style.background = '#48c78e';
+            btn.style.color = '#fff';
+            btn.style.borderColor = '#48c78e';
+            btn.style.opacity = '1';
+        } else {
+            throw new Error(data.message || 'Save failed');
+        }
+    })
+    .catch(err => {
+        console.error('Save Error:', err);
+        alert('Error saving: ' + err.message);
+        btn.innerHTML = '❌ SAVE FAILED';
+        btn.style.background = '#ff6b6b';
+    })
+    .finally(() => {
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.style.background = '';
+            btn.style.color = '';
+            btn.style.borderColor = '';
+            btn.style.pointerEvents = '';
+        }, 3000);
+    });
+}
+
+initDrag(1); initDrag(2);
+ 
+// ── Export ────────────────────────────────────────────────────
+async function downloadPoster(btn) {
+    const poster = document.getElementById('promoPoster');
+    const st = poster.style.transform, so = poster.style.transformOrigin;
+    const sm = poster.style.marginTop;  // save margin
+    const originalText = btn.innerHTML;
+    
+    btn.innerHTML = '⏳ GENERATING 4K IMAGE…'; 
+    btn.disabled = true;
+    
+    // Reset transform for high-res capture
+    poster.style.transform = 'none'; 
+    poster.style.transformOrigin = 'top left';
+    poster.style.marginTop = '0';
+
+    // Wait a bit for layout to settle
+    await new Promise(r => setTimeout(r, 500));
+
+    try {
+        const dataUrl = await htmlToImage.toPng(poster, {
+            quality: 1.0,
+            pixelRatio: 4, // 4K quality
+            skipAutoScale: true,
+            cacheBust: false,
+        });
+
+        const a = document.createElement('a');
+        a.download = `Matchday-{{ match.pk|default:"promo" }}.png`;
+        a.href = dataUrl;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        btn.innerHTML = '✅ EXPORT SUCCESSFUL';
+    } catch(err) { 
+        console.error('Export error:', err);
+        alert('Export error: ' + (err && err.message ? err.message : err)); 
+        btn.innerHTML = '❌ EXPORT FAILED';
+    } finally {
+        poster.style.transform = st; 
+        poster.style.transformOrigin = so;
+        poster.style.marginTop = sm;
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }, 3000);
+    }
+}
+
+async function exportVideo(btn) {
+    const poster = document.getElementById('promoPoster');
+    const st = poster.style.transform, so = poster.style.transformOrigin;
+    const sm = poster.style.marginTop; // save margin
+    const originalText = btn.innerHTML;
+
+    btn.innerHTML = '🎬 RECORDING VIDEO…';
+    btn.disabled = true;
+
+    poster.style.transform = 'none';
+    poster.style.transformOrigin = 'top left';
+    poster.style.marginTop = '0';
+
+    const capturer = new CCapture({ 
+        format: 'webm', 
+        framerate: 30,
+        verbose: false,
+        name: `Matchday-{{ match.pk }}`
+    });
+
+    const duration = 5; // 5 seconds
+    const fps = 30;
+    const totalFrames = duration * fps;
+    let currentFrame = 0;
+
+    capturer.start();
+
+    async function renderFrame() {
+        if (currentFrame >= totalFrames) {
+            capturer.stop();
+            capturer.save();
+            poster.style.transform = st;
+            poster.style.transformOrigin = so;
+            poster.style.marginTop = sm;
+            btn.innerHTML = '✅ VIDEO EXPORTED';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }, 3000);
+            return;
+        }
+
+        try {
+            const canvas = await htmlToImage.toCanvas(poster, {
+                pixelRatio: 2, // High quality but manageable for video
+                cacheBust: false,
+            });
+            capturer.capture(canvas);
+            currentFrame++;
+            btn.innerHTML = `🎬 RECORDING: ${Math.round((currentFrame/totalFrames)*100)}%`;
+            requestAnimationFrame(renderFrame);
+        } catch(err) {
+            console.error('Video Error:', err);
+            capturer.stop();
+            alert('Video export failed: ' + (err && err.message ? err.message : err));
+            poster.style.transform = st;
+            poster.style.transformOrigin = so;
+            poster.style.marginTop = sm;
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    renderFrame();
+}
+ 
+// ── Scale ─────────────────────────────────────────────────────
+function updateScale() {
+    const c = document.getElementById('promoPoster');
+    const pw = window.innerWidth > 900 ? 420 : 0;
+    const availW = window.innerWidth - pw - 40;
+    const availH = window.innerHeight - 16;
+    const s = Math.min(availW / 1080, availH / 1080, 0.95);
+    const scaledH = Math.round(1080 * s);
+    const topMargin = Math.max(8, Math.floor((availH - scaledH) / 2));
+    c.style.transform = `scale(${s})`;
+    c.style.transformOrigin = 'top center';
+    c.style.marginTop = topMargin + 'px';
+    c.style.marginBottom = '0';
+}
+
+// Arabic Text Detection
+function adjustArabicFonts() {
+    document.querySelectorAll('.retro-team-name').forEach(el => {
+        if (/[\u0600-\u06FF]/.test(el.innerText)) {
+            el.classList.add('arabic-text');
+        }
+    });
+}
+
+window.addEventListener('resize', updateScale);
+window.addEventListener('DOMContentLoaded', () => {
+    updateScale();
+    adjustArabicFonts();
+    
+    // Load saved configuration if exists
+    let savedConfig = null;
+    try {
+        const configEl = document.getElementById('promo-config-json');
+        if (configEl) savedConfig = JSON.parse(configEl.textContent);
+    } catch(e) { console.error("Error parsing saved config:", e); }
+
+    if (savedConfig && Object.keys(savedConfig).length > 0) {
+        if (savedConfig.players) {
+            Object.assign(PS, savedConfig.players);
+            updateTransform(1); updateTransform(2);
+            syncSliders(1); syncSliders(2);
+        }
+        if (savedConfig.background) {
+            document.getElementById('posterBg').style.backgroundImage = savedConfig.background;
+        }
+        if (savedConfig.tournamentLogo) {
+            document.getElementById('heroLogoImg').src = savedConfig.tournamentLogo;
+        }
+        if (savedConfig.p1_src) document.getElementById('player1_img').src = savedConfig.p1_src;
+        if (savedConfig.p2_src) document.getElementById('player2_img').src = savedConfig.p2_src;
+        
+        if (savedConfig.referee_id !== undefined) {
+            const select = document.getElementById('refereeSelect');
+            select.value = savedConfig.referee_id;
+            changeReferee(select);
+        }
+        if (savedConfig.show_referee !== undefined) {
+            const chk = document.getElementById('toggleRefereeShow');
+            chk.checked = savedConfig.show_referee;
+            toggleRefereeBadge(savedConfig.show_referee);
+        }
+    } else {
+        updateTransform(1); updateTransform(2);
+    }
+});
+</script>
+</body>
+</html>
+ 

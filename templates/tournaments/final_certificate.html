@@ -1,0 +1,645 @@
+{% load i18n static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>شهادة بطل دورة الماضي يلهم الحاضر - ESM</title>
+    <!-- Google Fonts including Gothic Blackletter for Title, Handwriting Script for Name, and standard sans-serif/serif for other elements -->
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,700;1,700&family=Aref+Ruqaa:wght@400;700&family=Reem+Kufi:wght@400;700;900&family=Cairo:wght@400;700;900&family=Tajawal:wght@400;700;900&family=UnifrakturMaguntia&family=Alex+Brush&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --paper-color: #faf9f6; /* Elegant off-white/ivory */
+            --teal-deep: #004845; /* Dark teal matching the image */
+            --teal-bright: #00827b;
+            --teal-dark: #002d2b;
+            --gold-burnished: #c5a028; /* Gold matching the image */
+            --gold-light: #fbe695;
+            --gold-dark: #9a7615;
+            --gold-gradient: linear-gradient(135deg, #bf953f 0%, #fcf6ba 45%, #b38728 70%, #aa771c 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #121212;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            font-family: 'Cairo', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* ─── ULTIMATE CERTIFICATE CONTAINER ─── */
+        .ultimate-cert-container {
+            width: 297mm;
+            height: 210mm;
+            background-color: var(--paper-color);
+            /* Elegant subtle dotted watermark texture */
+            background-image: radial-gradient(circle, #e9e3d3 1.5px, transparent 1.5px);
+            background-size: 16px 16px;
+            position: relative;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+            overflow: hidden;
+            padding: 45px 90px;
+            display: flex;
+            flex-direction: column;
+            z-index: 1;
+        }
+
+        /* ─── VECTOR GOLDEN SCALLOPED BORDER ─── */
+        .gold-border-overlay {
+            position: absolute;
+            inset: 22px 32px;
+            z-index: 5;
+            pointer-events: none;
+            width: calc(100% - 64px);
+            height: calc(100% - 44px);
+        }
+
+        /* ─── SIDE GEOMETRIC 3D RIBBONS ─── */
+        .ribbon-container-left {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 140px;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        .ribbon-container-right {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 140px;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+            transform: scaleX(-1); /* Flip right ribbons to preserve layout direction dynamically */
+        }
+
+        /* ─── MAIN CERTIFICATE CONTENT LAYOUT ─── */
+        .content-main {
+            position: relative;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            flex: 1;
+            width: 100%;
+        }
+
+        /* ─── TOP HEADER LOGO & INFO ─── */
+        .top-badge-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 5px;
+            margin-top: 5px;
+        }
+
+        .logo-label {
+            font-family: 'Cairo', sans-serif;
+            font-size: 16px;
+            font-weight: 900;
+            color: #222222;
+            margin-top: 4px;
+        }
+
+        /* ─── TITLES ─── */
+        .title-gothic {
+            font-family: 'UnifrakturMaguntia', serif;
+            font-size: 65px;
+            color: #002220; /* Much darker and richer teal-black */
+            margin-top: 10px;
+            margin-bottom: -5px;
+            font-weight: bold; /* Bolded for maximum presence */
+            letter-spacing: 0.5px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.25); /* Deeper text shadow to pop */
+        }
+
+        .title-arabic-sub {
+            font-family: 'Aref Ruqaa', serif;
+            font-size: 42px;
+            font-weight: 900; /* Ultra-bold for maximum density */
+            color: #002220; /* Darker, richer teal-black */
+            margin-top: -5px;
+            margin-bottom: 5px;
+            text-shadow: 0.5px 0.5px 1px rgba(0, 0, 0, 0.15); /* Subtle shadow for depth */
+        }
+
+        .presentation-line {
+            font-family: 'Cairo', sans-serif;
+            font-size: 18px;
+            font-weight: 900;
+            color: #444444;
+            margin-bottom: 2px;
+            letter-spacing: 0.5px;
+        }
+
+        /* ─── RECIPIENT HANDWRITTEN BAR ─── */
+        .recipient-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 2px 0 10px 0;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .recipient-name {
+            font-family: 'Alex Brush', cursive;
+            font-size: 60px;
+            font-weight: 700;
+            color: var(--gold-burnished);
+            line-height: 1.1;
+            letter-spacing: 0.5px;
+            padding: 0 20px;
+            text-align: center;
+            outline: none;
+        }
+
+        .gold-double-bar {
+            width: 440px;
+            height: 5px;
+            border-top: 1.5px solid var(--gold-burnished);
+            border-bottom: 1.5px solid var(--gold-burnished);
+            margin-top: 4px;
+        }
+
+        /* ─── APPRECIATION PARAGRAPH ─── */
+        .appreciation-paragraph {
+            max-width: 780px;
+            font-size: 23px;
+            line-height: 1.45;
+            font-family: 'Amiri', serif;
+            color: #333333;
+            margin-top: 5px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        /* ─── SIGNATURES & BOTTOM SEAL ─── */
+        .bottom-section {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: auto;
+            padding: 0 40px 5px 40px;
+        }
+
+        .sig-container {
+            width: 190px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 25px; /* Raised upwards from the bottom margin */
+        }
+
+        .sig-line-thin {
+            width: 100%;
+            height: 1px;
+            background-color: #666666;
+            margin-bottom: 8px;
+        }
+
+        .sig-title-label {
+            font-size: 15px;
+            font-weight: 900;
+            color: #444444;
+            font-family: 'Cairo', sans-serif;
+            text-transform: uppercase;
+        }
+
+        /* ─── NO-PRINT CONTROLS ─── */
+        .no-print {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        }
+        .no-print button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: 'Cairo';
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+        }
+        .no-print button:hover { transform: scale(1.05); }
+
+        /* ─── PRINT & PDF OVERRIDES ─── */
+        @media print {
+            body { background: none !important; padding: 0 !important; }
+            .no-print { display: none !important; }
+            .ultimate-cert-container {
+                box-shadow: none !important;
+                border: none !important;
+                width: 297mm;
+                height: 210mm;
+                padding: 45px 90px !important;
+                background-color: #faf9f6 !important;
+                background-image: radial-gradient(circle, #e9e3d3 1.5px, transparent 1.5px) !important;
+                background-size: 16px 16px !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            @page {
+                size: A4 landscape;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Printable/A4 Certificate wrapper -->
+    <div class="ultimate-cert-container" id="main-cert">
+        
+        <!-- Scalloped Gold Inset Border Outline SVG -->
+        <svg class="gold-border-overlay" viewBox="0 0 1000 700" fill="none" preserveAspectRatio="none">
+            <defs>
+                <linearGradient id="overlay-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#bf953f" />
+                    <stop offset="25%" stop-color="#fcf6ba" />
+                    <stop offset="50%" stop-color="#b38728" />
+                    <stop offset="100%" stop-color="#aa771c" />
+                </linearGradient>
+            </defs>
+            <!-- Perfect scallops/notches curved inward at corners -->
+            <path d="M 50,15 L 950,15 C 950,30 970,50 985,50 L 985,650 C 970,650 950,670 950,685 L 50,685 C 50,670 30,650 15,650 L 15,50 C 30,50 50,30 50,15 Z" 
+                  stroke="url(#overlay-gold)" stroke-width="1.8" fill="none" />
+            <!-- Little gold corner accent circles -->
+            <circle cx="32" cy="32" r="3" fill="url(#overlay-gold)" />
+            <circle cx="968" cy="32" r="3" fill="url(#overlay-gold)" />
+            <circle cx="968" cy="668" r="3" fill="url(#overlay-gold)" />
+            <circle cx="32" cy="668" r="3" fill="url(#overlay-gold)" />
+        </svg>
+
+        <!-- Left Modern 3D Folded Ribbon SVG (Teal-to-Gold) -->
+        <div class="ribbon-container-left">
+            <svg width="100%" height="100%" viewBox="0 0 140 800" fill="none" preserveAspectRatio="none">
+                <defs>
+                    <linearGradient id="ribbon-teal-dark" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#003533" />
+                        <stop offset="100%" stop-color="#004d4a" />
+                    </linearGradient>
+                    <linearGradient id="ribbon-teal-mid" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#004d4a" />
+                        <stop offset="100%" stop-color="#007e79" />
+                    </linearGradient>
+                    <linearGradient id="ribbon-teal-light" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#007e79" />
+                        <stop offset="100%" stop-color="#14a39d" />
+                    </linearGradient>
+                    <linearGradient id="ribbon-gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#c5a028" />
+                        <stop offset="50%" stop-color="#fbe695" />
+                        <stop offset="100%" stop-color="#9a7615" />
+                    </linearGradient>
+                </defs>
+                
+                <!-- Main Asymmetrical Left Teal Ribbon pointing right -->
+                <polygon points="0,180 120,380 120,430 0,310" fill="url(#ribbon-teal-mid)" />
+                <polygon points="0,310 120,430 0,480" fill="url(#ribbon-teal-dark)" />
+                <polygon points="0,480 120,430 120,480 0,600" fill="url(#ribbon-teal-light)" />
+                
+                <!-- 3D Overlapping folded highlights -->
+                <polygon points="0,270 70,380 0,410" fill="url(#ribbon-teal-light)" opacity="0.8" />
+                <polygon points="0,410 70,380 120,430 0,480" fill="url(#ribbon-teal-mid)" opacity="0.9" />
+
+                <!-- Bottom Left fold in gold -->
+                <polygon points="0,620 60,690 60,730 0,770" fill="url(#ribbon-gold-grad)" />
+                <polygon points="0,770 60,730 0,800" fill="#7a5210" />
+                <!-- Inner bottom corner filler -->
+                <polygon points="0,730 40,770 0,800" fill="url(#ribbon-teal-dark)" />
+            </svg>
+        </div>
+
+        <!-- Right Modern 3D Folded Ribbon SVG (Gold-to-Teal) -->
+        <div class="ribbon-container-right">
+            <svg width="100%" height="100%" viewBox="0 0 140 800" fill="none" preserveAspectRatio="none">
+                <!-- Large top-mid Golden Fold pointing left -->
+                <polygon points="0,150 120,350 120,400 0,270" fill="url(#ribbon-gold-grad)" />
+                <polygon points="0,270 120,400 0,450" fill="#7a5210" />
+                <polygon points="0,450 120,400 120,450 0,570" fill="url(#ribbon-gold-grad)" />
+                
+                <!-- Bottom Teal fold -->
+                <polygon points="0,600 65,680 65,720 0,780" fill="url(#ribbon-teal-mid)" />
+                <polygon points="0,780 65,720 0,800" fill="url(#ribbon-teal-dark)" />
+                <!-- Bottom Gold corner piece -->
+                <polygon points="0,740 40,780 0,800" fill="url(#ribbon-gold-grad)" />
+            </svg>
+        </div>
+
+        <!-- Dynamic/App watermark background elements positioned safely -->
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 450px; height: 450px; background: url('{% if tournament.logo %}{{ tournament.logo.url }}{% else %}/static/img/app_logo.png{% endif %}') no-repeat center; background-size: contain; opacity: 0.22; z-index: 2; pointer-events: none;"></div>
+
+        <!-- Main Contents -->
+        <div class="content-main">
+            
+            <!-- Top Scalloped Circular Badge & Company Logo -->
+            <div class="top-badge-container">
+                <!-- SVG Checkmark Gold Rosette Badge -->
+                <svg viewBox="0 0 80 80" width="46" height="46">
+                    <defs>
+                        <linearGradient id="badge-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#bf953f" />
+                            <stop offset="25%" stop-color="#fcf6ba" />
+                            <stop offset="50%" stop-color="#b38728" />
+                            <stop offset="100%" stop-color="#aa771c" />
+                        </linearGradient>
+                        <clipPath id="badge-logo-clip">
+                            <circle cx="0" cy="0" r="16.5" />
+                        </clipPath>
+                    </defs>
+                    <g transform="translate(40,40)">
+                        <rect x="-25" y="-25" width="50" height="50" rx="5" ry="5" fill="url(#badge-gold)" stroke="#9a7615" stroke-width="0.5" transform="rotate(0)" />
+                        <rect x="-25" y="-25" width="50" height="50" rx="5" ry="5" fill="url(#badge-gold)" stroke="#9a7615" stroke-width="0.5" transform="rotate(15)" />
+                        <rect x="-25" y="-25" width="50" height="50" rx="5" ry="5" fill="url(#badge-gold)" stroke="#9a7615" stroke-width="0.5" transform="rotate(30)" />
+                        <rect x="-25" y="-25" width="50" height="50" rx="5" ry="5" fill="url(#badge-gold)" stroke="#9a7615" stroke-width="0.5" transform="rotate(45)" />
+                        <rect x="-25" y="-25" width="50" height="50" rx="5" ry="5" fill="url(#badge-gold)" stroke="#9a7615" stroke-width="0.5" transform="rotate(60)" />
+                        <rect x="-25" y="-25" width="50" height="50" rx="5" ry="5" fill="url(#badge-gold)" stroke="#9a7615" stroke-width="0.5" transform="rotate(75)" />
+                        
+                        <circle cx="0" cy="0" r="18" fill="#ffffff" stroke="url(#badge-gold)" stroke-width="1.2" />
+                        <!-- Clipped Premium Soccer Ball Image Sourced Dynamically -->
+                        <image href="{% static 'img/rosette_ball.jpg' %}" x="-16.5" y="-16.5" width="33" height="33" clip-path="url(#badge-logo-clip)" />
+                    </g>
+                </svg>
+                <div class="logo-label" contenteditable="true" spellcheck="false">الجمهورية الجزائرية الديمقراطية الشعبية</div>
+                
+                <!-- ESM Club Header details (safely stacked) -->
+                <div style="text-align: center; line-height: 1.25; margin-top: 6px;">
+                    <p style="font-size: 17px; font-weight: 900; color: var(--teal-deep); font-family: 'Cairo';" contenteditable="true" spellcheck="false">نادي وفاق الرياضي مسلمون</p>
+                    <p style="font-size: 13px; font-weight: 700; color: var(--gold-burnished); font-family: 'Cairo';" contenteditable="true" spellcheck="false">ESM - Messelmoun / ولاية تيبازة</p>
+                </div>
+            </div>
+
+            <!-- Gothic/Blackletter Title (Mirroring "Certificate Of Appreciation" in photo) -->
+            <h1 class="title-gothic" contenteditable="true" spellcheck="false">Champion Certificate</h1>
+            <div class="title-arabic-sub" contenteditable="true" spellcheck="false">شهادة شكر وتقدير</div>
+
+            <!-- Presentation Line -->
+            <p class="presentation-line" contenteditable="true" spellcheck="false">تمنح هذه الشهادة بكل فخر واعتزاز لـ / This Certificate Presented To</p>
+
+            <!-- Recipient name styled exactly like handwriting cursor with double gold underline -->
+            <div class="recipient-box">
+                <h2 class="recipient-name" contenteditable="true" spellcheck="false">{{ winner.name|default:"فريق النجوم" }}</h2>
+                <div class="gold-double-bar"></div>
+            </div>
+
+            <!-- Dynamic category info -->
+            <p style="font-size: 14px; font-weight: 900; color: var(--teal-deep); font-family: 'Cairo'; margin-bottom: 2px;" contenteditable="true" spellcheck="false">
+                بطل دورة: "{{ tournament.name }}" لعام {{ tournament.year }}
+            </p>
+
+            <!-- Arabic appreciation paragraph styled perfectly -->
+            <div class="appreciation-paragraph" contenteditable="true" spellcheck="false">
+                بفخر واعتزاز، نمنح هذه الشهادة لـهذا الفريق المذكور أعلاه، تقديراً لمسيرتهم الحافلة بالتميز والروح الرياضية العالية طوال منافسات <strong style="color: var(--teal-deep); font-size: 26px; font-weight: 900; font-family: 'Cairo', sans-serif; border-bottom: 2px double var(--gold-burnished); padding-bottom: 1px; display: inline-block;">دورة 'الماضي يلهم الحاضر' لعام {{ tournament.year }}</strong>. لقد جسدتم بعطائكم فوق أرضية ملعب الشهيد عزيبي أحمد أسمى قيم الوفاء والتنافس الشريف، مبرهنين أن الإبداع لا يحده زمن، ليبقى هذا التتويج وساماً ملهماً يُزين سجلات الرياضة ببلدية مسلمون.
+            </div>
+
+            <!-- Signatures and Gold Rosette Seal at the Bottom -->
+            <div class="bottom-section">
+                
+                <!-- Left Signature Block -->
+                <div class="sig-container">
+                    <div style="height: 35px; display: flex; align-items: flex-end;">
+                        <!-- Placeholder for visual signature mark if needed -->
+                    </div>
+                    <div class="sig-line-thin"></div>
+                    <div class="sig-title-label" contenteditable="true" spellcheck="false">إمضاء رئيس النادي</div>
+                </div>
+
+                <!-- Bottom Center Rosette Gold Seal (Sourced from image details) -->
+                <div style="margin-bottom: -15px;">
+                    <svg viewBox="0 0 120 120" width="95" height="95">
+                        <defs>
+                            <linearGradient id="seal-gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#bf953f" />
+                                <stop offset="25%" stop-color="#fcf6ba" />
+                                <stop offset="50%" stop-color="#b38728" />
+                                <stop offset="75%" stop-color="#fcf6ba" />
+                                <stop offset="100%" stop-color="#aa771c" />
+                            </linearGradient>
+                            <linearGradient id="seal-teal-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#003532" />
+                                <stop offset="100%" stop-color="#005d58" />
+                            </linearGradient>
+                            <clipPath id="seal-logo-clip">
+                                <circle cx="0" cy="0" r="23" />
+                            </clipPath>
+                        </defs>
+                        <g transform="translate(60,60)">
+                            <path d="M 0,-45 L 8,-43 L 16,-40 L 24,-35 L 30,-28 L 35,-20 L 38,-10 L 40,0 L 38,10 L 35,20 L 30,28 L 24,35 L 16,40 L 8,43 L 0,45 L -8,43 L -16,40 L -24,35 L -30,28 L -35,20 L -38,10 L -40,0 L -38,-10 L -35,-20 L -30,-28 L -24,-35 L -16,-40 L -8,-43 Z" fill="url(#seal-gold-grad)" stroke="#aa771c" stroke-width="0.8" />
+                            
+                            <rect x="-35" y="-35" width="70" height="70" rx="8" ry="8" fill="url(#seal-gold-grad)" stroke="#aa771c" stroke-width="0.5" transform="rotate(0)" />
+                            <rect x="-35" y="-35" width="70" height="70" rx="8" ry="8" fill="url(#seal-gold-grad)" stroke="#aa771c" stroke-width="0.5" transform="rotate(15)" />
+                            <rect x="-35" y="-35" width="70" height="70" rx="8" ry="8" fill="url(#seal-gold-grad)" stroke="#aa771c" stroke-width="0.5" transform="rotate(30)" />
+                            <rect x="-35" y="-35" width="70" height="70" rx="8" ry="8" fill="url(#seal-gold-grad)" stroke="#aa771c" stroke-width="0.5" transform="rotate(45)" />
+                            <rect x="-35" y="-35" width="70" height="70" rx="8" ry="8" fill="url(#seal-gold-grad)" stroke="#aa771c" stroke-width="0.5" transform="rotate(60)" />
+                            <rect x="-35" y="-35" width="70" height="70" rx="8" ry="8" fill="url(#seal-gold-grad)" stroke="#aa771c" stroke-width="0.5" transform="rotate(75)" />
+                            
+                            <circle cx="0" cy="0" r="28" fill="url(#seal-teal-grad)" stroke="url(#seal-gold-grad)" stroke-width="1.8" />
+                            
+                            <!-- Circular Application Logo Frame Sourced Dynamically -->
+                            <image href="{% if site_settings.app_logo %}{{ site_settings.app_logo.url }}{% elif tournament.logo %}{{ tournament.logo.url }}{% else %}/static/img/app_logo.png{% endif %}" x="-23" y="-23" width="46" height="46" clip-path="url(#seal-logo-clip)" onload="removeWhiteBackground(this)" />
+                        </g>
+                    </svg>
+                </div>
+
+                <!-- Right Date Block -->
+                <div class="sig-container">
+                    <p style="font-size: 17px; font-weight: bold; color: #222222; font-family: 'Cairo'; margin-bottom: 2px;" contenteditable="true" spellcheck="false">
+                        {% if final_match.match_date %}{{ final_match.match_date|date:"d / m / Y" }}{% else %}{{ "now"|date:"d / m / Y" }}{% endif %}
+                    </p>
+                    <div class="sig-line-thin"></div>
+                    <div class="sig-title-label" contenteditable="true" spellcheck="false">تاريخ التحرير</div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Print / Download Floating Controls -->
+    <div class="no-print">
+        <button onclick="window.print()" style="background: var(--gold-gradient); color: black; font-weight: bold; border: 1px solid var(--gold-burnished);">طباعة الشهادة</button>
+        <button onclick="downloadPDF(event)" style="background: var(--teal-deep); color: white; border: 1px solid var(--gold-burnished);">تحميل PDF</button>
+    </div>
+
+    <script>
+        function removeWhiteBackground(imgElement) {
+            if (!imgElement) return;
+            if (imgElement.dataset.bgRemoved === 'true') return;
+            
+            const originalUrl = imgElement.tagName.toLowerCase() === 'image' ? imgElement.getAttribute('href') : imgElement.src;
+            if (!originalUrl || originalUrl.startsWith('data:')) return;
+            
+            const tempImg = new Image();
+            tempImg.crossOrigin = "Anonymous";
+            tempImg.src = originalUrl;
+            tempImg.onload = () => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const width = tempImg.naturalWidth;
+                    const height = tempImg.naturalHeight;
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    ctx.drawImage(tempImg, 0, 0);
+                    const imgData = ctx.getImageData(0, 0, width, height);
+                    const data = imgData.data;
+                    
+                    // Flood fill starting from the four corners
+                    const tolerance = 45;
+                    const visited = new Uint8Array(width * height);
+                    const corners = [
+                        {x: 0, y: 0},
+                        {x: width - 1, y: 0},
+                        {x: 0, y: height - 1},
+                        {x: width - 1, y: height - 1}
+                    ];
+                    
+                    let removedAny = false;
+                    
+                    for (const corner of corners) {
+                        const cIdx = (corner.y * width + corner.x);
+                        if (visited[cIdx]) continue;
+                        
+                        const rBg = data[cIdx * 4];
+                        const gBg = data[cIdx * 4 + 1];
+                        const bBg = data[cIdx * 4 + 2];
+                        const aBg = data[cIdx * 4 + 3];
+                        
+                        if (aBg < 50) continue;
+                        
+                        const queue = [[corner.x, corner.y]];
+                        visited[cIdx] = 1;
+                        
+                        let head = 0;
+                        while (head < queue.length) {
+                            const [cx, cy] = queue[head++];
+                            const idx = (cy * width + cx) * 4;
+                            
+                            data[idx + 3] = 0;
+                            removedAny = true;
+                            
+                            const neighbors = [
+                                [cx + 1, cy],
+                                [cx - 1, cy],
+                                [cx, cy + 1],
+                                [cx, cy - 1]
+                            ];
+                            
+                            for (const [nx, ny] of neighbors) {
+                                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                    const nIdx = ny * width + nx;
+                                    if (!visited[nIdx]) {
+                                        const pIdx = nIdx * 4;
+                                        const r = data[pIdx];
+                                        const g = data[pIdx+1];
+                                        const b = data[pIdx+2];
+                                        const a = data[pIdx+3];
+                                        
+                                        if (a >= 50 &&
+                                            Math.abs(r - rBg) <= tolerance &&
+                                            Math.abs(g - gBg) <= tolerance &&
+                                            Math.abs(b - bBg) <= tolerance) {
+                                            queue.push([nx, ny]);
+                                            visited[nIdx] = 1;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (removedAny) {
+                        ctx.putImageData(imgData, 0, 0);
+                        imgElement.dataset.bgRemoved = 'true';
+                        const dataUrl = canvas.toDataURL('image/png');
+                        if (imgElement.tagName.toLowerCase() === 'image') {
+                            imgElement.setAttribute('href', dataUrl);
+                        } else {
+                            imgElement.src = dataUrl;
+                        }
+                    }
+                } catch (e) {
+                    console.warn("Could not remove background:", e);
+                }
+            };
+        }
+
+        async function downloadPDF(event) {
+            if (event) event.preventDefault();
+            
+            const element = document.getElementById('main-cert');
+            const teamName = element.querySelector('.recipient-name').innerText.trim() || 'Champion_Certificate';
+            
+            const btn = event.currentTarget;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'جاري التحميل...';
+            btn.style.opacity = '0.7';
+            btn.style.pointerEvents = 'none';
+
+            const opt = {
+                margin: 0,
+                filename: `شهادة_بطل_الدورة_${teamName}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { 
+                    scale: 2,
+                    useCORS: true,
+                    letterRendering: false,
+                    onclone: (clonedDoc) => {
+                        const clonedCert = clonedDoc.getElementById('main-cert');
+                        
+                        // Force pristine clean white/ivory background and fix gradients for html2pdf rendering
+                        clonedCert.style.backgroundColor = '#faf9f6';
+                        clonedCert.style.backgroundImage = 'radial-gradient(circle, #e9e3d3 1.5px, transparent 1.5px)';
+                        clonedCert.style.width = '297mm';
+                        clonedCert.style.height = '210mm';
+                        clonedCert.style.padding = '45px 90px';
+                        
+                        // Ensure GOTHIC and Script titles don't drop shadow rendering issues in standard PDFs
+                        const gothicTitle = clonedCert.querySelector('.title-gothic');
+                        if (gothicTitle) {
+                            gothicTitle.style.color = '#004845';
+                            gothicTitle.style.textShadow = 'none';
+                        }
+                    }
+                },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape', compress: true }
+            };
+
+            try {
+                await html2pdf().set(opt).from(element).save();
+            } catch (err) {
+                console.error('PDF Export Error:', err);
+                alert('حدث خطأ أثناء تحميل الملف، يرجى المحاولة مرة أخرى.');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.style.opacity = '1';
+                btn.style.pointerEvents = 'auto';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% load i18n turniq_tags %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+
+  <!-- BREADCRUMB -->
+  <div class="flex items-center gap-2 text-sm mb-6" style="color:var(--muted)">
+    <a href="{% url 'teams:list' %}" class="hover:underline" style="color:var(--primary)">⚽ {% trans "Équipes" %}</a>
+    <span>›</span>
+    <a href="{% url 'teams:detail' team.pk %}" class="hover:underline" style="color:var(--primary)">{{ team.name }}</a>
+    <span>›</span>
+    <a href="{% url 'teams:player_list' team.pk %}" class="hover:underline" style="color:var(--primary)">{% trans "Joueurs" %}</a>
+    <span>›</span>
+    <span>{% if action == 'create' %}{% trans "Ajouter" %}{% else %}{% trans "Modifier" %}{% endif %}</span>
+  </div>
+
+  <div class="card rounded-2xl overflow-hidden">
+    <!-- Header with team colors -->
+    <div class="h-2" style="background:linear-gradient(90deg,{{ team.color_primary }},{{ team.color_secondary }})"></div>
+
+    <div class="px-6 py-4 border-b flex items-center gap-4" style="border-color:var(--border);background:var(--card2)">
+      <div class="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center font-bold text-lg flex-shrink-0"
+           style="background:{{ team.color_primary }}20;color:{{ team.color_primary }};border:1px solid {{ team.color_primary }}40">
+        {% if team.logo %}<img src="{{ team.logo.url }}" class="w-full h-full object-cover"/>
+        {% else %}{{ team.name|slice:":2"|upper }}{% endif %}
+      </div>
+      <div>
+        <h1 class="font-bold text-lg">{{ page_title }}</h1>
+        <p class="text-xs" style="color:var(--muted)">{{ team.name }} · {{ team.neighborhood }}</p>
+      </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="p-6">
+      {% csrf_token %}
+
+      {% if form.errors %}
+      <div class="mb-5 p-4 rounded-xl" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3)">
+        <p class="font-bold text-sm text-red-400 mb-2">❌ {% trans "Erreurs / أخطاء" %} :</p>
+        {% for field, errors in form.errors.items %}
+          {% for error in errors %}
+            <p class="text-xs text-red-300 mt-0.5">• {{ error }}</p>
+          {% endfor %}
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+        <!-- Photo -->
+        <div class="sm:col-span-2 flex items-center gap-5">
+          <div class="w-20 h-20 rounded-2xl border overflow-hidden flex items-center justify-center text-3xl flex-shrink-0"
+               style="border-color:var(--border);background:var(--card2)" id="photo-preview">
+            {% if action == 'update' and object.photo %}
+              <img src="{{ object.photo.url }}" class="w-full h-full object-cover"/>
+            {% else %}🧑{% endif %}
+          </div>
+          <div class="flex-1">
+            <label class="form-label">📷 {% trans "Photo du joueur" %} / صورة اللاعب</label>
+            <input type="file" name="photo" accept="image/*" class="form-input"
+                   onchange="previewImg(this,'photo-preview')"/>
+          </div>
+        </div>
+
+        <!-- First name -->
+        <div>
+          <label class="form-label">👤 {% trans "Prénom" %} / الاسم <span class="text-red-400">*</span></label>
+          <input type="text" name="first_name" value="{{ form.first_name.value|default:'' }}"
+                 class="form-input" required placeholder="Mohamed"/>
+        </div>
+
+        <!-- Last name -->
+        <div>
+          <label class="form-label">👤 {% trans "Nom" %} / اللقب <span class="text-red-400">*</span></label>
+          <input type="text" name="last_name" value="{{ form.last_name.value|default:'' }}"
+                 class="form-input" required placeholder="Amrani"/>
+        </div>
+
+        <!-- Date of birth -->
+        <div>
+          <label class="form-label">🎂 {% trans "Date de naissance" %} / تاريخ الميلاد <span id="age-preview" class="ms-2 text-primary font-bold"></span></label>
+          <input type="date" name="date_of_birth" value="{{ form.date_of_birth.value|date:'Y-m-d'|default:form.date_of_birth.value|default:'' }}"
+                 class="form-input" onchange="updateAgePreview(this.value)"/>
+        </div>
+
+        <!-- National ID -->
+        <div>
+          <label class="form-label font-bold text-lg">🪪 {% trans "N° Carte nationale" %} / رقم التعريف الوطني <span class="text-red-400">*</span></label>
+          <input type="text" name="national_id" value="{{ form.national_id.value|default:'' }}"
+                 class="form-input text-lg font-mono tracking-[0.2em] font-bold" 
+                 required 
+                 minlength="18" 
+                 maxlength="18" 
+                 pattern="\d{18}" 
+                 title="رقم التعريف الوطني يجب أن يتكون من 18 رقماً بالضبط / Le numéro doit contenir exactement 18 chiffres"
+                 placeholder="000000000000000000"
+                 oninput="this.value = this.value.replace(/[^0-9]/g, '')"/>
+        </div>
+
+        <!-- Jersey number -->
+        <div>
+          <label class="form-label">👕 {% trans "Numéro maillot" %} / رقم القميص <span class="text-red-400">*</span></label>
+          <input type="number" name="jersey_number" value="{{ form.jersey_number.value|default:'' }}"
+                 class="form-input text-xl font-bold text-center" required min="1" max="99"/>
+        </div>
+
+        <!-- Position -->
+        <div>
+          <label class="form-label">⚽ {% trans "Poste" %} / المركز <span class="text-red-400">*</span></label>
+          <div class="grid grid-cols-4 gap-1.5 mt-1">
+            {% for val, lbl in form.fields.position.choices %}
+            <label class="cursor-pointer">
+              <input type="radio" name="position" value="{{ val }}"
+                     {% if form.position.value == val %}checked{% endif %} class="sr-only peer"/>
+              <div class="text-center py-2 rounded-lg text-xs font-bold transition border-2 border-transparent peer-checked:border-yellow-500"
+                   style="background:{% if val == 'GK' %}rgba(245,158,11,.15){% elif val == 'DEF' %}rgba(59,130,246,.15){% elif val == 'MID' %}rgba(16,185,129,.15){% else %}rgba(239,68,68,.15){% endif %}">
+                {% if val == 'GK' %}🧤{% elif val == 'DEF' %}🛡{% elif val == 'MID' %}⚙{% else %}⚡{% endif %}
+                <div>{{ lbl|slice:":3" }}</div>
+              </div>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Preferred foot -->
+        <div>
+          <label class="form-label">🦶 {% trans "Pied préféré" %} / القدم المفضلة</label>
+          <div class="grid grid-cols-3 gap-1.5 mt-1">
+            {% for val, lbl in form.fields.preferred_foot.choices %}
+            <label class="cursor-pointer">
+              <input type="radio" name="preferred_foot" value="{{ val }}"
+                     {% if form.preferred_foot.value == val or not form.preferred_foot.value and val == 'R' %}checked{% endif %}
+                     class="sr-only peer"/>
+              <div class="text-center py-2 rounded-lg text-xs font-bold border-2 border-transparent peer-checked:border-yellow-500 transition"
+                   style="background:var(--card2)">
+                {% if val == 'R' %}➡️{% elif val == 'L' %}⬅️{% else %}↔️{% endif %} {{ lbl }}
+              </div>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Height / Weight -->
+        <div>
+          <label class="form-label">📏 {% trans "Taille" %} / الطول (cm)</label>
+          <input type="number" name="height_cm" value="{{ form.height_cm.value|default:'' }}"
+                 class="form-input" min="140" max="220" placeholder="175"/>
+        </div>
+        <div>
+          <label class="form-label">⚖️ {% trans "Poids" %} / الوزن (kg)</label>
+          <input type="number" name="weight_kg" value="{{ form.weight_kg.value|default:'' }}"
+                 class="form-input" min="40" max="120" placeholder="70"/>
+        </div>
+
+        <!-- Status -->
+        <div class="sm:col-span-2">
+          <label class="form-label">⚙️ {% trans "Statut" %} / الحالة</label>
+          <div class="flex flex-wrap gap-4">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" name="is_active" {% if form.is_active.value %}checked{% endif %}
+                     class="form-checkbox"/>
+              <span class="text-sm font-semibold text-green-400">✅ {% trans "Actif" %} / نشيط</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" name="is_suspended" {% if form.is_suspended.value %}checked{% endif %}
+                     class="form-checkbox"/>
+              <span class="text-sm font-semibold text-red-400">🚫 {% trans "Suspendu" %} / موقوف</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="sm:col-span-2">
+          <label class="form-label">📝 {% trans "Notes" %} / ملاحظات</label>
+          <textarea name="notes" rows="2" class="form-input"
+                    placeholder="Notes sur le joueur... / ملاحظات حول اللاعب">{{ form.notes.value|default:'' }}</textarea>
+        </div>
+
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="flex flex-wrap gap-3 mt-6 pt-5 border-t" style="border-color:var(--border)">
+        <button type="submit" class="btn btn-primary">
+          {% if action == 'create' %}➕ {% trans "Ajouter le joueur" %} / إضافة اللاعب
+          {% else %}💾 {% trans "Enregistrer" %} / حفظ{% endif %}
+        </button>
+        <a href="{% url 'teams:player_list' team.pk %}" class="btn btn-ghost">← {% trans "Retour" %} / رجوع</a>
+        {% if action == 'update' %}
+          <button type="button"
+                  onclick="confirmDelete('{% trans "Supprimer le joueur" %}','{{ object.full_name }} — هل أنت متأكد؟','{% url "teams:player_delete" object.pk %}')"
+                  class="btn btn-danger ms-auto">
+            🗑️ {% trans "Supprimer" %} / حذف
+          </button>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+function previewImg(input, previewId) {
+  const el = document.getElementById(previewId);
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      el.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover"/>`;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function updateAgePreview(dobString) {
+  const preview = document.getElementById('age-preview');
+  if (!dobString) {
+    preview.innerHTML = '';
+    return;
+  }
+  const dob = new Date(dobString);
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+    age--;
+  }
+  preview.innerHTML = age > 0 ? `(${age} ans)` : '';
+}
+
+// Initial call if editing
+document.addEventListener('DOMContentLoaded', () => {
+  const dobInput = document.querySelector('input[name="date_of_birth"]');
+  if (dobInput && dobInput.value) updateAgePreview(dobInput.value);
+});
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,67 @@
+{% load i18n turniq_tags %}
+<a href="{% url 'matches:detail' match.pk %}" class="block group transition-all duration-300 hover:scale-[1.02]">
+  <div class="cl-match-card-v2 relative overflow-hidden rounded-3xl p-6 border border-white/10 shadow-2xl backdrop-blur-xl bg-gradient-to-br from-white/5 to-transparent">
+    <!-- Top Bar: Date & Stage -->
+    <div class="flex justify-between items-center mb-6 text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 border-b border-white/5 pb-3">
+        <span>{% if match.group %}{{ match.group.name }}{% else %}{{ match.get_stage_display }}{% endif %}</span>
+        <span class="text-{{ match.status_color|default:'primary' }}">
+            {% if match.status == 'live' %}🔴 LIVE{% else %}{{ match.match_date|date:"d M Y - H:i" }}{% endif %}
+        </span>
+    </div>
+
+    <!-- Main Content: Teams & Scores -->
+    <div class="flex items-center justify-between gap-4">
+        <!-- Team 1 -->
+        <div class="flex flex-col items-center gap-3 w-1/3 text-center">
+            <div class="w-20 h-20 rounded-full bg-black/40 border border-white/10 p-3 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 team-logo-circle shadow-lg">
+                {% if match.team1.logo %}
+                    <img src="{{ match.team1.logo.url }}" class="w-full h-full object-contain">
+                {% else %}
+                    <div class="text-2xl">🛡️</div>
+                {% endif %}
+            </div>
+            <span class="font-bebas text-xl text-white truncate w-full">{{ match.team1.name|upper }}</span>
+        </div>
+
+        <!-- Center: Score / VS -->
+        <div class="flex flex-col items-center justify-center w-1/3">
+            {% if match.status == 'scheduled' %}
+                <div class="bg-white/10 px-6 py-2 rounded-xl border border-white/5 font-bebas text-3xl text-gray-300">
+                    VS
+                </div>
+            {% else %}
+                <div class="flex items-center gap-4">
+                    <span class="font-bebas text-5xl text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{{ match.score_team1 }}</span>
+                    <span class="text-gray-500 font-bold">-</span>
+                    <span class="font-bebas text-5xl text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{{ match.score_team2 }}</span>
+                </div>
+            {% endif %}
+            {% if match.status == 'finished' %}
+                <span class="text-[9px] font-bold text-gray-500 mt-2 uppercase tracking-widest">{% trans "Terminé" %}</span>
+            {% endif %}
+        </div>
+
+        <!-- Team 2 -->
+        <div class="flex flex-col items-center gap-3 w-1/3 text-center">
+            <div class="w-20 h-20 rounded-full bg-black/40 border border-white/10 p-3 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 team-logo-circle shadow-lg">
+                {% if match.team2.logo %}
+                    <img src="{{ match.team2.logo.url }}" class="w-full h-full object-contain">
+                {% else %}
+                    <div class="text-2xl">🛡️</div>
+                {% endif %}
+            </div>
+            <span class="font-bebas text-xl text-white truncate w-full">{{ match.team2.name|upper }}</span>
+        </div>
+    </div>
+
+    <!-- Bottom Bar: Venue -->
+    <div class="mt-6 pt-3 border-t border-white/5 flex items-center justify-center gap-2">
+        <span class="text-gray-500">📍</span>
+        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{{ match.venue|default:"Messelmoun Stadium" }}</span>
+    </div>
+
+    <!-- Interactive Hover Background -->
+    <div class="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+  </div>
+</a>
+

@@ -1,0 +1,370 @@
+{% load i18n static %}
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        @page { size: A4; margin: 1.5cm; }
+        body { 
+            font-family: 'Cairo', sans-serif; 
+            color: #111; 
+            line-height: 1.5; 
+            margin: 0; 
+            padding: 0; 
+            background: #fff;
+        }
+        .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px; }
+        .header-logo-container { width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; background: transparent; overflow: hidden; }
+        .header-logo { width: 55px; height: 55px; object-fit: contain; mix-blend-mode: multiply; background: transparent; }
+        .header-logo-placeholder { width: 55px; height: 55px; background: transparent; color: #333; border: 2px solid #333; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; }
+        .header-text { text-align: center; flex: 1; padding: 0 10px; }
+        .header-text h1 { 
+            margin: 0; 
+            font-size: 24px; 
+            font-family: 'Amiri', serif;
+            font-weight: 700;
+            color: #000;
+        }
+        .header-text p { 
+            margin: 2px 0 0; 
+            font-size: 12px; 
+            font-weight: 700; 
+            color: #222; 
+        }
+        
+        .team-info { display: flex; justify-content: space-between; margin-bottom: 10px; background: transparent; padding: 5px 0; border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; }
+        .team-info div { display: flex; flex-direction: column; }
+        .team-info label { font-size: 10px; text-transform: uppercase; color: #666; font-weight: bold; }
+        .team-info span { font-size: 16px; font-weight: bold; }
+
+        table { width: 100%; border-collapse: collapse; border: 1.5px solid #000; flex: 1; margin-bottom: 15px; }
+        th { 
+            background: #f4f4f4; 
+            color: #000; 
+            text-align: center; 
+            padding: 8px; 
+            font-size: 12px; 
+            border: 1px solid #000;
+            font-weight: 900;
+            height: 30px;
+        }
+        td { 
+            border: 1px solid #000; 
+            padding: 5px 8px; 
+            font-size: 14px; 
+            color: #000;
+            text-align: center;
+        }
+        tr {
+            height: 35px; /* Ensures all rows are equal height */
+        }
+        tr:nth-child(even) { background: transparent; }
+        
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; background: #eee; }
+
+        #print-content {
+            display: flex;
+            flex-direction: column;
+            min-height: 260mm; /* A4 printable area height */
+        }
+
+        .footer { margin-top: auto; display: flex; justify-content: space-between; padding-top: 15px; }
+        .signature-box { border-top: 1px solid #000; width: 250px; padding-top: 10px; text-align: center; }
+        .signature-box p { margin: 0; font-size: 12px; font-weight: bold; }
+        .signature-box .hint { font-size: 10px; font-weight: normal; color: #666; margin-top: 40px; }
+
+        @media print {
+            .no-print { display: none !important; }
+            button { display: none !important; }
+            body { -webkit-print-color-adjust: exact; }
+        }
+        
+        .text-bold { font-weight: 700; }
+        .text-center { text-align: center; }
+
+        /* Force single A4 page mode for PDF export */
+        .pdf-mode {
+            width: 210mm;
+            height: 297mm; /* Force exactly one A4 page */
+            padding: 12mm 15mm;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+        .pdf-mode .header { margin-bottom: 10px; padding-bottom: 5px; }
+        .pdf-mode .header-logo-container { width: 50px; height: 50px; }
+        .pdf-mode .header-logo { width: 50px; height: 50px; }
+        .pdf-mode .header-logo-placeholder { width: 50px; height: 50px; font-size: 20px; border-width: 1.5px; }
+        .pdf-mode .header-text h1 { font-size: 22px; }
+        .pdf-mode .header-text p { font-size: 12px; margin-top: 0px; }
+        .pdf-mode .team-info { margin-bottom: 10px; padding: 5px 0; }
+        .pdf-mode .team-info span { font-size: 14px; }
+        .pdf-mode table { flex: 1; margin-bottom: 10px; width: 100%; height: 100%; }
+        .pdf-mode th { padding: 6px 8px; font-size: 13px; height: 25px; }
+        .pdf-mode td { padding: 4px 8px; font-size: 14px; height: auto; }
+        .pdf-mode .footer { margin-top: auto; padding-top: 10px; }
+        .pdf-mode .signature-box { width: 200px; }
+        .pdf-mode .signature-box p { font-size: 11px; }
+    </style>
+    <script>
+      function removeWhiteBackground(imgElement) {
+          if (!imgElement) return;
+          if (imgElement.dataset.bgRemoved === 'true') return;
+          
+          const proceed = () => {
+              if (imgElement.dataset.bgRemoved === 'true') return;
+              
+              try {
+                  const canvas = document.createElement('canvas');
+                  const ctx = canvas.getContext('2d');
+                  const width = imgElement.naturalWidth || imgElement.width || 300;
+                  const height = imgElement.naturalHeight || imgElement.height || 300;
+                  canvas.width = width;
+                  canvas.height = height;
+                  
+                  ctx.drawImage(imgElement, 0, 0);
+                  const imgData = ctx.getImageData(0, 0, width, height);
+                  const data = imgData.data;
+                  
+                  // Flood-fill starting from the four corners to remove only the outer background
+                  const tolerance = 45; // color match tolerance
+                  const visited = new Uint8Array(width * height);
+                  
+                  const corners = [
+                      {x: 0, y: 0},
+                      {x: width - 1, y: 0},
+                      {x: 0, y: height - 1},
+                      {x: width - 1, y: height - 1}
+                  ];
+                  
+                  let removedAny = false;
+                  
+                  for (const corner of corners) {
+                      const cIdx = (corner.y * width + corner.x);
+                      if (visited[cIdx]) continue;
+                      
+                      const rBg = data[cIdx * 4];
+                      const gBg = data[cIdx * 4 + 1];
+                      const bBg = data[cIdx * 4 + 2];
+                      const aBg = data[cIdx * 4 + 3];
+                      
+                      // If the corner is already transparent, skip
+                      if (aBg < 50) continue;
+                      
+                      // Start BFS from this corner
+                      const queue = [[corner.x, corner.y]];
+                      visited[cIdx] = 1;
+                      
+                      let head = 0;
+                      while (head < queue.length) {
+                          const [cx, cy] = queue[head++];
+                          const idx = (cy * width + cx) * 4;
+                          
+                          // Set this pixel to transparent
+                          data[idx + 3] = 0;
+                          removedAny = true;
+                          
+                          const neighbors = [
+                              [cx + 1, cy],
+                              [cx - 1, cy],
+                              [cx, cy + 1],
+                              [cx, cy - 1]
+                          ];
+                          
+                          for (const [nx, ny] of neighbors) {
+                              if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                  const nIdx = ny * width + nx;
+                                  if (!visited[nIdx]) {
+                                      const pIdx = nIdx * 4;
+                                      const r = data[pIdx];
+                                      const g = data[pIdx+1];
+                                      const b = data[pIdx+2];
+                                      const a = data[pIdx+3];
+                                      
+                                      // Match if neighbor color is close to the corner background color
+                                      if (a >= 50 &&
+                                          Math.abs(r - rBg) <= tolerance &&
+                                          Math.abs(g - gBg) <= tolerance &&
+                                          Math.abs(b - bBg) <= tolerance) {
+                                          queue.push([nx, ny]);
+                                          visited[nIdx] = 1;
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }
+                  
+                  if (removedAny) {
+                      ctx.putImageData(imgData, 0, 0);
+                      imgElement.dataset.bgRemoved = 'true';
+                      imgElement.src = canvas.toDataURL('image/png');
+                  }
+              } catch (e) {
+                  console.warn("Could not remove background (CORS restrict?):", e);
+              }
+          };
+
+          if (imgElement.complete && imgElement.naturalWidth > 0) {
+              proceed();
+          } else {
+              imgElement.onload = proceed;
+          }
+      }
+    </script>
+</head>
+<body>
+
+    <div id="print-content">
+        <div class="header">
+        <!-- App Logo (Left) -->
+        <div class="header-logo-container">
+            {% if site_settings.app_logo %}
+                <img src="{{ site_settings.app_logo.url }}" class="header-logo" alt="App Logo" onload="removeWhiteBackground(this)">
+            {% else %}
+                <div class="header-logo-placeholder">{{ site_settings.app_name|slice:":1" }}</div>
+            {% endif %}
+        </div>
+        
+        <!-- Tournament Info (Center) -->
+        <div class="header-text">
+            <h1>{{ tournament.name|default:site_settings.app_name }}</h1>
+            <p>Saison {{ tournament.year|default:"2025" }} — Liste Officielle des Joueurs</p>
+            <div style="font-size: 10px; color: #777; margin-top: 5px;">Document généré le {{ now|date:"d/m/Y H:i" }}</div>
+        </div>
+
+        <!-- Team Logo (Right) -->
+        <div class="header-logo-container" style="text-align: right;">
+            {% if team.logo %}
+                <img src="{{ team.logo.url }}" class="header-logo" alt="Team Logo">
+            {% else %}
+                <div class="header-logo-placeholder" style="margin-left: auto;">{{ team.name|slice:":1" }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="team-info">
+        <div>
+            <label>Équipe / الفريق</label>
+            <span>{{ team.name }}</span>
+        </div>
+        <div>
+            <label>Quartier / الحي</label>
+            <span>{{ team.neighborhood }}</span>
+        </div>
+        <div>
+            <label>Responsable / المسؤول</label>
+            <span>
+                {% if team.manager %}
+                    {{ team.manager.get_full_name|default:team.manager.username }}
+                {% else %}
+                    {% trans "Non assigné" %}
+                {% endif %}
+            </span>
+        </div>
+        <div>
+            <label>Total Joueurs / مجموع اللاعبين</label>
+            <span>{% if request.GET.blank == '1' %}15{% else %}{{ players.count }}{% endif %}</span>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th width="40">#</th>
+                <th>Nom & Prénom / الاسم و اللقب</th>
+                <th>Poste / المركز</th>
+                <th>Date de Naissance / تاريخ الميلاد</th>
+                <th>N° Carte Nationale / رقم التعريف</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if request.GET.blank == '1' %}
+                {% with ''|center:15 as range %}
+                {% for _ in range %}
+                <tr>
+                    <td style="font-weight: bold; text-align: center;"></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                {% endfor %}
+                {% endwith %}
+            {% else %}
+                {% for player in players %}
+                <tr>
+                    <td style="font-weight: bold; text-align: center;">{{ player.jersey_number }}</td>
+                    <td>
+                        <div style="font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            {{ player.last_name|upper }} &nbsp;&nbsp;&nbsp; {{ player.first_name }}
+                            {% if player.is_captain %}
+                                <span class="badge" style="background: #c5a028; color: #fff; border: 1px solid #a4801b; font-size: 8px; padding: 1px 5px; border-radius: 3px; font-weight: bold; text-transform: uppercase;">
+                                    CAPITAINE / القائد
+                                </span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td><span class="badge">{{ player.get_position_display }}</span></td>
+                    <td>{{ player.date_of_birth|date:"d/m/Y"|default:"—" }} {% if player.age %}({{ player.age }} ans){% endif %}</td>
+                    <td style="font-family: monospace;">{{ player.display_national_id }}</td>
+                </tr>
+                {% endfor %}
+            {% endif %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <div class="signature-box">
+            <p>Signature du Responsable / قائد الفريق</p>
+            <div class="hint">(Précédé de la mention "Lu et approuvé")</div>
+        </div>
+
+        <div class="signature-box">
+            <p>Visa de l'Organisateur / المصادقة</p>
+            <div class="hint">(Date et Signature)</div>
+        </div>
+    </div>
+    </div>
+
+    <div style="margin-top: 40px; text-align: center; font-size: 10px; color: #999;" class="no-print">
+        <button onclick="window.print()" style="padding: 10px 20px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer;">🖨️ Lancer l'impression</button>
+        &nbsp;
+        <button onclick="window.close()" style="padding: 10px 20px; background: #eee; color: #333; border: 1px solid #ddd; border-radius: 5px; cursor: pointer;">✕ Fermer</button>
+    </div>
+    
+    <script>
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('pdf') === '1') {
+                // Hide the buttons before generating PDF
+                document.querySelector('.no-print').style.display = 'none';
+                
+                const element = document.getElementById('print-content');
+                // Apply the single-page A4 class
+                element.classList.add('pdf-mode');
+                
+                const opt = {
+                    margin:       0, // Margins are handled by .pdf-mode padding
+                    filename:     '{{ team.name|slugify }}_liste_joueurs.pdf',
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2, useCORS: true },
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+                
+                html2pdf().set(opt).from(element).save().then(function() {
+                    // Restore original state
+                    element.classList.remove('pdf-mode');
+                    document.querySelector('.no-print').style.display = 'block';
+                });
+            } else {
+                window.print();
+            }
+        };
+    </script>
+</body>
+</html>

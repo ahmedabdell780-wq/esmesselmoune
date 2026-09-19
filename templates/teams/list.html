@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% load i18n turniq_tags %}
+{% block title %}{% trans "Équipes" %} / الفرق{% endblock %}
+
+{% block content %}
+<!-- CINEMATIC PAGE HERO -->
+<div class="relative w-full min-h-[300px] mb-12 rounded-[2.5rem] overflow-hidden border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] group animate-fade-in-up">
+  <!-- Deep Cinematic Background -->
+  <div class="absolute inset-0 bg-[#070b14] z-0"></div>
+  <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-900/30 via-transparent to-transparent z-0"></div>
+  <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-primary/15 via-transparent to-transparent z-0"></div>
+  
+  <!-- Subtle Grid Pattern -->
+  <div class="absolute inset-0 opacity-[0.03] mix-blend-overlay pointer-events-none" style="background-image: url('data:image/svg+xml,%3Csvg width=%2230%22 height=%2230%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cpath d=%22M30 0L0 0 0 30%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%221%22/%3E%3C/svg%3E'); background-size: 30px 30px;"></div>
+
+  <!-- Decorative geometric elements -->
+  <div class="absolute -top-10 -right-10 w-64 h-64 border-[1px] border-white/5 rounded-full blur-[1px] opacity-50 group-hover:scale-110 transition-transform duration-[2s] pointer-events-none"></div>
+  <div class="absolute top-10 right-10 w-32 h-32 border-[1px] border-primary/20 rounded-full blur-[1px] opacity-60 group-hover:scale-90 transition-transform duration-[2s] pointer-events-none"></div>
+  
+  <div class="relative z-10 flex flex-col lg:flex-row items-center justify-between p-8 sm:p-12 h-full gap-10 bg-gradient-to-r from-black/60 via-black/40 to-transparent">
+    
+    <!-- Title Area -->
+    <div class="flex flex-col items-center lg:items-start text-center lg:text-left w-full lg:w-auto">
+      <div class="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/5 backdrop-blur-md border border-white/10 shadow-lg mb-6">
+        <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+        <span class="text-xs text-white/90 font-bold uppercase tracking-[0.2em]">{% trans "Championnat Inter-Quartiers" %}</span>
+      </div>
+      
+      <h1 class="font-bebas text-7xl sm:text-[6rem] leading-[0.9] tracking-wider text-transparent bg-clip-text bg-gradient-to-b from-white via-white/90 to-white/40 drop-shadow-2xl mb-6">
+        ÉQUIPES <span class="text-primary font-cairo">الفرق</span>
+      </h1>
+      
+      <div class="flex flex-wrap items-center justify-center lg:justify-start gap-4">
+        <div class="flex items-center gap-3 bg-primary/10 border border-primary/20 px-6 py-2.5 rounded-2xl backdrop-blur-md shadow-[0_0_20px_rgba(197,160,40,0.15)] group/badge hover:bg-primary/20 transition-colors">
+          <span class="text-3xl filter drop-shadow-md group-hover/badge:scale-110 transition-transform">🛡️</span>
+          <div class="flex flex-col text-left">
+            <span class="font-bebas text-3xl text-primary leading-none">{{ teams|length }}</span>
+            <span class="text-[9px] text-primary/70 font-black uppercase tracking-[0.2em] leading-none mt-1">Total Équipes</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search & Filters Area (Glassmorphic) -->
+    <div class="w-full lg:w-[480px] p-6 sm:p-8 rounded-[2rem] bg-white/[0.02] backdrop-blur-2xl border border-white/10 shadow-2xl flex flex-col gap-4">
+      <form method="get" class="flex flex-col gap-4 w-full m-0">
+        <!-- Search Input -->
+        <div class="relative w-full group/search">
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within/search:text-primary transition-colors">
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <input type="text" name="q" value="{{ search_query }}" placeholder="{% trans 'Rechercher une équipe...' %} / ابحث عن فريق"
+                 class="w-full bg-black/50 border border-white/10 text-white rounded-xl pl-12 pr-4 py-3.5 focus:ring-2 focus:ring-primary/50 focus:border-primary/50 outline-none transition-all placeholder-gray-500 text-sm font-bold shadow-inner"/>
+        </div>
+        
+        <!-- Tournament Filter & Reset -->
+        <div class="flex flex-col sm:flex-row gap-3 w-full">
+          <div class="relative flex-1">
+            <select name="tournament" onchange="this.form.submit()" class="w-full bg-black/50 border border-white/10 text-white/90 text-xs rounded-xl px-4 py-3 pr-10 focus:ring-2 focus:ring-primary/50 outline-none appearance-none font-bold tracking-wider cursor-pointer transition-all hover:bg-black/70 shadow-inner">
+              <option value="" class="bg-slate-900 text-white">🏆 كل الدوريات / Tous les tournois</option>
+              {% for t in tournaments %}
+                <option value="{{ t.pk }}" class="bg-slate-900 text-white" {% if selected_tournament == t.pk|stringformat:"s" %}selected{% endif %}>
+                  {{ t.name }} ({{ t.year }})
+                </option>
+              {% endfor %}
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+          </div>
+
+          {% if search_query or selected_tournament %}
+          <a href="{% url 'teams:list' %}" class="flex items-center justify-center w-full sm:w-12 h-11 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-colors shrink-0" title="Réinitialiser / مسح الفلاتر">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </a>
+          {% endif %}
+        </div>
+      </form>
+      
+      {% if can_manage %}
+      <a href="{% url 'teams:create' %}" class="btn bg-primary hover:bg-primary/90 text-black font-black py-3 px-6 rounded-xl shadow-[0_0_25px_rgba(197,160,40,0.3)] w-full flex items-center justify-center gap-2 transition-transform hover:scale-105 border border-yellow-300 mt-2">
+        <span class="text-xl">➕</span>
+        <span class="text-sm uppercase tracking-widest">{% trans "Ajouter" %} / إضافة فريق</span>
+      </a>
+      {% endif %}
+    </div>
+    
+  </div>
+</div>
+
+<!-- Teams Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+  {% for team in teams %}
+  <div class="group relative flex flex-col h-full bg-[#0a0f1c] rounded-[1.5rem] border border-white/10 hover:border-blue-500/40 transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_15px_40px_-15px_rgba(59,130,246,0.4)] overflow-hidden">
+    
+    <!-- Glowing Background Effect on Hover -->
+    <div class="absolute inset-0 bg-gradient-to-b from-blue-600/0 to-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+
+    <!-- Cover Image / Gradient Top -->
+    <div class="h-24 relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br transition-all duration-700 group-hover:scale-110"
+           style="background: linear-gradient(135deg, {{ team.color_primary|default:'#1e3a8a' }}, {{ team.color_secondary|default:'#0f172a' }}); opacity: 0.8;">
+      </div>
+      <!-- Mesh pattern -->
+      <div class="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.1)_1px,transparent_1px)] [background-size:10px_10px] opacity-30"></div>
+      <!-- Fade to bottom -->
+      <div class="absolute bottom-0 left-0 w-full h-16 bg-gradient-to-t from-[#0a0f1c] to-transparent"></div>
+    </div>
+
+    <!-- Content -->
+    <div class="px-5 pb-5 flex-1 flex flex-col relative z-10 -mt-10">
+      <!-- Header: Logo & Badge -->
+      <div class="flex justify-between items-end mb-4">
+        <!-- Logo Container -->
+        <div class="w-16 h-16 rounded-xl bg-white p-1 shadow-xl relative group-hover:scale-105 transition-transform duration-500 flex-shrink-0 z-20 border-2 border-[#0a0f1c]">
+          <div class="w-full h-full rounded-lg border border-gray-100 overflow-hidden bg-white flex items-center justify-center relative">
+            {% if team.logo %}
+              <img src="{{ team.logo.url }}" class="w-full h-full object-contain p-0.5">
+            {% else %}
+              <div class="w-full h-full flex items-center justify-center text-xl bg-gradient-to-br from-slate-100 to-slate-200">🛡️</div>
+            {% endif %}
+            <!-- Glass glare -->
+            <div class="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/40 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none transform -translate-x-full group-hover:translate-x-full"></div>
+          </div>
+        </div>
+        
+        <!-- Neighborhood Badge -->
+        <div class="mb-3">
+          <span class="px-3 py-1 bg-[#121a2f] border border-white/5 rounded-full text-[8px] font-bold tracking-[0.2em] uppercase text-blue-400 group-hover:border-blue-500/30 group-hover:bg-blue-500/10 transition-all shadow-inner whitespace-nowrap">
+            📍 {{ team.neighborhood|default:"Quartier Inconnu" }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Title & Stats -->
+      <div class="mb-5 flex-1 flex flex-col">
+        <h3 class="font-bebas text-2xl text-white tracking-widest mb-1 drop-shadow-md group-hover:text-blue-300 transition-colors truncate w-full" title="{{ team.name }}">
+          {{ team.name }}
+        </h3>
+        
+        <div class="w-8 h-0.5 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full mb-4 opacity-50 group-hover:opacity-100 group-hover:w-12 transition-all duration-500"></div>
+        
+        <!-- Sleek Stats -->
+        <div class="grid grid-cols-2 gap-2 mt-auto">
+          <div class="bg-black/30 border border-white/5 rounded-lg p-2.5 flex items-center justify-between group-hover:bg-white/5 transition-colors group/stat">
+            <span class="text-[8px] text-gray-500 uppercase tracking-widest font-bold group-hover/stat:text-gray-400 transition-colors">Joueurs</span>
+            <span class="text-xs font-black text-white font-mono">{{ team.player_count|default:"0" }}</span>
+          </div>
+          <div class="bg-black/30 border border-white/5 rounded-lg p-2.5 flex items-center justify-between group-hover:bg-white/5 transition-colors group/stat">
+            <span class="text-[8px] text-gray-500 uppercase tracking-widest font-bold group-hover/stat:text-gray-400 transition-colors">Victoires</span>
+            <span class="text-xs font-black text-white font-mono">{{ team.win_count|default:"0" }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      {% if can_manage or team.manager == request.user %}
+      <div class="flex gap-2 w-full mt-auto">
+        <a href="{% url 'teams:detail' team.pk %}" class="flex-1 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-[9px] font-black tracking-widest uppercase py-2.5 rounded-lg text-center transition-all shadow-md shadow-blue-500/20">
+          {% trans "Détails" %}
+        </a>
+        <a href="{% url 'teams:player_list' team.pk %}" class="flex-1 bg-white/5 hover:bg-white/10 text-white border border-white/5 text-[9px] font-black tracking-widest uppercase py-2.5 rounded-lg text-center transition-all">
+          {% trans "Joueurs" %}
+        </a>
+        {% if can_manage %}
+        <a href="{% url 'teams:edit' team.pk %}" class="w-10 bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg flex items-center justify-center transition-all text-xs text-gray-400 hover:text-white" title="Modifier">
+          ✏️
+        </a>
+        {% endif %}
+      </div>
+      {% else %}
+      <div class="w-full mt-auto bg-white/5 border border-white/5 text-gray-500 text-[9px] font-bold tracking-widest uppercase py-2.5 rounded-lg text-center flex items-center justify-center gap-2">
+        🔒 {% trans "Privé" %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-span-full py-20 text-center">
+    <div class="inline-flex w-32 h-32 rounded-full bg-white/5 border border-white/10 items-center justify-center text-6xl mb-8 opacity-40">
+      ⚽
+    </div>
+    <h2 class="font-bebas text-4xl text-white tracking-widest mb-4">{% trans "Aucune équipe trouvée" %}</h2>
+    <p class="text-gray-500 max-w-md mx-auto mb-10">{% trans "Commencez par ajouter votre première équipe au championnat." %}</p>
+    {% if can_manage %}
+    <a href="{% url 'teams:create' %}" class="btn btn-primary px-10 py-4 rounded-2xl shadow-2xl">
+      ➕ {% trans "Ajouter une équipe" %}
+    </a>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Custom Confirm Modal Integration -->
+{% if can_manage %}
+<script>
+function confirmDelete(title, message, url) {
+    // Custom logic to handle deletion confirm
+    if (confirm(message)) {
+        window.location.href = url;
+    }
+}
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block title %}{% trans "Tirage au sort manuel - Phase Finale" %} / القرعة اليدوية للمرحلة النهائية{% endblock %}
+
+{% block content %}
+<div class="relative mb-10 rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/10">
+    <div class="absolute inset-0 bg-gradient-to-br from-[#0f172a] via-[#311010] to-[#0a0f1c] z-0"></div>
+    <div class="absolute top-0 right-0 w-96 h-96 bg-rose-500/20 rounded-full blur-[120px] pointer-events-none"></div>
+    <div class="absolute bottom-0 left-0 w-64 h-64 bg-amber-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+    
+    <div class="relative z-10 p-8 sm:p-12 flex flex-col sm:flex-row items-center gap-6">
+        <div class="w-24 h-24 rounded-[2rem] bg-gradient-to-br from-rose-500/30 to-amber-500/10 border border-rose-500/40 flex items-center justify-center text-5xl shadow-[0_0_40px_rgba(244,63,94,0.3)] flex-shrink-0">
+            🏆
+        </div>
+        <div class="text-center sm:text-right">
+            <h1 class="font-bebas text-5xl sm:text-6xl tracking-[0.1em] text-white leading-none drop-shadow-xl flex flex-col sm:flex-row gap-3">
+                القرعة اليدوية للأدوار النهائية
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-amber-400 font-black">/ TIRAGE MANUEL</span>
+            </h1>
+            <p class="text-gray-300 mt-3 font-bold flex flex-col sm:flex-row gap-3 items-center text-sm">
+                <span class="px-3 py-1 bg-black/40 border border-white/10 rounded-lg"><span class="text-rose-400">1️⃣</span> حدد أطراف مواجهات الربع النهائي (Quarts de finale)</span>
+                <span class="hidden sm:block text-white/20">|</span>
+                <span class="px-3 py-1 bg-black/40 border border-white/10 rounded-lg"><span class="text-amber-400">2️⃣</span> النظام سينشئ شجرة البطولة التنافسية تلقائياً</span>
+            </p>
+        </div>
+    </div>
+</div>
+
+<form method="post" id="manual-knockout-form" class="max-w-6xl mx-auto space-y-8">
+  {% csrf_token %}
+
+  <!-- Notice Banner -->
+  <div class="p-6 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-sm flex items-center gap-4">
+      <span class="text-3xl">💡</span>
+      <div>
+          <strong class="font-bold block text-base text-amber-300">ملاحظة تنظيمية:</strong>
+          يمكنك تغيير أي فريق من القوائم المنسدلة أدناه لضبط المواجهات المباشرة للربع النهائي، وسيتم تمرير الفائزين تلقائياً إلى النصف النهائي والنهائي.
+      </div>
+  </div>
+
+  <!-- MATCHES GRID (4 Quarter Final Matches) -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <!-- MATCH 1 (QF1 - Right Wing Top) -->
+      <div class="card p-6 rounded-3xl border border-white/10 bg-slate-900/60 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+          <div class="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+              <div class="flex items-center gap-2">
+                  <span class="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center font-black text-sm">QF1</span>
+                  <h3 class="font-bold text-white text-lg">المباراة الأولى (جهة النصف النهائي 1)</h3>
+              </div>
+              <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">الجهة اليمنى</span>
+          </div>
+
+          <div class="space-y-4">
+              <!-- Team 1 -->
+              <div>
+                  <label class="block text-xs font-bold text-gray-400 mb-1">الفريق الأول (مثلاً: متصدر A):</label>
+                  <select name="match_1_team1" class="form-input w-full py-3 px-4 rounded-xl bg-black/50 border-white/20 text-white font-bold text-sm">
+                      <option value="">-- اختر الفريق الأول --</option>
+                      {% for team in confirmed_teams %}
+                          <option value="{{ team.id }}" 
+                            {% if qf_matches.0 and qf_matches.0.team1_id == team.id %}selected
+                            {% elif not qf_matches and seed_teams.A1 and seed_teams.A1.id == team.id %}selected{% endif %}>
+                              {{ team.name }} {% if seed_teams.A1 and seed_teams.A1.id == team.id %}(متصدر A1){% endif %}
+                          </option>
+                      {% endfor %}
+                  </select>
+              </div>
+
+              <div class="flex justify-center my-1">
+                  <span class="w-8 h-8 rounded-full bg-rose-500 text-black font-black text-xs flex items-center justify-center shadow-lg">VS</span>
+              </div>
+
+              <!-- Team 2 -->
+              <div>
+                  <label class="block text-xs font-bold text-gray-400 mb-1">الفريق الثاني (مثلاً: ثاني B):</label>
+                  <select name="match_1_team2" class="form-input w-full py-3 px-4 rounded-xl bg-black/50 border-white/20 text-white font-bold text-sm">
+                      <option value="">-- اختر الفريق الثاني --</option>
+                      {% for team in confirmed_teams %}
+                          <option value="{{ team.id }}" 
+                            {% if qf_matches.0 and qf_matches.0.team2_id == team.id %}selected
+                            {% elif not qf_matches and seed_teams.B2 and seed_teams.B2.id == team.id %}selected{% endif %}>
+                              {{ team.name }} {% if seed_teams.B2 and seed_teams.B2.id == team.id %}(ثاني B2){% endif %}
+                          </option>
+                      {% endfor %}
+                  </select>
+              </div>
+          </div>
+      </div>
+
+      <!-- MATCH 2 (QF2 - Right Wing Bottom) -->
+      <div class="card p-6 rounded-3xl border border-white/10 bg-slate-900/60 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+          <div class="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+              <div class="flex items-center gap-2">
+                  <span class="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center font-black text-sm">QF2</span>
+                  <h3 class="font-bold text-white text-lg">المباراة الثانية (جهة النصف النهائي 1)</h3>
+              </div>
+              <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">الجهة اليمنى</span>
+          </div>
+
+          <div class="space-y-4">
+              <!-- Team 1 -->
+              <div>
+                  <label class="block text-xs font-bold text-gray-400 mb-1">الفريق الأول (مثلاً: متصدر C):</label>
+                  <select name="match_2_team1" class="form-input w-full py-3 px-4 rounded-xl bg-black/50 border-white/20 text-white font-bold text-sm">
+                      <option value="">-- اختر الفريق الأول --</option>
+                      {% for team in confirmed_teams %}
+                          <option value="{{ team.id }}" 
+                            {% if qf_matches.1 and qf_matches.1.team1_id == team.id %}selected
+                            {% elif not qf_matches and seed_teams.C1 and seed_teams.C1.id == team.id %}selected{% endif %}>
+                              {{ team.name }} {% if seed_teams.C1 and seed_teams.C1.id == team.id %}(متصدر C1){% endif %}
+                          </option>
+                      {% endfor %}
+                  </select>
+              </div>
+
+              <div class="flex justify-center my-1">
+                  <span class="w-8 h-8 rounded-full bg-rose-500 text-black font-black text-xs flex items-center justify-center shadow-lg">VS</span>
+              </div>
+
+              <!-- Team 2 -->
+              <div>
+                  <label class="block text-xs font-bold text-gray-400 mb-1">الفريق الثاني (مثلاً: ثاني D):</label>
+                  <select name="match_2_team2" class="form-input w-full py-3 px-4 rounded-xl bg-black/50 border-white/20 text-white font-bold text-sm">
+                      <option value="">-- اختر الفريق الثاني --</option>
+                      {% for team in confirmed_teams %}
+                          <option value="{{ team.id }}" 
+                            {% if qf_matches.1 and qf_matches.1.team2_id == team.id %}selected
+                            {% elif not qf_matches and seed_teams.D2 and seed_teams.D2.id == team.id %}selected{% endif %}>
+                              {{ team.name }} {% if seed_teams.D2 and seed_teams.D2.id == team.id %}(ثاني D2){% endif %}
+                          </option>
+                      {% endfor %}
+                  </select>
+              </div>
+          </div>
+      </div>
+
+      <!-- MATCH 3 (QF3 - Left Wing Top) -->
+      <div class="card p-6 rounded-3xl border border-white/10 bg-slate-900/60 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+          <div class="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+              <div class="flex items-center gap-2">
+                  <span class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-sm">QF3</span>
+                  <h3 class="font-bold text-white text-lg">المباراة الثالثة (جهة النصف النهائي 2)</h3>
+              </div>
+              <span class="text-xs px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-300 font-bold border border-blue-500/30">الجهة اليسرى</span>
+          </div>
+
+          <div class="space-y-4">
+              <!-- Team 1 -->
+              <div>
+                  <label class="block text-xs font-bold text-gray-400 mb-1">الفريق الأول (مثلاً: متصدر B):</label>
+                  <select name="match_3_team1" class="form-input w-full py-3 px-4 rounded-xl bg-black/50 border-white/20 text-white font-bold text-sm">
+                      <option value="">-- اختر الفريق الأول --</option>
+                      {% for team in confirmed_teams %}
+                          <option value="{{ team.id }}" 
+                            {% if qf_matches.2 and qf_matches.2.team1_id == team.id %}selected
+                            {% elif not qf_matches and seed_teams.B1 and seed_teams.B1.id == team.id %}selected{% endif %}>
+                              {{ team.name }} {% if seed_teams.B1 and seed_teams.B1.id == team.id %}(متصدر B1){% endif %}
+                          </option>
+                      {% endfor %}
+                  </select>
+              </div>
+
+              <div class="flex justify-center my-1">
+                  <span class="w-8 h-8 rounded-full bg-amber-500 text-black font-black text-xs flex items-center justify-center shadow-lg">VS</span>
+              </div>
+
+              <!-- Team 2 -->
+              <div>
+                  <label class="block text-xs font-bold text-gray-400 mb-1">الفريق الثاني (مثلاً: ثاني A):</label>
+                  <select name="match_3_team2" class="form-input w-full py-3 px-4 rounded-xl bg-black/50 border-white/20 text-white font-bold text-sm">
+                      <option value="">-- اختر الفريق الثاني --</option>
+                      {% for team in confirmed_teams %}
+                          <option value="{{ team.id }}" 
+                            {% if qf_matches.2 and qf_matches.2.team2_id == team.id %}selected
+                            {% elif not qf_matches and seed_teams.A2 and seed_teams.A2.id == team.id %}selected{% endif %}>
+                              {{ team.name }} {% if seed_teams.A2 and seed_teams.A2.id == team.id %}(ثاني A2){% endif %}
+                          </option>
+                      {% endfor %}
+                  </select>
+              </div>
+          </div>
+      </div>
+
+      <!-- MATCH 4 (QF4 - Left Wing Bottom) -->
+      <div class="card p-6 rounded-3xl border border-white/10 bg-slate-900/60 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+          <div class="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+              <div class="flex items-center gap-2">
+                  <span class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-sm">QF4</span>
+                  <h3 class="font-bold text-white text-lg">المباراة الرابعة (جهة النصف النهائي 2)</h3>
+              </div>
+              <span class="text-xs px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-300 font-bold border border-blue-500/30">الجهة اليسرى</span>
+          </div>
+
+          <div class="space-y-4">
+              <!-- Team 1 -->
+              <div>
+                  <label class="block text-xs font-bold text-gray-400 mb-1">الفريق الأول (مثلاً: متصدر D):</label>
+                  <select name="match_4_team1" class="form-input w-full py-3 px-4 rounded-xl bg-black/50 border-white/20 text-white font-bold text-sm">
+                      <option value="">-- اختر الفريق الأول --</option>
+                      {% for team in confirmed_teams %}
+                          <option value="{{ team.id }}" 
+                            {% if qf_matches.3 and qf_matches.3.team1_id == team.id %}selected
+                            {% elif not qf_matches and seed_teams.D1 and seed_teams.D1.id == team.id %}selected{% endif %}>
+                              {{ team.name }} {% if seed_teams.D1 and seed_teams.D1.id == team.id %}(متصدر D1){% endif %}
+                          </option>
+                      {% endfor %}
+                  </select>
+              </div>
+
+              <div class="flex justify-center my-1">
+                  <span class="w-8 h-8 rounded-full bg-amber-500 text-black font-black text-xs flex items-center justify-center shadow-lg">VS</span>
+              </div>
+
+              <!-- Team 2 -->
+              <div>
+                  <label class="block text-xs font-bold text-gray-400 mb-1">الفريق الثاني (مثلاً: ثاني C):</label>
+                  <select name="match_4_team2" class="form-input w-full py-3 px-4 rounded-xl bg-black/50 border-white/20 text-white font-bold text-sm">
+                      <option value="">-- اختر الفريق الثاني --</option>
+                      {% for team in confirmed_teams %}
+                          <option value="{{ team.id }}" 
+                            {% if qf_matches.3 and qf_matches.3.team2_id == team.id %}selected
+                            {% elif not qf_matches and seed_teams.C2 and seed_teams.C2.id == team.id %}selected{% endif %}>
+                              {{ team.name }} {% if seed_teams.C2 and seed_teams.C2.id == team.id %}(ثاني C2){% endif %}
+                          </option>
+                      {% endfor %}
+                  </select>
+              </div>
+          </div>
+      </div>
+
+  </div>
+
+  <div class="flex justify-end gap-4 mt-8 pt-6 border-t border-white/10">
+    <a href="{% url 'tournaments:admin_panel' %}" class="btn btn-ghost px-8 py-4 font-bold rounded-xl border border-white/10 hover:bg-white/5">✕ إلغاء / Annuler</a>
+    <button type="submit" class="btn btn-primary px-10 py-4 font-bold rounded-xl shadow-[0_10px_25px_rgba(244,63,94,0.4)] hover:-translate-y-1 hover:scale-105 transition-all text-lg flex items-center gap-2 bg-gradient-to-r from-rose-600 to-amber-600 border-none">
+      💾 {% trans "Enregistrer et Générer l'Arbre" %} / حفظ وتوليد المرحلة النهائية
+    </button>
+  </div>
+</form>
+{% endblock %}

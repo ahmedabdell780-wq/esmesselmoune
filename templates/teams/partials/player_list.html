@@ -1,0 +1,41 @@
+{% for player in players %}
+{% load turniq_tags %}
+<div class="flex items-center gap-3 px-4 py-3 border-b hover:bg-white/3 transition"
+     style="border-color:var(--border)">
+  <!-- Jersey number -->
+  <div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
+       style="background:{{ player.team.color_primary }}15;color:{{ player.team.color_primary }};border:1px solid {{ player.team.color_primary }}30">
+    {{ player.jersey_number }}
+  </div>
+
+  <!-- Photo or initials -->
+  <div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center text-xs font-bold"
+       style="background:var(--bg-card2);color:var(--muted)">
+    {% if player.photo %}
+      <img src="{{ player.photo.url }}" class="w-full h-full object-cover"/>
+    {% else %}
+      {{ player.first_name|first }}{{ player.last_name|first }}
+    {% endif %}
+  </div>
+
+  <!-- Name -->
+  <a href="{% url 'teams:player_detail' player.pk %}"
+     class="flex-1 hover:underline min-w-0">
+    <div class="font-semibold text-sm truncate
+      {% if player.is_suspended %}line-through text-red-400{% endif %}">
+      {{ player.full_name }}
+      {% if player.is_suspended %}
+        <span class="text-xs no-underline">🚫</span>
+      {% endif %}
+    </div>
+    {% if player.age %}
+      <div class="text-xs" style="color:var(--muted)">{{ player.age }} ans · {{ player.get_preferred_foot_display }} pied</div>
+    {% endif %}
+  </a>
+
+  <!-- Physical -->
+  <div class="hidden sm:flex items-center gap-2 text-xs" style="color:var(--muted)">
+    {% if player.height_cm %}<span>{{ player.height_cm }}cm</span>{% endif %}
+  </div>
+</div>
+{% endfor %}

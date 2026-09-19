@@ -1,0 +1,594 @@
+{% extends 'base.html' %}
+{% load i18n turniq_tags %}
+{% block title %}لوحة التحكم / Admin{% endblock %}
+
+{% block content %}
+<!-- ADMIN HERO DASHBOARD -->
+<div class="relative mb-10 rounded-[2.5rem] overflow-hidden group shadow-2xl border border-white/10">
+  <!-- Dynamic Background -->
+  <div class="absolute inset-0 bg-gradient-to-br from-slate-900 to-[#0a0f1c] z-0"></div>
+  <div class="absolute -top-32 -right-32 w-96 h-96 bg-primary/20 rounded-full blur-[100px] pointer-events-none group-hover:bg-primary/30 transition-all duration-700"></div>
+  <div class="absolute -bottom-32 -left-32 w-96 h-96 bg-blue-500/10 rounded-full blur-[100px] pointer-events-none group-hover:bg-blue-500/20 transition-all duration-700"></div>
+
+  <!-- Content Overlay -->
+  <div class="relative z-10 p-8 sm:p-12 backdrop-blur-3xl bg-black/10 flex flex-col xl:flex-row items-center justify-between gap-8">
+    
+    <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 w-full xl:w-auto text-center sm:text-right">
+      <div class="w-24 h-24 rounded-[2rem] bg-gradient-to-br from-primary/30 to-primary/5 border border-primary/40 flex items-center justify-center text-5xl shadow-[0_0_40px_rgba(202,138,4,0.3)] flex-shrink-0 mx-auto sm:mx-0">
+        🕹️
+      </div>
+      <div>
+        <h1 class="font-bebas text-5xl sm:text-6xl tracking-[0.1em] leading-none text-white drop-shadow-xl flex flex-col sm:flex-row sm:items-center gap-3">
+          لوحة التحكم
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400 font-black">/ ADMIN</span>
+        </h1>
+        <p class="text-sm mt-3 font-bold text-gray-400 tracking-wide flex items-center justify-center sm:justify-start gap-2">
+          <span class="relative flex h-3 w-3">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+          </span>
+          إدارة البطولات، الفرق، والجداول / Centre de Commandement
+        </p>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex flex-col sm:flex-row gap-4 w-full xl:w-auto justify-center xl:justify-end">
+      
+      <!-- Create Veterans Tournament -->
+      <form action="{% url 'tournaments:create_veterans' %}" method="post" class="w-full sm:w-auto">
+        {% csrf_token %}
+        <button type="submit" class="group w-full sm:w-auto relative px-6 py-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-yellow-500/50 transition-all shadow-lg overflow-hidden flex items-center gap-4" onclick="return confirm('هل أنت متأكد من إنشاء دورة الكهول للموسم الحالي؟')">
+          <span class="text-3xl drop-shadow-lg group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300">👴</span>
+          <div class="text-right">
+            <div class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Création Rapide</div>
+            <div class="text-sm text-white font-black drop-shadow-md">دورة الكهول (سريع)</div>
+          </div>
+        </button>
+      </form>
+
+      <!-- Create New Tournament -->
+      <button type="button" onclick="openCreateTournamentModal()" class="group w-full sm:w-auto relative px-8 py-4 rounded-2xl bg-gradient-to-br from-primary to-[#8b6b15] hover:from-primary hover:to-primary border border-white/20 hover:border-white/50 transition-all shadow-[0_0_30px_rgba(202,138,4,0.4)] overflow-hidden flex items-center gap-4">
+        <span class="text-3xl drop-shadow-lg group-hover:rotate-90 transition-transform duration-500">➕</span>
+        <div class="text-right">
+          <div class="text-[10px] text-white/70 font-bold uppercase tracking-widest mb-1">Nouveau Tournoi</div>
+          <div class="text-sm text-white font-black drop-shadow-md">إضافة دورة جديدة</div>
+        </div>
+      </button>
+
+    </div>
+  </div>
+</div>
+
+<!-- TOURNAMENT FILTER SELECTOR -->
+<div class="mb-8 p-4 rounded-2xl bg-black/30 border border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
+  <div class="flex items-center gap-3">
+    <span class="text-xl">🔍</span>
+    <div>
+      <h3 class="font-bold text-sm text-white">{% trans "Filtrer la vue" %} / تصفية عرض لوحة التحكم</h3>
+      <p class="text-[11px] opacity-60">{% trans "Choisissez un seul tournoi à afficher et gérer" %} / اختر دورة معينة لإدارتها بشكل منفصل</p>
+    </div>
+  </div>
+  <form method="get" class="flex items-center gap-2 w-full sm:w-auto">
+    <select name="tournament_id" onchange="this.form.submit()" class="form-input py-2 px-4 text-xs font-bold bg-zinc-900 border-white/10 text-white rounded-xl w-full sm:w-56 cursor-pointer">
+      <option value="">✨ {% trans "Tous les tournois" %} / جميع البطولات</option>
+      {% for t in all_tournaments_selector %}
+        <option value="{{ t.id }}" {% if selected_tournament_id == t.id %}selected{% endif %}>{{ t.name }} ({{ t.year }})</option>
+      {% endfor %}
+    </select>
+    {% if selected_tournament_id %}
+      <a href="{% url 'tournaments:admin_panel' %}" class="btn btn-ghost btn-sm text-rose-400 hover:text-rose-300 font-bold border border-rose-500/20 hover:bg-rose-500/10 whitespace-nowrap">
+        ✕ {% trans "Réinitialiser" %} / إلغاء
+      </a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- PENDING PARTICIPATIONS SECTION -->
+{% if pending_participations %}
+<div class="mb-10">
+    <div class="flex items-center gap-3 mb-4">
+        <span class="w-10 h-10 rounded-xl bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-xl">📋</span>
+        <div>
+            <h2 class="text-xl font-bold uppercase tracking-tight">{% trans "Demandes de participation" %} / طلبات المشاركة</h2>
+            <p class="text-xs opacity-60">{% trans "Équipes souhaitant rejoindre un tournoi" %}</p>
+        </div>
+        <span class="badge badge-red ml-auto">{{ pending_participations.count }}</span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% for tt in pending_participations %}
+        <div class="card rounded-2xl p-5 flex flex-col sm:flex-row items-center gap-4 border-l-4 border-yellow-500">
+            <div class="w-16 h-16 rounded-xl overflow-hidden border bg-white/5 flex-shrink-0" style="border-color:var(--border)">
+                {% if tt.team.logo %}
+                <img src="{{ tt.team.logo.url }}" class="w-full h-full object-cover"/>
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center text-2xl">⚽</div>
+                {% endif %}
+            </div>
+            <div class="flex-1 text-center sm:text-left">
+                <h3 class="font-bold text-lg leading-tight">{{ tt.team.name }}</h3>
+                <p class="text-xs opacity-60">
+                    📍 {{ tt.team.neighborhood }} · 
+                    {% if tt.team.manager %}
+                        {{ tt.team.manager.get_full_name|default:tt.team.manager.username }}
+                    {% else %}
+                        <span class="italic opacity-50">{% trans "Aucun responsable" %}</span>
+                    {% endif %}
+                </p>
+                <div class="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-bold">
+                    🏆 {{ tt.tournament.name }}
+                </div>
+                {% if tt.notes %}
+                <div class="mt-2 p-2 rounded-lg bg-black/20 text-[10px] italic border border-white/5">
+                    "{{ tt.notes }}"
+                </div>
+                {% endif %}
+            </div>
+            <div class="flex gap-2 w-full sm:w-auto">
+                <form action="{% url 'tournaments:participation_action' tt.pk %}" method="post" class="flex-1 sm:flex-none">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="approve"/>
+                    <button type="submit" class="btn btn-primary btn-sm w-full">✅ {% trans "Approuver" %}</button>
+                </form>
+                <form action="{% url 'tournaments:participation_action' tt.pk %}" method="post" class="flex-1 sm:flex-none">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="reject"/>
+                    <button type="submit" class="btn btn-danger btn-sm w-full">❌</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- MANUAL INCLUSION FORM -->
+<div class="mb-10 card p-6 rounded-2xl border border-white/10 shadow-lg">
+    <div class="flex flex-col xl:flex-row gap-6">
+        <div class="flex-1">
+            <h3 class="font-bebas text-2xl mb-1 text-white flex items-center gap-2">
+                <span class="text-primary">➕</span> {% trans "Ajout manuel d'équipe" %} / إضافة فريق يدوياً
+            </h3>
+            <p class="text-xs text-gray-400">{% trans "Inscrire directement une équipe existante à un tournoi sans passer par le processus de demande." %}</p>
+        </div>
+        <form action="" method="post" id="manual-inclusion-form" class="flex flex-col sm:flex-row gap-4 w-full xl:w-2/3 items-start">
+            {% csrf_token %}
+            <div class="flex flex-col gap-2 w-full sm:w-1/3">
+                <select name="tournament_id" class="form-input py-3 px-4 text-sm font-bold rounded-xl bg-black/40 border-white/10 text-white w-full" required onchange="updateInclusionAction(this.value)">
+                    <option value="">-- {% trans "Sélectionner le tournoi" %} --</option>
+                    {% for t in tournaments %}
+                    <option value="{{ t.pk }}">🏆 {{ t.name }} ({{ t.year }})</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary w-full py-3 rounded-xl shadow-lg mt-auto">
+                    ✅ {% trans "Ajouter les équipes" %}
+                </button>
+            </div>
+            
+            <div class="w-full sm:w-2/3">
+                <div class="bg-black/30 border border-white/10 rounded-xl h-[180px] overflow-y-auto p-2 flex flex-col gap-1 custom-scrollbar">
+                    {% for team in all_teams %}
+                    <label class="team-option flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 cursor-pointer transition-all border border-transparent" data-team-id="{{ team.pk }}">
+                        <input type="checkbox" name="team_ids" value="{{ team.pk }}" style="display: none;" onchange="
+                            if(this.checked) {
+                                this.parentElement.style.backgroundColor = 'rgba(202, 138, 4, 0.15)';
+                                this.parentElement.style.borderColor = 'rgba(202, 138, 4, 0.4)';
+                                this.nextElementSibling.style.backgroundColor = '#ca8a04';
+                                this.nextElementSibling.style.borderColor = '#ca8a04';
+                                this.nextElementSibling.firstElementChild.style.opacity = '1';
+                            } else {
+                                this.parentElement.style.backgroundColor = 'transparent';
+                                this.parentElement.style.borderColor = 'transparent';
+                                this.nextElementSibling.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+                                this.nextElementSibling.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                                this.nextElementSibling.firstElementChild.style.opacity = '0';
+                            }
+                        ">
+                        <!-- Custom Checkbox -->
+                        <div class="w-5 h-5 rounded bg-black/50 border border-white/20 flex items-center justify-center transition-all flex-shrink-0">
+                            <span class="text-black text-xs opacity-0 font-black">✓</span>
+                        </div>
+                        <!-- Team Logo -->
+                        <div class="w-10 h-10 rounded-full bg-white/5 border border-white/10 overflow-hidden flex items-center justify-center flex-shrink-0 shadow-sm">
+                            {% if team.logo %}
+                            <img src="{{ team.logo.url }}" class="w-full h-full object-cover">
+                            {% else %}
+                            <span class="text-sm">⚽</span>
+                            {% endif %}
+                        </div>
+                        <!-- Team Info -->
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm font-bold text-white truncate group-hover:text-primary transition-colors">{{ team.name }}</div>
+                            <div class="text-[9px] text-gray-500 font-bold uppercase tracking-widest truncate">📍 {{ team.neighborhood }}</div>
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+                <p class="text-[10px] text-gray-500 mt-2 font-medium">💡 يمكنك تحديد عدة فرق معاً لإضافتها دفعة واحدة.</p>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+/* Custom Scrollbar for the team list */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+</style>
+
+<script>
+const tournamentTeamsMap = {{ tournament_teams_map_json|safe }};
+
+function updateInclusionAction(tournamentId) {
+    const form = document.getElementById('manual-inclusion-form');
+    const teamOptions = document.querySelectorAll('.team-option');
+    
+    if (tournamentId) {
+        form.action = `/tournaments/admin/${tournamentId}/manual-inclusion/`;
+        
+        const existingTeams = tournamentTeamsMap[tournamentId] || [];
+        
+        teamOptions.forEach(option => {
+            const teamId = parseInt(option.dataset.teamId);
+            const checkbox = option.querySelector('input[type="checkbox"]');
+            
+            if (existingTeams.includes(teamId)) {
+                option.style.display = 'none';
+                checkbox.checked = false; // Deselect if hidden
+            } else {
+                option.style.display = 'flex';
+            }
+        });
+    } else {
+        form.action = "";
+        teamOptions.forEach(option => {
+            option.style.display = 'flex';
+        });
+    }
+}
+</script>
+
+
+{% for tournament in tournaments %}
+<div class="card rounded-2xl overflow-hidden mb-6">
+  <div class="px-6 py-4 flex items-center justify-between transition-all" 
+       style="{% if tournament.status == 'finished' %}background: linear-gradient(to right, rgba(16,185,129,0.15), rgba(16,185,129,0.02)); border-bottom: 2px solid rgba(16,185,129,0.3); border-right: 4px solid #10b981;{% else %}background:var(--card2); border-bottom:1px solid var(--border){% endif %}"
+       dir="rtl">
+    <div>
+      <h2 class="font-bold text-lg flex items-center gap-2">
+        {{ tournament.name }}
+        {% if tournament.status == 'finished' %}<span class="text-emerald-500 text-sm" title="دورة منتهية">✅</span>{% endif %}
+      </h2>
+      <p class="text-xs mt-0.5" style="color:var(--muted)">
+        {{ tournament.year }} · إصدار {{ tournament.edition }}
+        · {{ tournament.registered_team_count }}/{{ tournament.max_teams }} {% trans "équipes" %}
+      </p>
+    </div>
+    <span class="badge text-xs font-bold
+      {% if tournament.status == 'draft' %}badge-gray
+      {% elif tournament.status == 'registration' %}badge-blue
+      {% elif tournament.status == 'group_stage' %}
+      {% elif tournament.status == 'knockout' %}badge-red
+      {% elif tournament.status == 'finished' %}badge-green{% endif %}"
+      style="{% if tournament.status == 'group_stage' %}background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3){% endif %}">
+      {{ tournament.get_status_display }}
+    </span>
+  </div>
+
+  <div class="px-6 py-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+
+    <!-- Generate Groups -->
+    <div class="flex flex-col gap-2">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="tournament_id" value="{{ tournament.pk }}"/>
+        <input type="hidden" name="action" value="generate_groups"/>
+        <button type="submit" class="btn btn-success w-full justify-center"
+                {% if tournament.status not in 'registration group_stage' %}disabled style="opacity:.4;cursor:not-allowed"{% endif %}>
+          🎲 قرعة تلقائية / Auto
+        </button>
+      </form>
+      <a href="{% url 'tournaments:manual_groups' tournament.pk %}" 
+         class="btn btn-ghost btn-sm w-full justify-center border border-primary/20 hover:bg-primary/5"
+         {% if tournament.status not in 'registration group_stage' %}style="opacity:.4;pointer-events:none"{% endif %}>
+        📝 قرعة يدوية / Manuel
+      </a>
+    </div>
+
+    <!-- Generate Knockout -->
+    {% if tournament.format != 'round_robin' %}
+    <div class="flex flex-col gap-2">
+      <form method="post" onsubmit="return confirm('⚠️ هل أنت متأكد من رغبتك في توليد الأدوار الإقصائية (القرعة الذكية)؟\n\nسيقوم النظام بجلب المتأهلين من المجموعات وإنشاء الشجرة تلقائياً. أي مباريات إقصائية سابقة سيتم حذفها!');">
+        {% csrf_token %}
+        <input type="hidden" name="tournament_id" value="{{ tournament.pk }}"/>
+        <input type="hidden" name="action" value="generate_knockout"/>
+        <button type="submit" class="btn btn-danger w-full justify-center shadow-lg shadow-red-500/20"
+                title="يأخذ النظام تلقائياً أول وثاني كل مجموعة، ويرسم الشجرة (Bracket) بشكل آلي">
+          🏆 توليد المرحلة النهائية (قرعة ذكية)
+        </button>
+      </form>
+      <a href="{% url 'tournaments:manual_knockout' tournament.pk %}" 
+         class="btn btn-ghost btn-sm w-full justify-center border border-red-500/30 hover:bg-red-500/10 text-red-400 font-bold">
+        ✍️ قرعة يدوية / Tirage Manuel
+      </a>
+    </div>
+    {% else %}
+    <div class="flex items-center justify-center p-3 text-xs bg-gold/10 text-gold border border-gold/20 rounded-xl font-bold h-full min-h-[44px]">
+      🏆 بطولة ذهاب وإياب (لا توجد مرحلة إقصائية)
+    </div>
+    {% endif %}
+
+    <!-- Change Status -->
+    <form method="post" class="flex gap-2">
+      {% csrf_token %}
+      <input type="hidden" name="tournament_id" value="{{ tournament.pk }}"/>
+      <input type="hidden" name="action" value="set_status"/>
+      <select name="new_status" class="form-input flex-1 text-xs py-2">
+        {% for val, lbl in tournament.Status.choices %}
+          <option value="{{ val }}" {% if tournament.status == val %}selected{% endif %}>{{ lbl }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-ghost btn-sm px-3">↗</button>
+    </form>
+
+    <!-- Admin Actions -->
+    <div class="flex flex-col gap-2">
+      <a href="{% url 'tournaments:finance' tournament.pk %}" class="btn btn-primary w-full justify-center bg-gradient-to-r from-emerald-600 to-teal-600 border-none shadow-lg shadow-emerald-500/20">
+        💵 المالية / Finance
+      </a>
+      <a href="{% url 'tournaments:committee_list' tournament.pk %}" class="btn w-full justify-center font-bold border-none shadow-lg" style="background:linear-gradient(135deg,#1a5c2a,#2d7a3e);color:#fff;">
+        👥 اللجنة المنظمة / Comité
+      </a>
+      <a href="{% url 'tournaments:teams_print_detail' tournament.pk %}" target="_blank" class="btn btn-ghost w-full justify-center border border-white/20 hover:border-primary/50 hover:bg-primary/5">
+        🖨️ طباعة الفرق / Imprimer Équipes
+      </a>
+      <a href="{% url 'tournaments:draw_slips_print' tournament.pk %}" target="_blank" class="btn btn-ghost w-full justify-center border border-white/20 hover:border-blue-500/50 hover:bg-blue-500/10 text-blue-400">
+        ✂️ قصاصات القرعة / Billets de Tirage
+      </a>
+      <!-- Template Pro (A4) per Stage -->
+      <div class="p-3 rounded-2xl bg-gradient-to-br from-amber-500/10 via-emerald-500/10 to-blue-500/10 border border-amber-500/30 flex flex-col gap-2">
+        <div class="flex items-center justify-between text-xs font-black text-amber-300">
+          <span>🖼️ Template Pro (A4) - ملخص وبوستر حسب المرحلة</span>
+          <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[9px] font-black">A4 / PNG</span>
+        </div>
+        <div class="grid grid-cols-2 gap-1.5 text-xs font-bold">
+          <a href="{% url 'tournaments:stage_summary_detail' tournament.pk %}?stage=GROUP" target="_blank" class="px-2 py-1.5 rounded-lg bg-black/50 border border-white/10 hover:border-emerald-400 text-emerald-300 text-center transition-all flex items-center justify-center gap-1">
+            🟢 المجموعات
+          </a>
+          <a href="{% url 'tournaments:stage_summary_detail' tournament.pk %}?stage=QF" target="_blank" class="px-2 py-1.5 rounded-lg bg-black/50 border border-white/10 hover:border-rose-400 text-rose-300 text-center transition-all flex items-center justify-center gap-1">
+            🔴 الربع النهائي
+          </a>
+          <a href="{% url 'tournaments:stage_summary_detail' tournament.pk %}?stage=SF" target="_blank" class="px-2 py-1.5 rounded-lg bg-black/50 border border-white/10 hover:border-blue-400 text-blue-300 text-center transition-all flex items-center justify-center gap-1">
+            🔵 النصف النهائي
+          </a>
+          <a href="{% url 'tournaments:stage_summary_detail' tournament.pk %}?stage=FINAL" target="_blank" class="px-2 py-1.5 rounded-lg bg-black/50 border border-white/10 hover:border-amber-400 text-amber-300 text-center transition-all flex items-center justify-center gap-1">
+            🏆 النهائي
+          </a>
+        </div>
+      </div>
+
+      <a href="{% url 'tournaments:tree_print' tournament.pk %}" target="_blank" class="btn btn-ghost w-full justify-center border border-white/20 hover:border-[#126f3b]/50 hover:bg-[#126f3b]/10 text-[#79ff38]">
+        🌳 طباعة شجرة البطولة / Imprimer l'Arbre
+      </a>
+      
+      <!-- Dropdown for printing players of a specific team -->
+      <form action="{% url 'tournaments:all_players_print' tournament.pk %}" method="get" target="_blank" class="flex gap-2">
+        <select name="team_id" class="form-input flex-1 text-xs py-2 bg-transparent border-white/20 hover:border-primary/50 text-white" required>
+            <option value="" disabled selected class="bg-gray-900 text-white">🛡️ قائمة الضمان لفريق معين...</option>
+            {% for tt in tournament.tournament_teams.all %}
+                {% if tt.is_confirmed %}
+                <option value="{{ tt.team.id }}" class="bg-gray-900 text-white">{{ tt.team.name }}</option>
+                {% endif %}
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-ghost border border-white/20 hover:bg-primary/5 px-4">
+            طباعة
+        </button>
+      </form>
+      
+      <a href="{% url 'tournaments:all_players_print' tournament.pk %}" target="_blank" class="btn btn-ghost w-full justify-center border border-rose-500/20 hover:border-rose-500/50 hover:bg-rose-500/5 text-rose-400">
+        🛡️ قائمة الضمان لكل الفرق / Toutes les Assurances
+      </a>
+      <div class="flex gap-2">
+        <a href="/admin/tournaments/tournament/{{ tournament.pk }}/change/"
+           class="btn btn-ghost flex-1 justify-center" target="_blank" title="Paramètres avancés">
+          ⚙️ Admin
+        </a>
+        <form method="post" onsubmit="return confirm('⚠️ هل أنت متأكد من حذف البطولة نهائياً؟ سيتم مسح كل المباريات، المجموعات، والإحصائيات المرتبطة بها ولن يمكن التراجع!');" class="flex-1">
+          {% csrf_token %}
+          <input type="hidden" name="tournament_id" value="{{ tournament.pk }}"/>
+          <input type="hidden" name="action" value="delete_tournament"/>
+          <button type="submit" class="btn btn-danger w-full justify-center shadow-lg shadow-red-500/20" title="حذف البطولة بالكامل">
+            🗑️ حذف
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  {% if tournament.groups.exists %}
+  <div class="px-6 pb-4 border-t" style="border-color:var(--border)">
+    <p class="text-xs font-bold uppercase tracking-wider mb-2 mt-3" style="color:var(--muted)">المجموعات / Groupes créés</p>
+    <div class="flex flex-wrap items-center gap-2">
+      {% for group in tournament.groups.all %}
+      <span class="badge badge-gold">{{ group.name }} ({{ group.teams.count }} فرق)</span>
+      {% endfor %}
+      
+      <form method="post" class="inline">
+        {% csrf_token %}
+        <input type="hidden" name="tournament_id" value="{{ tournament.pk }}"/>
+        <input type="hidden" name="action" value="add_group"/>
+        <button type="submit" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-primary/20 hover:border-primary/40 transition-all text-xs"
+                title="{% trans 'Ajouter un groupe' %}">
+          ➕
+        </button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if tournament.winner %}
+  <div class="px-6 pb-4">
+    <p class="text-sm font-bold" style="color:var(--primary)">🏆 الفائز / Vainqueur : {{ tournament.winner.name }}</p>
+  </div>
+  {% endif %}
+</div>
+{% empty %}
+<div class="card rounded-2xl p-12 text-center">
+  <div class="text-4xl mb-4">🏆</div>
+  <p class="text-lg font-bold mb-2">لا توجد بطولات / {% trans "Aucun tournoi" %}</p>
+  <a href="/admin/tournaments/tournament/add/" class="btn btn-primary mt-4">+ إنشاء بطولة</a>
+</div>
+{% endfor %}
+
+<!-- GLOBAL SETTINGS SECTION -->
+<div class="mt-12 pt-8 border-t" style="border-color:var(--border)">
+  <div class="mb-6">
+    <h2 class="font-bebas text-4xl tracking-widest leading-none">
+      ⚙️ إعدادات التطبيق / <span style="color:var(--primary)">PARAMÈTRES GLOBAUX</span>
+    </h2>
+    <p class="text-sm mt-1" style="color:var(--muted)">{% trans "Personnalisez l'identité visuelle de votre application" %}</p>
+  </div>
+
+  <div class="card rounded-2xl p-6 sm:p-8">
+    <form method="post" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="update_settings">
+
+      <!-- App Name -->
+      <div class="space-y-2">
+        <label class="form-label font-bold">🏷️ {% trans "Nom de l'application" %} / اسم التطبيق</label>
+        <input type="text" name="app_name" value="{{ site_settings.app_name }}"
+               class="form-input py-3 px-4 rounded-xl font-bold" 
+               style="background:var(--card2); border:1px solid var(--border)"/>
+        <p class="text-[10px] opacity-60">{% trans "Ce nom sera affiché dans le menu, le pied de page et les titres." %}</p>
+      </div>
+
+      <!-- App Logo -->
+      <div class="space-y-2">
+        <label class="form-label font-bold">🖼️ {% trans "Logo de l'application" %} / الشعار</label>
+        <div class="flex items-center gap-4">
+          <div class="w-16 h-16 rounded-xl border flex items-center justify-center overflow-hidden bg-white/5" 
+               style="border-color:var(--border)">
+            {% if site_settings.app_logo %}
+              <img src="{{ site_settings.app_logo.url }}" class="w-full h-full object-contain p-2" onload="removeWhiteBackground(this)">
+            {% else %}
+              <span class="text-xs opacity-40">NO LOGO</span>
+            {% endif %}
+          </div>
+          <div class="flex-1">
+            <input type="file" name="app_logo" accept="image/*" class="text-xs w-full"/>
+            <p class="text-[10px] mt-1 opacity-60">{% trans "Remplace le texte par une image dans le menu." %}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="md:col-span-2 pt-4 flex justify-end">
+        <button type="submit" class="btn btn-primary px-10 py-3 rounded-xl shadow-lg hover:-translate-y-1 transition-all">
+          💾 {% trans "Sauvegarder les modifications" %} / حفظ التغييرات
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openCreateTournamentModal() {
+    const modal = document.getElementById('create_tournament_modal');
+    const content = document.getElementById('create_tournament_modal_content');
+    
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+      content.classList.remove('scale-95', 'opacity-0');
+      content.classList.add('scale-100', 'opacity-100');
+    }, 50);
+  }
+
+  function closeCreateTournamentModal() {
+    const modal = document.getElementById('create_tournament_modal');
+    const content = document.getElementById('create_tournament_modal_content');
+    
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    
+    setTimeout(() => {
+      modal.classList.add('hidden');
+    }, 300);
+  }
+</script>
+
+<!-- Create Tournament Modal -->
+<div id="create_tournament_modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+  <!-- Backdrop -->
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeCreateTournamentModal()"></div>
+  
+  <!-- Modal Content -->
+  <div class="relative bg-zinc-900 border border-white/10 rounded-2xl p-6 w-full max-w-lg shadow-2xl transform transition-all duration-300 scale-95 opacity-0" id="create_tournament_modal_content">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold text-lg text-white">🏆 {% trans "Créer un nouveau tournoi" %} / إنشاء بطولة جديدة</h3>
+      <button onclick="closeCreateTournamentModal()" class="text-gray-400 hover:text-white text-xl font-bold">&times;</button>
+    </div>
+    
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="create_tournament">
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold opacity-60 mb-1">{% trans "Nom du tournoi" %} / اسم البطولة *</label>
+          <input type="text" name="name" class="form-input py-2 px-3 text-sm w-full bg-black/40 border-white/10 text-white" placeholder="Ex: دورة رمضان الكبرى" required>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold opacity-60 mb-1">{% trans "Année" %} / السنة</label>
+          <input type="number" name="year" value="{% now 'Y' %}" class="form-input py-2 px-3 text-sm font-mono w-full bg-black/40 border-white/10 text-white" required>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold opacity-60 mb-1">{% trans "Édition" %} / الطبعة أو الإصدار</label>
+          <input type="number" name="edition" value="1" class="form-input py-2 px-3 text-sm font-mono w-full bg-black/40 border-white/10 text-white" required>
+        </div>
+
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold opacity-60 mb-1">{% trans "Format" %} / الصيغة *</label>
+          <select name="format" class="form-input py-2 px-3 text-sm w-full bg-black/40 border-white/10 text-white" required>
+            <option value="group_knockout">🏆 {% trans "Groupes + Élimination directe" %} / مجموعات + إقصاء مباشر</option>
+            <option value="round_robin">⚽ {% trans "Championnat aller-retour" %} / بطولة ذهاب وإياب (الدوري)</option>
+            <option value="single_knockout">⚡ {% trans "Élimination directe" %} / خروج المغلوب مباشرة</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold opacity-60 mb-1">{% trans "Nb. max équipes" %} / أقصى عدد للفرق</label>
+          <input type="number" name="max_teams" value="16" class="form-input py-2 px-3 text-sm font-mono w-full bg-black/40 border-white/10 text-white" required>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold opacity-60 mb-1">{% trans "Nombre de groupes" %} / عدد المجموعات</label>
+          <input type="number" name="num_groups" value="4" class="form-input py-2 px-3 text-sm font-mono w-full bg-black/40 border-white/10 text-white" required>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold opacity-60 mb-1">{% trans "Frais d'inscription" %} / سعر الاشتراك (DZD)</label>
+          <input type="number" name="subscription_price" value="0" step="0.01" class="form-input py-2 px-3 text-sm font-mono w-full bg-black/40 border-white/10 text-white" required>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold opacity-60 mb-1">{% trans "Lieu" %} / مكان إجراء المباريات</label>
+          <input type="text" name="location" value="Stade Communal" class="form-input py-2 px-3 text-sm w-full bg-black/40 border-white/10 text-white" required>
+        </div>
+      </div>
+
+      <div class="pt-4">
+        <button type="submit" class="btn btn-primary w-full py-3 bg-gradient-to-r from-primary to-primary-glow text-white font-bold rounded-xl shadow-lg transition-all">
+          💾 {% trans "Créer le tournoi" %} / إنشاء البطولة وحفظها
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

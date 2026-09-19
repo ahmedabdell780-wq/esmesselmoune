@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load i18n turniq_tags %}
+{% block title %}التسجيل في أكاديمية الوفاق{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* إخفاء القوائم والفوتر لمنع الزوار من تصفح باقي الموقع */
+    header, nav, footer, #mobile-nav, .mobile-nav-toggle { display: none !important; }
+    main { padding-top: 2rem !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="text-center mb-10">
+        {% if settings.logo %}
+        <img src="{{ settings.logo.url }}" alt="Logo" class="w-32 h-32 mx-auto mb-4">
+        {% endif %}
+        <h1 class="font-bebas text-5xl text-primary mb-4">التسجيل في أكاديمية الوفاق</h1>
+        <p class="text-gray-400">نادي الوفاق الرياضي مسلمون</p>
+    </div>
+
+    {% if not settings.academy_registration_open %}
+    <div class="card rounded-2xl p-12 shadow-2xl text-center">
+        <div class="text-6xl mb-4">🔒</div>
+        <h2 class="text-3xl font-bold text-red-500 mb-4">التسجيلات مغلقة حالياً</h2>
+        <p class="text-xl text-gray-300">يرجى الانتظار حتى تعلن إدارة النادي عن فتح فترة التسجيلات الجديدة للموسم القادم.</p>
+    </div>
+    {% else %}
+    <div class="card rounded-2xl p-8 shadow-2xl">
+        <form method="post" enctype="multipart/form-data" class="space-y-8">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+            <div class="bg-red-500/10 border border-red-500/30 text-red-500 p-4 rounded-xl mb-6">
+                يرجى تصحيح الأخطاء أدناه.
+                {{ form.errors }}
+            </div>
+            {% endif %}
+
+            <!-- 1. معلومات الهوية والمسار الدراسي للاعب -->
+            <div class="space-y-4">
+                <h2 class="text-2xl font-bold border-b border-white/10 pb-2 text-white/90">1. معلومات الهوية والمسار الدراسي للاعب</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label">اللقب / Nom</label>
+                        {{ form.last_name }}
+                    </div>
+                    <div>
+                        <label class="form-label">الاسم / Prénom</label>
+                        {{ form.first_name }}
+                    </div>
+                    <div>
+                        <label class="form-label">تاريخ الازدياد / Date de naissance</label>
+                        {{ form.date_of_birth }}
+                    </div>
+                    <div>
+                        <label class="form-label">مكان الازدياد / Lieu de naissance</label>
+                        {{ form.place_of_birth }}
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="form-label">العنوان الشخصي / Adresse</label>
+                        {{ form.address }}
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="form-label">المؤسسة التعليمية (المستوى الدراسي) / Niveau Scolaire</label>
+                        {{ form.school_level }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. الملف الفني والرياضي للاعب -->
+            <div class="space-y-4">
+                <h2 class="text-2xl font-bold border-b border-white/10 pb-2 text-white/90">2. الملف الفني والرياضي للاعب</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label">الفئة العمرية / Catégorie</label>
+                        {{ form.category }}
+                    </div>
+                    <div>
+                        <label class="form-label">النادي أو المدرسة السابقة</label>
+                        {{ form.previous_club }}
+                    </div>
+                    <div>
+                        <label class="form-label">المنصب التكتيكي / Poste</label>
+                        {{ form.position }}
+                    </div>
+                    <div>
+                        <label class="form-label">القدم المفضلة</label>
+                        {{ form.preferred_foot }}
+                    </div>
+                    <div>
+                        <label class="form-label">الرقم المفضل للقميص</label>
+                        {{ form.jersey_number }}
+                    </div>
+                    <div>
+                        <label class="form-label">الصورة الشمسية (اختياري)</label>
+                        {{ form.photo }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. معلومات الولي -->
+            <div class="space-y-4">
+                <h2 class="text-2xl font-bold border-b border-white/10 pb-2 text-white/90">3. معلومات الولي أو الوصي الشرعي</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label">صلة القرابة</label>
+                        {{ form.parent_relation }}
+                    </div>
+                    <div>
+                        <label class="form-label">اسم ولقب الولي</label>
+                        {{ form.parent_name }}
+                    </div>
+                    <div>
+                        <label class="form-label">رقم الهاتف الأساسي</label>
+                        {{ form.parent_phone }}
+                    </div>
+                    <div>
+                        <label class="form-label">هاتف الطوارئ (الاحتياطي)</label>
+                        {{ form.emergency_phone }}
+                    </div>
+                    <div>
+                        <label class="form-label">البريد الإلكتروني</label>
+                        {{ form.parent_email }}
+                    </div>
+                    <div>
+                        <label class="form-label">المهنة ومقر العمل</label>
+                        {{ form.parent_profession }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. الملف الطبي البيومتري -->
+            <div class="space-y-4">
+                <h2 class="text-2xl font-bold border-b border-white/10 pb-2 text-white/90">4. القياسات البيومترية والملف الطبي</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="form-label">القامة (سم) / Taille</label>
+                        {{ form.height }}
+                    </div>
+                    <div>
+                        <label class="form-label">الوزن (كغ) / Poids</label>
+                        {{ form.weight }}
+                    </div>
+                    <div>
+                        <label class="form-label">فصيلة الدم / Groupe sanguin</label>
+                        {{ form.blood_type }}
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="form-label">الأمراض المزمنة أو السوابق الجراحية (إن وجدت)</label>
+                        {{ form.medical_history }}
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="form-label">شهادة طبية إلكترونية (اختياري)</label>
+                        {{ form.medical_certificate }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-6 border-t border-white/10 flex justify-end gap-4">
+                <button type="submit" class="btn btn-primary px-8">
+                    <i class="fa-solid fa-check ml-2"></i> تأكيد وتسجيل اللاعب
+                </button>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

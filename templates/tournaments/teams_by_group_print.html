@@ -1,0 +1,698 @@
+{% load i18n static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>الفرق حسب المجموعات - {{ tournament.name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Outfit:wght@800;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --gold: #d4af37;
+            --gold-light: #fef08a;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --group-a: #10b981; /* Emerald */
+            --group-b: #f97316; /* Orange */
+            --group-c: #8b5cf6; /* Violet */
+            --group-d: #ef4444; /* Red */
+            --group-e: #3b82f6; /* Blue */
+            --group-f: #eab308; /* Yellow */
+        }
+
+        @page {
+            size: A4 landscape;
+            margin: 0;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #cbd5e1;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+        .print-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .print-page {
+            width: 297mm;
+            height: 210mm;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            position: relative;
+            padding: 12mm;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+        }
+
+        /* Abstract Modern Backgrounds */
+        .bg-shape {
+            position: absolute;
+            z-index: 0;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.4;
+        }
+        .bg-shape-1 {
+            top: -100px;
+            right: -100px;
+            width: 400px;
+            height: 400px;
+            background: var(--gold);
+            opacity: 0.15;
+        }
+        .bg-shape-2 {
+            bottom: -150px;
+            left: -100px;
+            width: 500px;
+            height: 500px;
+            background: var(--primary);
+            opacity: 0.1;
+        }
+        .bg-shape-3 {
+            top: 40%;
+            left: 40%;
+            width: 300px;
+            height: 300px;
+            background: var(--group-e);
+            opacity: 0.05;
+        }
+
+        .watermark-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.04;
+            z-index: 0;
+            width: 500px;
+            height: 500px;
+            pointer-events: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            mix-blend-mode: multiply;
+        }
+        .watermark-logo img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            filter: grayscale(100%) contrast(120%);
+        }
+
+        .print-page > :not(.bg-shape):not(.watermark-logo):not(.soccer-ball) {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Glassmorphism Header */
+        .tournament-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            padding: 15px 25px;
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+        }
+        .header-logo-box img {
+            height: 65px;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        }
+        .header-trophy-box img {
+            height: 65px;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        }
+        .header-text {
+            text-align: center;
+        }
+        .header-badge {
+            background: linear-gradient(135deg, var(--gold) 0%, #b89020 100%);
+            color: white;
+            font-size: 12px;
+            font-weight: 800;
+            padding: 4px 16px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 6px;
+            box-shadow: 0 4px 6px rgba(212, 175, 55, 0.3);
+            letter-spacing: 0.5px;
+        }
+        .header-title {
+            font-size: 26px;
+            font-weight: 900;
+            color: var(--primary);
+            margin: 0;
+            line-height: 1.2;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .header-subtitle {
+            font-size: 14px;
+            font-weight: 800;
+            color: #475569;
+            margin-top: 4px;
+        }
+
+        /* Section Badges */
+        .section-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 15px;
+            font-weight: 900;
+            color: var(--primary);
+            margin-bottom: 12px;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 8px 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            border: 1px solid rgba(255,255,255,0.8);
+            backdrop-filter: blur(10px);
+        }
+        .section-badge span {
+            background: linear-gradient(135deg, var(--primary) 0%, #1e293b 100%);
+            color: white;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            font-size: 13px;
+            box-shadow: 0 2px 4px rgba(15,23,42,0.3);
+        }
+
+        /* Groups */
+        .groups-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex: 1;
+        }
+        .group-card {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(255, 255, 255, 1);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        
+        .group-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 6px;
+            z-index: 2;
+        }
+        .group-card:nth-child(6n+1)::before { background: linear-gradient(90deg, var(--group-a), #34d399); }
+        .group-card:nth-child(6n+2)::before { background: linear-gradient(90deg, var(--group-b), #fb923c); }
+        .group-card:nth-child(6n+3)::before { background: linear-gradient(90deg, var(--group-c), #a78bfa); }
+        .group-card:nth-child(6n+4)::before { background: linear-gradient(90deg, var(--group-d), #f87171); }
+        .group-card:nth-child(6n+5)::before { background: linear-gradient(90deg, var(--group-e), #60a5fa); }
+        .group-card:nth-child(6n+6)::before { background: linear-gradient(90deg, var(--group-f), #facc15); }
+
+        .group-header {
+            text-align: center;
+            padding: 15px 10px 10px;
+            font-size: 15px;
+            font-weight: 900;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 100%);
+        }
+
+        .group-body {
+            padding: 0 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+        .team-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 6px 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .team-seed {
+            font-size: 12px;
+            font-weight: 900;
+            width: 26px;
+            height: 26px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 6px;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .group-card:nth-child(6n+1) .team-seed { background: var(--group-a); }
+        .group-card:nth-child(6n+2) .team-seed { background: var(--group-b); }
+        .group-card:nth-child(6n+3) .team-seed { background: var(--group-c); }
+        .group-card:nth-child(6n+4) .team-seed { background: var(--group-d); }
+        .group-card:nth-child(6n+5) .team-seed { background: var(--group-e); }
+        .group-card:nth-child(6n+6) .team-seed { background: var(--group-f); }
+
+        .team-name {
+            font-size: 11.5px;
+            font-weight: 800;
+            color: var(--primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.2;
+            width: 100%;
+            border: 1px solid transparent;
+            background: transparent;
+            cursor: pointer;
+            outline: none;
+            font-family: 'Cairo', sans-serif;
+            border-radius: 4px;
+            padding: 0;
+            margin: 0;
+        }
+        .team-name:hover, .team-name:focus {
+            border-color: var(--border);
+            background: #f8fafc;
+        }
+
+        .team-logo {
+            width: 18px;
+            height: 18px;
+            object-fit: contain;
+            border-radius: 50%;
+            background: #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+            margin-left: 6px; /* Arabic layout spacing */
+        }
+
+        /* Soccer Ball Decoration */
+        .soccer-ball {
+            position: absolute;
+            bottom: -20px;
+            left: 20px;
+            width: 140px;
+            height: 140px;
+            z-index: 10;
+            opacity: 0.08;
+            filter: drop-shadow(4px 4px 6px rgba(0,0,0,0.1));
+            pointer-events: none;
+            transform: rotate(-15deg);
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; margin: 0; padding: 0; }
+            .print-page { 
+                box-shadow: none; 
+                margin: 0; 
+                background: white;
+            }
+            .tournament-header {
+                box-shadow: none;
+                background: transparent;
+                border: 1px solid var(--border);
+            }
+            .group-card {
+                box-shadow: none;
+            }
+            .section-badge {
+                box-shadow: none;
+            }
+            .team-name {
+                appearance: none;
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                border: none !important;
+                background: transparent !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="no-print" style="margin-bottom: 20px; text-align: center; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; justify-content: center; align-items: center; gap: 15px;">
+        <button class="print-btn" onclick="window.print()" style="padding: 6px 15px; font-weight: 800; font-family: 'Cairo'; cursor: pointer; border-radius: 5px; border: none; background: #0f172a; color: white;">🖨️ طباعة النموذج</button>
+        <button class="print-btn" onclick="downloadImage()" style="padding: 6px 15px; font-weight: 800; font-family: 'Cairo'; cursor: pointer; border-radius: 5px; border: 1px solid #0f172a; background: white; color: #0f172a;">📸 حفظ كصورة</button>
+        <div style="height: 30px; width: 1px; background: #ccc; margin: 0 10px;"></div>
+        {% if user.is_authenticated and user.role in 'admin,organizer' %}
+        <button class="print-btn" onclick="saveGroupOrder()" style="padding: 6px 15px; font-weight: 800; font-family: 'Cairo'; cursor: pointer; border-radius: 5px; border: 1px solid #22c55e; background: #22c55e; color: white;">💾 حفظ التعديلات</button>
+        <div style="height: 30px; width: 1px; background: #ccc; margin: 0 10px;"></div>
+        {% endif %}
+        <label for="format-select" style="font-weight: 800; color: var(--primary);">اختر نظام البطولة:</label>
+        <select id="format-select" onchange="changeFormat(this.value)" style="padding: 5px 10px; font-family: 'Cairo'; border-radius: 5px; border: 1px solid var(--border); font-weight: 600;">
+            <option value="18">نظام 18 فريق (6 مجموعات)</option>
+            <option value="18-5">نظام 18-20 فريق (4 مجموعات بـ 5 فرق)</option>
+            <option value="16">نظام 16 فريق (4 مجموعات)</option>
+            <option value="12">نظام 12 فريق (3 مجموعات)</option>
+            <option value="20">نظام 20 فريق (5 مجموعات)</option>
+        </select>
+    </div>
+    <div class="print-page">
+        <!-- Decorative Backgrounds -->
+        <div class="bg-shape bg-shape-1"></div>
+        <div class="bg-shape bg-shape-2"></div>
+        <div class="bg-shape bg-shape-3"></div>
+        <div class="watermark-logo">
+            <img src="{% if site_settings.app_logo %}{{ site_settings.app_logo.url }}{% else %}{% static 'img/app_logo.png' %}{% endif %}" alt="Watermark">
+        </div>
+
+        <!-- Header -->
+        <div class="tournament-header">
+            <div class="header-logo-box">
+                <img src="{% if site_settings.app_logo %}{{ site_settings.app_logo.url }}{% else %}{% static 'img/app_logo.png' %}{% endif %}" alt="Logo">
+            </div>
+            <div class="header-text">
+                <div class="header-badge">نتائج القرعة - الفرق حسب المجموعات</div>
+                <h1 class="header-title">
+                    {% if "دورة" in tournament.name %}
+                        {{ tournament.name }}
+                    {% else %}
+                        دورة {{ tournament.name }}
+                    {% endif %}
+                </h1>
+                <div class="header-subtitle">النسخة {% if tournament.edition == 1 %}الأولى{% elif tournament.edition == 2 %}الثانية{% else %}{{ tournament.edition }}{% endif %} {{ tournament.year }}</div>
+            </div>
+            <div class="header-trophy-box">
+                <img src="/media/branding/turniq_trophy.png" alt="Trophy" onerror="this.onerror=null; this.src='/static/img/trophy.png';">
+            </div>
+        </div>
+
+        <!-- Groups Section -->
+        <div class="section-badge" style="display: flex; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 8px;"><span>1</span> دور المجموعات</div>
+            <div id="qual-text" style="font-size: 10px; color: #64748b; font-weight: 700;">(يتأهل متصدر كل مجموعة وأفضل فريقين في المركز الثاني)</div>
+        </div>
+        <div class="groups-container">
+            {% for group in groups %}
+                <div class="group-card">
+                    <div class="group-header">{{ group.name }}</div>
+                    <div class="group-body" data-group-id="{{ group.id }}">
+                        {% for standing in group.sorted_standings|slice:":5" %}
+                            {% with team=standing.team %}
+                            <div class="team-row">
+                                <div class="team-seed">{% if forloop.parentloop.parentloop.counter == 1 %}A{% elif forloop.parentloop.parentloop.counter == 2 %}B{% elif forloop.parentloop.parentloop.counter == 3 %}C{% elif forloop.parentloop.parentloop.counter == 4 %}D{% elif forloop.parentloop.parentloop.counter == 5 %}E{% elif forloop.parentloop.parentloop.counter == 6 %}F{% else %}{{ forloop.parentloop.parentloop.counter }}{% endif %}{{ forloop.parentloop.counter }}</div>
+                                <img src="" class="team-logo" style="display:none;" alt="Logo"><select class="team-name" onchange="updateTeamLogo(this)">
+                                    <option value="">--</option>
+                                    {% for tt in all_teams %}
+                                        <option value="{{ tt.team.id }}" {% if tt.team.id == team.id %}selected{% endif %}>{{ tt.team.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% endwith %}
+                        {% empty %}
+                            {% for i in "12345" %}
+                                <div class="team-row">
+                                    <div class="team-seed">{% if forloop.parentloop.counter == 1 %}A{% elif forloop.parentloop.counter == 2 %}B{% elif forloop.parentloop.counter == 3 %}C{% elif forloop.parentloop.counter == 4 %}D{% elif forloop.parentloop.counter == 5 %}E{% elif forloop.parentloop.counter == 6 %}F{% else %}{{ forloop.parentloop.counter }}{% endif %}{{ i }}</div>
+                                    <img src="" class="team-logo" style="display:none;" alt="Logo"><select class="team-name" onchange="updateTeamLogo(this)">
+                                        <option value="" selected>--</option>
+                                        {% for tt in all_teams %}
+                                            <option value="{{ tt.team.id }}">{{ tt.team.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            {% endfor %}
+                        {% endfor %}
+                        
+                        <!-- Padding logic for incomplete groups -->
+                        {% if group.teams.count == 1 %}
+                            {% for i in "2345" %}
+                                <div class="team-row"><div class="team-seed">{% if forloop.parentloop.counter == 1 %}A{% elif forloop.parentloop.counter == 2 %}B{% elif forloop.parentloop.counter == 3 %}C{% elif forloop.parentloop.counter == 4 %}D{% elif forloop.parentloop.counter == 5 %}E{% elif forloop.parentloop.counter == 6 %}F{% else %}{{ forloop.parentloop.counter }}{% endif %}{{ i }}</div><img src="" class="team-logo" style="display:none;" alt="Logo"><select class="team-name" onchange="updateTeamLogo(this)"><option value="" selected>--</option>{% for tt in all_teams %}<option value="{{ tt.team.id }}">{{ tt.team.name }}</option>{% endfor %}</select></div>
+                            {% endfor %}
+                        {% elif group.teams.count == 2 %}
+                            {% for i in "345" %}
+                                <div class="team-row"><div class="team-seed">{% if forloop.parentloop.counter == 1 %}A{% elif forloop.parentloop.counter == 2 %}B{% elif forloop.parentloop.counter == 3 %}C{% elif forloop.parentloop.counter == 4 %}D{% elif forloop.parentloop.counter == 5 %}E{% elif forloop.parentloop.counter == 6 %}F{% else %}{{ forloop.parentloop.counter }}{% endif %}{{ i }}</div><img src="" class="team-logo" style="display:none;" alt="Logo"><select class="team-name" onchange="updateTeamLogo(this)"><option value="" selected>--</option>{% for tt in all_teams %}<option value="{{ tt.team.id }}">{{ tt.team.name }}</option>{% endfor %}</select></div>
+                            {% endfor %}
+                        {% elif group.teams.count == 3 %}
+                            {% for i in "45" %}
+                                <div class="team-row"><div class="team-seed">{% if forloop.parentloop.counter == 1 %}A{% elif forloop.parentloop.counter == 2 %}B{% elif forloop.parentloop.counter == 3 %}C{% elif forloop.parentloop.counter == 4 %}D{% elif forloop.parentloop.counter == 5 %}E{% elif forloop.parentloop.counter == 6 %}F{% else %}{{ forloop.parentloop.counter }}{% endif %}{{ i }}</div><img src="" class="team-logo" style="display:none;" alt="Logo"><select class="team-name" onchange="updateTeamLogo(this)"><option value="" selected>--</option>{% for tt in all_teams %}<option value="{{ tt.team.id }}">{{ tt.team.name }}</option>{% endfor %}</select></div>
+                            {% endfor %}
+                        {% elif group.teams.count == 4 %}
+                            {% for i in "5" %}
+                                <div class="team-row"><div class="team-seed">{% if forloop.parentloop.counter == 1 %}A{% elif forloop.parentloop.counter == 2 %}B{% elif forloop.parentloop.counter == 3 %}C{% elif forloop.parentloop.counter == 4 %}D{% elif forloop.parentloop.counter == 5 %}E{% elif forloop.parentloop.counter == 6 %}F{% else %}{{ forloop.parentloop.counter }}{% endif %}{{ i }}</div><img src="" class="team-logo" style="display:none;" alt="Logo"><select class="team-name" onchange="updateTeamLogo(this)"><option value="" selected>--</option>{% for tt in all_teams %}<option value="{{ tt.team.id }}">{{ tt.team.name }}</option>{% endfor %}</select></div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            {% empty %}
+                {% for g in "ABCDEF" %}
+                    <div class="group-card">
+                        <div class="group-header">المجموعة {{ g }}</div>
+                        <div class="group-body" data-group-id="{{ group.id }}">
+                            {% for i in "12345" %}
+                                <div class="team-row">
+                                    <div class="team-seed">{{ g }}{{ i }}</div>
+                                    <img src="" class="team-logo" style="display:none;" alt="Logo"><select class="team-name" onchange="updateTeamLogo(this)">
+                                        <option value="" selected>--</option>
+                                        {% for tt in all_teams %}
+                                            <option value="{{ tt.team.id }}">{{ tt.team.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+
+        <!-- Knockout Section Removed -->
+
+        <!-- Soccer Ball Decoration -->
+        <svg class="soccer-ball" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="46" fill="#ffffff" stroke="#0f172a" stroke-width="2"/>
+            <polygon points="50,32 63,42 58,58 42,58 37,42" fill="#0f172a"/>
+            <line x1="50" y1="32" x2="50" y2="15" stroke="#0f172a" stroke-width="2"/>
+            <line x1="63" y1="42" x2="78" y2="38" stroke="#0f172a" stroke-width="2"/>
+            <line x1="58" y1="58" x2="68" y2="72" stroke="#0f172a" stroke-width="2"/>
+            <line x1="42" y1="58" x2="32" y2="72" stroke="#0f172a" stroke-width="2"/>
+            <line x1="37" y1="42" x2="22" y2="38" stroke="#0f172a" stroke-width="2"/>
+            
+            <polygon points="50,15 67,8 80,20 78,38 63,42" fill="none" stroke="#0f172a" stroke-width="2"/>
+            <polygon points="78,38 90,48 85,65 68,72 58,58" fill="none" stroke="#0f172a" stroke-width="2"/>
+            <polygon points="68,72 50,82 32,72 42,58 58,58" fill="none" stroke="#0f172a" stroke-width="2"/>
+            <polygon points="32,72 15,65 10,48 22,38 37,42" fill="none" stroke="#0f172a" stroke-width="2"/>
+            <polygon points="22,38 20,20 33,8 50,15 37,42" fill="none" stroke="#0f172a" stroke-width="2"/>
+            
+            <polygon points="50,15 67,8 33,8" fill="#0f172a"/>
+            <polygon points="80,20 90,34 88,48 78,38" fill="#0f172a"/>
+            <polygon points="85,65 72,79 59,79 68,72" fill="#0f172a"/>
+            <polygon points="41,79 28,79 15,65 32,72" fill="#0f172a"/>
+            <polygon points="10,48 8,34 20,20 22,38" fill="#0f172a"/>
+        </svg>
+
+    </div>
+
+    <script>
+        const teamLogos = {
+            {% for tt in all_teams %}
+            "{{ tt.team.id }}": "{% if tt.team.logo %}{{ tt.team.logo.url }}{% else %}/static/img/default-team.png{% endif %}",
+            {% endfor %}
+        };
+
+        function updateAvailableTeams() {
+            const allSelects = Array.from(document.querySelectorAll('.team-name'));
+            const selectedValues = allSelects.map(s => s.value).filter(v => v !== "");
+            
+            allSelects.forEach(select => {
+                const currentVal = select.value;
+                Array.from(select.options).forEach(option => {
+                    if (option.value === "") return;
+                    if (selectedValues.includes(option.value) && option.value !== currentVal) {
+                        option.disabled = true;
+                        option.style.display = 'none';
+                    } else {
+                        option.disabled = false;
+                        option.style.display = '';
+                    }
+                });
+            });
+        }
+
+        function updateTeamLogo(selectElem) {
+            const row = selectElem.closest('.team-row');
+            if (!row) return;
+            const img = row.querySelector('.team-logo');
+            if (!img) return;
+            
+            const selectedTeam = selectElem.value;
+            if (selectedTeam && teamLogos[selectedTeam]) {
+                img.src = teamLogos[selectedTeam];
+                img.style.display = 'block';
+            } else {
+                img.style.display = 'none';
+            }
+            
+            updateAvailableTeams();
+        }
+
+        async function saveGroupOrder() {
+            const data = {};
+            const groupBodies = document.querySelectorAll('.group-body[data-group-id]');
+            
+            groupBodies.forEach(body => {
+                const groupId = body.getAttribute('data-group-id');
+                if (!groupId) return; // Skip padding groups
+                
+                const selects = body.querySelectorAll('.team-name');
+                const teamIds = [];
+                selects.forEach(s => {
+                    const row = s.closest('.team-row');
+                    if (row && row.style.display !== 'none' && s.value) {
+                        teamIds.push(s.value);
+                    }
+                });
+                data[groupId] = teamIds;
+            });
+
+            const btn = document.querySelector('button[onclick="saveGroupOrder()"]');
+            if (btn) btn.innerText = '⏳ جاري الحفظ...';
+
+            try {
+                const response = await fetch("{% url 'tournaments:save_group_order' tournament.pk %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    alert('✅ تم حفظ التعديلات بنجاح في قاعدة البيانات!');
+                    if (btn) btn.innerText = '💾 حفظ التعديلات';
+                } else {
+                    alert('❌ حدث خطأ: ' + result.message);
+                    if (btn) btn.innerText = '💾 حفظ التعديلات';
+                }
+            } catch (err) {
+                console.error(err);
+                alert('❌ تعذر الاتصال بالخادم.');
+                if (btn) btn.innerText = '💾 حفظ التعديلات';
+            }
+        }
+
+        function changeFormat(format) {
+            const qualText = document.getElementById('qual-text');
+            const groupCards = document.querySelectorAll('.group-card');
+            groupCards.forEach(c => c.style.display = 'block');
+            
+            const teamRows = document.querySelectorAll('.team-row');
+            teamRows.forEach(r => r.style.display = 'flex');
+
+            if (format === '16' || format === '18' || format === '12' || format === '20') {
+                const groupBodies = document.querySelectorAll('.group-body');
+                groupBodies.forEach(body => {
+                    const rows = body.querySelectorAll('.team-row');
+                    const maxRows = (format === '18' && format !== '18-5') ? 3 : 4;
+                    if(rows.length > maxRows) {
+                        for(let i=maxRows; i<rows.length; i++) rows[i].style.display = 'none';
+                    }
+                });
+            }
+
+            if (format === '16') {
+                if(groupCards.length > 4) { groupCards[4].style.display = 'none'; if(groupCards[5]) groupCards[5].style.display = 'none'; }
+                qualText.innerText = '(يتأهل الأول والثاني من كل مجموعة)';
+            } else if (format === '18-5') {
+                if(groupCards.length > 4) { groupCards[4].style.display = 'none'; if(groupCards[5]) groupCards[5].style.display = 'none'; }
+                qualText.innerText = '(يتأهل الأول والثاني من كل مجموعة)';
+            } else if (format === '18') {
+                qualText.innerText = '(يتأهل متصدر كل مجموعة وأفضل فريقين في المركز الثاني)';
+            } else if (format === '12') {
+                if(groupCards.length > 3) { for(let i=3; i<groupCards.length; i++) groupCards[i].style.display = 'none'; }
+                qualText.innerText = '(يتأهل الأول والثاني من كل مجموعة وأفضل فريقين في المركز الثالث)';
+            } else if (format === '20') {
+                if(groupCards.length > 5) { groupCards[5].style.display = 'none'; }
+                qualText.innerText = '(يتأهل متصدر كل مجموعة وأفضل 3 فرق في المركز الثاني)';
+            }
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            changeFormat(document.getElementById('format-select').value);
+            
+            document.querySelectorAll('.team-name').forEach(select => {
+                updateTeamLogo(select);
+            });
+        });
+
+        function downloadImage() {
+            const controls = document.querySelector('.no-print');
+            const originalDisplay = controls.style.display;
+            controls.style.display = 'none';
+            
+            const element = document.querySelector('.print-page');
+            
+            htmlToImage.toPng(element, { 
+                pixelRatio: 3,
+                cacheBust: true,
+                style: { margin: '0' }
+            })
+            .then(function(dataUrl) {
+                controls.style.display = originalDisplay;
+                const link = document.createElement('a');
+                link.download = 'Equipes_Groupes_{{ tournament.name|slugify }}.png';
+                link.href = dataUrl;
+                link.click();
+            })
+            .catch(function(error) {
+                controls.style.display = originalDisplay;
+                console.error('Error saving image:', error);
+                alert('حدث خطأ أثناء حفظ الصورة');
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,882 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ملخص {{ selected_stage_display }} - {{ tournament.name }} - TurniQ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" crossorigin="anonymous">
+    <!-- Image Export Engines -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+    <style>
+        :root {
+            --dark-green: #004d25;
+            --main-green: #064e29;
+            --accent-green: #00b84c;
+            --light-bg: #f4f8f5;
+            --gold: #d4af37;
+            --gold-gradient: linear-gradient(135deg, #ffe066 0%, #d4af37 100%);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #0f111a;
+            color: #1a1a1a;
+            font-family: 'Cairo', 'Tajawal', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 15px;
+        }
+
+        /* ─── ACTION TOOLBAR ─── */
+        .toolbar {
+            width: 100%;
+            max-width: 1050px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            background: #161a2e;
+            border: 1px solid #282f48;
+            padding: 15px 25px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            color: #fff;
+        }
+
+        .toolbar-title {
+            font-size: 18px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toolbar-title span {
+            color: var(--accent-green);
+        }
+
+        .toolbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .stage-select {
+            padding: 10px 18px;
+            font-size: 14px;
+            font-weight: 800;
+            border-radius: 12px;
+            background: #252b42;
+            color: #fff;
+            border: 1px solid #384263;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .btn {
+            padding: 12px 22px;
+            font-size: 14px;
+            font-weight: 800;
+            border-radius: 14px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, #00b84c, #008f3a);
+            color: #ffffff;
+        }
+        .btn-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,184,76,0.4);
+        }
+
+        .btn-print {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: #ffffff;
+        }
+        .btn-print:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(37,99,235,0.4);
+        }
+
+        .btn-back {
+            background: #252b42;
+            color: #e2e8f0;
+            border: 1px solid #384263;
+        }
+
+        /* ─── STAGE SUMMARY MAIN CONTAINER ─── */
+        .poster-card {
+            width: 1050px;
+            background-color: var(--light-bg);
+            border: 4px solid var(--dark-green);
+            border-radius: 28px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 35px 80px rgba(0,0,0,0.7);
+            padding: 35px 40px;
+            color: #000000;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            letter-spacing: normal !important;
+            font-feature-settings: "liga" 1, "calt" 1 !important;
+        }
+
+        .poster-card * {
+            letter-spacing: normal !important;
+        }
+
+        /* ─── HEADER ─── */
+        .poster-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 5;
+            border-bottom: 3px dashed rgba(0,77,37,0.2);
+            padding-bottom: 20px;
+        }
+
+        .crest-wrapper {
+            width: 135px;
+            min-height: 125px;
+            background: #ffffff;
+            border: 4px solid var(--dark-green);
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(0,77,37,0.2);
+            padding: 10px 8px;
+        }
+
+        .crest-logo {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .crest-title {
+            font-size: 11px;
+            font-weight: 900;
+            color: var(--dark-green);
+            text-align: center;
+            line-height: 1.2;
+            margin-top: 4px;
+            word-break: break-word;
+        }
+
+        .title-center-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .main-stage-title {
+            font-size: 38px;
+            font-weight: 900;
+            color: #082914;
+            line-height: 1.1;
+            margin-bottom: 8px;
+        }
+
+        .stage-pill-badge {
+            background: var(--dark-green);
+            color: #ffffff;
+            padding: 6px 25px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 900;
+            box-shadow: 0 6px 15px rgba(0,77,37,0.3);
+        }
+
+        .season-ribbon {
+            width: 130px;
+            height: 125px;
+            background: var(--dark-green);
+            color: #ffffff;
+            border-radius: 0 0 45px 45px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(0,77,37,0.3);
+            border: 3px solid #ffffff;
+            padding: 10px;
+        }
+
+        .season-num {
+            font-size: 42px;
+            font-weight: 900;
+            line-height: 0.9;
+        }
+
+        .season-text {
+            font-size: 13px;
+            font-weight: 800;
+            margin-top: 4px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .season-year {
+            font-size: 15px;
+            font-weight: 900;
+            color: var(--accent-green);
+        }
+
+        /* ─── STATS OVERVIEW CARDS ─── */
+        .stats-grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-radius: 18px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+        }
+
+        .stat-card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            background: #e6f4ea;
+            color: var(--dark-green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .stat-card-val {
+            font-size: 26px;
+            font-weight: 900;
+            color: var(--dark-green);
+            line-height: 1;
+        }
+
+        .stat-card-lbl {
+            font-size: 13px;
+            font-weight: 800;
+            color: #64748b;
+            margin-top: 3px;
+        }
+
+        /* ─── AWARDS & HONORS GRID (أفضل هجوم، دفاع، حارس) ─── */
+        .awards-banner-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .award-box {
+            background: linear-gradient(135deg, #004d25 0%, #064e29 100%);
+            color: #ffffff;
+            border-radius: 18px;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 10px 25px rgba(0,77,37,0.25);
+            border: 2px solid var(--accent-green);
+        }
+
+        .award-icon-circle {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .award-title {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--accent-green);
+            text-transform: uppercase;
+        }
+
+        .award-name {
+            font-size: 18px;
+            font-weight: 900;
+            color: #ffffff;
+            line-height: 1.1;
+            margin-top: 2px;
+        }
+
+        .award-stat-val {
+            font-size: 13px;
+            font-weight: 800;
+            color: #ffd700;
+            margin-top: 2px;
+        }
+
+        /* ─── SECTION BOX ─── */
+        .section-block {
+            background: #ffffff;
+            border: 2px solid var(--dark-green);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+        }
+
+        .section-header-bar {
+            background: var(--dark-green);
+            color: #ffffff;
+            padding: 12px 20px;
+            font-size: 18px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* ─── TEAM GOALS & STATS TABLE ─── */
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+        }
+
+        .custom-table th {
+            background: #f1f5f9;
+            color: #334155;
+            font-size: 14px;
+            font-weight: 900;
+            padding: 12px 10px;
+            text-align: center;
+            border-bottom: 2px solid #cbd5e1;
+        }
+
+        .custom-table td {
+            padding: 12px 10px;
+            text-align: center;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 16px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .team-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-align: right !important;
+            justify-content: flex-start;
+        }
+
+        .team-cell img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+            border-radius: 50%;
+            border: 1px solid #cbd5e1;
+        }
+
+        /* ─── MATCHES LIST GRID ─── */
+        .matches-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 16px;
+        }
+
+        .match-row-card {
+            background: #f8faf8;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 14px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .match-team-side {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 42%;
+            font-size: 15px;
+            font-weight: 800;
+        }
+        .match-team-side.home { justify-content: flex-end; text-align: left; }
+        .match-team-side.away { justify-content: flex-start; text-align: right; }
+
+        .match-score-badge {
+            background: var(--dark-green);
+            color: #ffffff;
+            padding: 6px 14px;
+            border-radius: 10px;
+            font-size: 17px;
+            font-weight: 900;
+            line-height: 1;
+            box-shadow: 0 4px 10px rgba(0,77,37,0.2);
+        }
+
+        /* ─── QUALIFIED TEAMS GRID ─── */
+        .qualified-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            padding: 16px;
+        }
+
+        .qualified-card {
+            background: #f0fdf4;
+            border: 2px solid var(--accent-green);
+            border-radius: 14px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .qualified-badge-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 900;
+            flex-shrink: 0;
+        }
+
+        /* ─── FOOTER BANNER ─── */
+        .poster-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 15px;
+            border-top: 3px solid var(--dark-green);
+        }
+
+        .footer-brand-title {
+            font-size: 22px;
+            font-weight: 900;
+            color: var(--dark-green);
+        }
+
+        @media print {
+            body { background: #ffffff !important; padding: 0 !important; }
+            .toolbar { display: none !important; }
+            .poster-card { width: 100% !important; box-shadow: none !important; border-radius: 0 !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── TOP ACTION TOOLBAR ─── -->
+    <div class="toolbar">
+        <div class="toolbar-title flex items-center gap-2">
+            <span>📊</span>
+            <a href="/tournaments/{{ tournament.pk }}/book/" class="hover:underline font-bold text-amber-300">
+                {{ tournament.name }}
+            </a>
+            <span class="text-slate-300 font-normal">| ملخص مرحلة البطولة (Stage Summary)</span>
+        </div>
+        <div class="toolbar-actions">
+            {% if stage_choices %}
+            <select onchange="location.href=this.value;" class="stage-select">
+                {% for code, label in stage_choices %}
+                    <option value="?stage={{ code }}" {% if selected_stage == code %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+            {% endif %}
+
+            <button onclick="downloadPosterAsImage()" id="download-btn" class="btn btn-download">
+                <span>📸</span> تحميل ملخص المرحلة كصورة (PNG)
+            </button>
+            <button onclick="window.print()" class="btn btn-print">
+                <span>🖨️</span> طباعة A4
+            </button>
+            <a href="{% url 'tournaments:standings_detail' tournament.pk %}" class="btn btn-back">
+                <span>⬅️</span> العودة للبطولة
+            </a>
+        </div>
+    </div>
+
+    <!-- ─── POSTER CONTAINER FOR IMAGE EXPORT ─── -->
+    <div id="stage-summary-poster" class="poster-card">
+        
+        <!-- 1. HEADER SECTION -->
+        <div class="poster-header">
+            <!-- Left Tournament Logo -->
+            <div class="crest-wrapper">
+                {% if tournament.logo %}
+                    <img src="{{ tournament.logo.url }}" class="crest-logo" alt="Logo">
+                {% elif site_settings and site_settings.app_logo %}
+                    <img src="{{ site_settings.app_logo.url }}" class="crest-logo" alt="Logo">
+                {% else %}
+                    <div style="font-size:40px;">🏆</div>
+                {% endif %}
+                <div class="crest-title">{{ tournament.name }}</div>
+            </div>
+
+            <!-- Center Stage Title -->
+            <div class="title-center-box">
+                <h1 class="main-stage-title">ملخص {{ selected_stage_display }}</h1>
+                <div class="stage-pill-badge">إحصائيات ونتائج المرحلة</div>
+            </div>
+
+            <!-- Right Season Ribbon Badge -->
+            <div class="season-ribbon">
+                <div class="season-num">{% if tournament.edition and tournament.edition > 1 %}{{ tournament.edition }}{% else %}2{% endif %}</div>
+                <div class="season-text">النسخة {% if tournament.edition == 3 %}الثالثة{% elif tournament.edition == 4 %}الرابعة{% else %}الثانية{% endif %}</div>
+                <div class="season-year">{{ tournament.year|default:2026 }}</div>
+            </div>
+        </div>
+
+        <!-- 2. STATS OVERVIEW CARDS (4 Cards) -->
+        <div class="stats-grid-4">
+            <div class="stat-card">
+                <div class="stat-card-icon">🏟️</div>
+                <div>
+                    <div class="stat-card-val">{{ finished_matches_count }} / {{ total_matches_count }}</div>
+                    <div class="stat-card-lbl">المباريات الملعوبة</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-icon">⚽</div>
+                <div>
+                    <div class="stat-card-val">{{ total_goals }}</div>
+                    <div class="stat-card-lbl">مجموع الأهداف (معدل {{ avg_goals }})</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-icon">🟨</div>
+                <div>
+                    <div class="stat-card-val">{{ yellow_cards_count }} <span style="font-size:16px; color:#ef4444;">({{ red_cards_count }}🟥)</span></div>
+                    <div class="stat-card-lbl">البطاقات الصفراء والحمراء</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-icon">👑</div>
+                <div>
+                    <div class="stat-card-val" style="font-size: 18px;">
+                        {% if stage_top_scorer %}
+                            {{ stage_top_scorer.player.full_name }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
+                    <div class="stat-card-lbl">
+                        {% if stage_top_scorer %}
+                            هداف المرحلة ({{ stage_top_scorer.goals_count }} أهداف - {{ stage_top_scorer.team.name }})
+                        {% else %}
+                            هداف المرحلة
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. AWARDS & HONORS BANNER (أفضل هجوم، أفضل دفاع، أحسن حارس) -->
+        <div class="awards-banner-grid">
+            <!-- Best Attack -->
+            <div class="award-box">
+                <div class="award-icon-circle">⚽</div>
+                <div>
+                    <div class="award-title">أفضل هجوم في المرحلة</div>
+                    <div class="award-name">
+                        {% if best_attack %}
+                            {% for b in best_attack %}{{ b.team.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
+                    <div class="award-stat-val">
+                        {% if best_attack %}{{ best_attack.0.goals_for }} أهداف مسجلة{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Best Defense -->
+            <div class="award-box">
+                <div class="award-icon-circle">🛡️</div>
+                <div>
+                    <div class="award-title">أفضل دفاع في المرحلة</div>
+                    <div class="award-name">
+                        {% if best_defense %}
+                            {% for b in best_defense %}{{ b.team.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
+                    <div class="award-stat-val">
+                        {% if best_defense %}{{ best_defense.0.goals_against }} أهداف مستقبلة{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Best Goalkeeper -->
+            <div class="award-box">
+                <div class="award-icon-circle">🧤</div>
+                <div>
+                    <div class="award-title">أحسن حارس في المرحلة</div>
+                    <div class="award-name">
+                        {% if best_goalkeeper %}
+                            {{ best_goalkeeper.player.name }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
+                    <div class="award-stat-val">
+                        {% if best_goalkeeper %}
+                            {{ best_goalkeeper.team.name }} ({{ best_goalkeeper.clean_sheets }} شباك نظيفة)
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. GOALS PER TEAM TABLE (عدد أهداف كل فريق وإحصائياته في هذا الدور) -->
+        {% if team_stats_list %}
+        <div class="section-block">
+            <div class="section-header-bar">
+                <span>📊 إحصائيات وعدد أهداف كل فريق في {{ selected_stage_display }}</span>
+                <span style="font-size:14px; opacity: 0.9;">{{ team_stats_list|length }} فريق مشارك</span>
+            </div>
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">#</th>
+                        <th style="text-align: right; padding-right: 20px;">الفريق</th>
+                        <th style="width: 90px;">المباريات</th>
+                        <th style="width: 90px;">الفوز</th>
+                        <th style="width: 110px; color:#008f3a;">أهداف له (⚽)</th>
+                        <th style="width: 110px; color:#dc2626;">أهداف عليه (🥅)</th>
+                        <th style="width: 110px;">الفارق (±)</th>
+                        <th style="width: 130px;">شباك نظيفة (Clean Sheet)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for st in team_stats_list %}
+                    <tr>
+                        <td style="font-weight:900;">{{ forloop.counter }}</td>
+                        <td>
+                            <div class="team-cell">
+                                {% if st.team.logo %}
+                                    <img src="{{ st.team.logo.url }}" alt="Logo">
+                                {% endif %}
+                                <span>{{ st.team.name }}</span>
+                            </div>
+                        </td>
+                        <td>{{ st.played }}</td>
+                        <td style="color:#008f3a;">{{ st.won }}</td>
+                        <td style="color:#008f3a; font-size:18px; font-weight:900;">{{ st.goals_for }}</td>
+                        <td style="color:#dc2626; font-size:18px; font-weight:900;">{{ st.goals_against }}</td>
+                        <td style="font-weight:900; {% if st.goals_for > st.goals_against %}color:#008f3a;{% elif st.goals_for < st.goals_against %}color:#dc2626;{% endif %}">
+                            {% if st.goals_for > st.goals_against %}+{% endif %}{{ st.goals_for|add:"-"|add:st.goals_against }}
+                        </td>
+                        <td>{{ st.clean_sheets }} 🛡️</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- 5. MATCH RESULTS LIST (نتائج مباريات هذا الدور) -->
+        {% if finished_matches %}
+        <div class="section-block">
+            <div class="section-header-bar">
+                <span>⚽ نتائج مباريات {{ selected_stage_display }}</span>
+                <span style="font-size:14px; opacity:0.9;">{{ finished_matches.count }} مباراة مكتملة</span>
+            </div>
+            <div class="matches-grid">
+                {% for m in finished_matches %}
+                <div class="match-row-card">
+                    <div class="match-team-side home">
+                        <span>{{ m.team1.name }}</span>
+                        {% if m.team1.logo %}
+                            <img src="{{ m.team1.logo.url }}" style="width:24px; height:24px; object-fit:contain; border-radius:50%;">
+                        {% endif %}
+                    </div>
+
+                    <div class="match-score-badge">
+                        {{ m.score_team1 }} - {{ m.score_team2 }}
+                        {% if m.penalties_team1 is not None %}
+                            <span style="font-size:11px; display:block; opacity:0.8;">({{ m.penalties_team1 }} - {{ m.penalties_team2 }} ترجيح)</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="match-team-side away">
+                        {% if m.team2.logo %}
+                            <img src="{{ m.team2.logo.url }}" style="width:24px; height:24px; object-fit:contain; border-radius:50%;">
+                        {% endif %}
+                        <span>{{ m.team2.name }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 6. ADVANCING / QUALIFIED TEAMS (الفرق المتأهلة) -->
+        {% if qualified_teams %}
+        <div class="section-block">
+            <div class="section-header-bar" style="background: linear-gradient(135deg, #008f3a 0%, #004d25 100%);">
+                <span>🌟 الفرق المتأهلة عن {{ selected_stage_display }}</span>
+                <span style="font-size:14px; opacity:0.9;">{{ qualified_teams|length }} فريق متأهل</span>
+            </div>
+            <div class="qualified-grid">
+                {% for q in qualified_teams %}
+                <div class="qualified-card">
+                    <div class="qualified-badge-icon">✓</div>
+                    {% if q.team.logo %}
+                        <img src="{{ q.team.logo.url }}" style="width:28px; height:28px; object-fit:contain; border-radius:50%;">
+                    {% endif %}
+                    <div>
+                        <div style="font-size:15px; font-weight:900; color:#064e29;">{{ q.team.name }}</div>
+                        <div style="font-size:11px; font-weight:700; color:#64748b;">{{ q.reason }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 7. FOOTER BANNER -->
+        <div class="poster-footer">
+            <div class="footer-brand-title">{{ tournament.name|upper }}</div>
+            <div style="font-size:13px; font-weight:800; color:#64748b;">
+                {{ site_settings.app_name|default:"TurniQ Tournament Management" }} · تاريخ التقرير: {% now "d/m/Y" %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ─── DUAL ENGINE IMAGE EXPORT SCRIPT ─── -->
+    <script>
+        async function downloadPosterAsImage() {
+            const btn = document.getElementById('download-btn');
+            const poster = document.getElementById('stage-summary-poster');
+            
+            if (!poster) return;
+            
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<span>⏳</span> جاري تحويل ملخص المرحلة إلى صورة...`;
+
+            if (document.fonts) {
+                try {
+                    await document.fonts.ready;
+                } catch(e) {}
+            }
+
+            const stageCode = "{{ selected_stage|slugify|default:'stage' }}";
+            const tourName = "{{ tournament.name|slugify|default:'tournament' }}";
+            const fileName = `stage_summary_${stageCode}_${tourName}.png`;
+
+            function triggerDownload(dataUrl) {
+                const link = document.createElement('a');
+                link.download = fileName;
+                link.href = dataUrl;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+
+            const disabledSheets = [];
+            for (let i = 0; i < document.styleSheets.length; i++) {
+                try {
+                    const rules = document.styleSheets[i].cssRules;
+                } catch (e) {
+                    document.styleSheets[i].disabled = true;
+                    disabledSheets.push(document.styleSheets[i]);
+                }
+            }
+
+            // Engine 1: htmlToImage (Renders native browser font ligatures & RTL perfectly connected)
+            if (typeof htmlToImage !== 'undefined') {
+                try {
+                    const dataUrl = await htmlToImage.toPng(poster, {
+                        pixelRatio: 2.0,
+                        cacheBust: true,
+                        backgroundColor: '#f4f8f5',
+                        style: {
+                            transform: 'none',
+                            margin: '0 auto'
+                        }
+                    });
+                    disabledSheets.forEach(s => s.disabled = false);
+                    triggerDownload(dataUrl);
+                    return;
+                } catch (err) {
+                    console.warn('htmlToImage failed, trying html2canvas fallback...', err);
+                }
+            }
+
+            // Engine 2: html2canvas fallback
+            if (typeof html2canvas !== 'undefined') {
+                try {
+                    const canvas = await html2canvas(poster, {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: '#f4f8f5',
+                        logging: false,
+                        letterRendering: false,
+                        windowWidth: 1200
+                    });
+                    disabledSheets.forEach(s => s.disabled = false);
+                    const dataUrl = canvas.toDataURL('image/png', 1.0);
+                    triggerDownload(dataUrl);
+                    return;
+                } catch (err) {
+                    console.error('html2canvas also failed:', err);
+                }
+            }
+
+            disabledSheets.forEach(s => s.disabled = false);
+            alert('حدث خطأ أثناء تصدير ملخص المرحلة كصورة.');
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    </script>
+</body>
+</html>

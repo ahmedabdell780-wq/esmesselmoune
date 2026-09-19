@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load i18n turniq_tags %}
+{% block title %}{% trans "Profil" %} / الملف الشخصي{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+  <div class="mb-8">
+    <h1 class="font-bebas text-4xl tracking-wider">الملف الشخصي / <span style="color:var(--primary)">PROFIL</span></h1>
+  </div>
+  <div class="card rounded-2xl p-6">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {% if form.errors %}
+      <div class="mb-4 p-3 rounded-xl text-sm" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#f87171">
+        {% for f,errs in form.errors.items %}{% for e in errs %}<p>❌ {{ e }}</p>{% endfor %}{% endfor %}
+      </div>
+      {% endif %}
+      <!-- Avatar -->
+      <div class="flex items-center gap-5 mb-6">
+        <div class="w-20 h-20 rounded-2xl overflow-hidden flex items-center justify-center font-bold text-2xl flex-shrink-0"
+             style="background:var(--primary-glow);color:var(--primary);border:1px solid var(--primary)">
+          {% if user.avatar %}<img src="{{ user.avatar.url }}" class="w-full h-full object-cover" onerror="this.outerHTML='{{ user.first_name|first|upper|escapejs }}{{ user.last_name|first|upper|escapejs }}';"/>
+          {% else %}{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}{% endif %}
+        </div>
+        <div>
+          <div class="font-bold text-lg">{{ user.get_full_name|default:user.username }}</div>
+          <div class="badge badge-gold mt-1 text-xs">{{ user.get_role_display }}</div>
+          <label class="btn btn-ghost btn-xs mt-2 cursor-pointer block">
+            📷 تغيير الصورة / Changer photo
+            <input type="file" name="avatar" accept="image/*" class="sr-only"/>
+          </label>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div><label class="form-label">{% trans "Prénom" %} / الاسم</label><input type="text" name="first_name" value="{{ user.first_name }}" class="form-input"/></div>
+        <div><label class="form-label">{% trans "Nom" %} / اللقب</label><input type="text" name="last_name" value="{{ user.last_name }}" class="form-input"/></div>
+      </div>
+      <div class="space-y-4">
+        <div><label class="form-label">Email</label><input type="email" name="email" value="{{ user.email }}" class="form-input"/></div>
+        <div><label class="form-label">📱 {% trans "Téléphone" %} / الهاتف</label><input type="text" name="phone" value="{{ user.phone }}" class="form-input" placeholder="0555 xx xx xx"/></div>
+        <div><label class="form-label">📍 {% trans "Quartier" %} / الحي</label><input type="text" name="neighborhood" value="{{ user.neighborhood }}" class="form-input"/></div>
+        <div><label class="form-label">📝 Bio</label><textarea name="bio" rows="3" class="form-input" placeholder="قدّم نفسك / Présentez-vous...">{{ user.bio }}</textarea></div>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button type="submit" class="btn btn-primary flex-1 justify-center py-3">💾 {% trans "Sauvegarder" %} / حفظ</button>
+        <a href="{% url 'accounts:appearance' %}" class="btn btn-ghost">🎨 {% trans "Apparence" %}</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

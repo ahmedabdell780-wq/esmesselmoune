@@ -1,0 +1,605 @@
+{% extends 'base.html' %}
+{% load i18n turniq_tags %}
+{% block title %}{% trans "Calendrier" %} / الجدول{% endblock %}
+
+{% block extra_head %}
+<style>
+  :root {
+    --match-bg: rgba(255, 255, 255, 0.03);
+    --match-border: rgba(255, 255, 255, 0.08);
+  }
+
+  .calendar-container {
+    padding: 2rem 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* Match Row - Cinematic Style */
+  .match-row {
+    background: var(--match-bg);
+    border: 1px solid var(--match-border);
+    border-radius: 24px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .match-row:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--primary);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  .match-row::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--primary);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .match-row:hover::before {
+    opacity: 1;
+  }
+
+  .match-main {
+    display: grid;
+    grid-template-columns: 1fr 120px 1fr;
+    align-items: center;
+    text-align: center;
+  }
+
+  .team-info {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .team-info.left { justify-content: flex-end; text-align: right; }
+  .team-info.right { justify-content: flex-start; text-align: left; }
+
+  .team-logo {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.3));
+    transition: transform 0.3s;
+  }
+
+  .match-row:hover .team-logo {
+    transform: scale(1.1) rotate(5deg);
+  }
+
+  .team-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .score-box {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: rgba(0,0,0,0.3);
+    padding: 0.5rem 1rem;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    min-width: 100px;
+  }
+
+  .vs-label {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.3);
+  }
+
+  .match-meta {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 700;
+  }
+
+  .live-badge {
+    background: #ff4b2b;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    animation: pulse-red 2s infinite;
+  }
+
+  @keyframes pulse-red {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 75, 43, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(255, 75, 43, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 75, 43, 0); }
+  }
+
+  /* Tab System */
+  .custom-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 3rem;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 0.5rem;
+    border-radius: 20px;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .tab-btn {
+    padding: 0.8rem 2rem;
+    border-radius: 15px;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 800;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: transparent;
+    border: none;
+    font-family: 'Cairo', sans-serif;
+  }
+
+  .tab-btn.active {
+    background: var(--primary);
+    color: black;
+    box-shadow: 0 10px 20px rgba(197, 160, 40, 0.2);
+  }
+
+  /* Filters */
+  .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.8rem;
+    margin-bottom: 3rem;
+  }
+
+  .filter-chip {
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.7);
+    padding: 0.6rem 1.5rem;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s;
+    text-decoration: none !important;
+  }
+
+  .filter-chip:hover, .filter-chip.active {
+    background: rgba(197, 160, 40, 0.1);
+    color: var(--primary);
+    border-color: var(--primary);
+  }
+
+  @media (max-width: 768px) {
+    .match-main {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    .team-info.left, .team-info.right {
+      justify-content: center;
+      text-align: center;
+      flex-direction: column;
+    }
+    .team-info.left { flex-direction: column-reverse; }
+    .score-box { order: -1; margin: 0 auto; }
+    .team-name { font-size: 1.4rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="calendar-container" x-data="{ activeTab: 'matches' }">
+  
+  <div class="text-center mb-12">
+    <h1 class="font-bebas text-6xl md:text-8xl tracking-tighter leading-none mb-2">
+      {% trans "CALENDRIER" %} / <span style="color:var(--primary)">الجدول</span>
+    </h1>
+    {% if tournament %}
+      <div class="inline-flex items-center gap-3 px-4 py-1 bg-primary/10 border border-primary/20 rounded-full text-primary font-bold text-sm">
+        🏆 {{ tournament.name }} · {{ tournament.year }}
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Tab Switcher -->
+  <div class="custom-tabs no-print">
+    <button class="tab-btn" :class="{ 'active': activeTab === 'matches' }" @click="activeTab = 'matches'">
+      {% trans "Matches" %} / المباريات
+    </button>
+    <button class="tab-btn" :class="{ 'active': activeTab === 'groups' }" @click="activeTab = 'groups'">
+      {% trans "Classement" %} / الترتيب
+    </button>
+    <button class="tab-btn" :class="{ 'active': activeTab === 'bracket' }" @click="activeTab = 'bracket'">
+      {% trans "Bracket" %} / الأدوار
+    </button>
+    <button class="tab-btn" :class="{ 'active': activeTab === 'teams' }" @click="activeTab = 'teams'">
+      {% trans "Équipes" %} / الفرق المشاركة
+    </button>
+    {% if user.role == 'admin' and tournament %}
+    <a href="{% url 'tournaments:awards_dashboard' tournament.pk %}" class="tab-btn" style="text-decoration:none">
+      {% trans "Awards" %} / الجوائز
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Matches Section -->
+  <div x-show="activeTab === 'matches'" class="animate-in">
+    <div class="flex flex-wrap justify-center items-center gap-4 mb-8 no-print">
+      <!-- Tournament Selector -->
+      <form method="get" class="w-full max-w-xs">
+        <select name="tournament" onchange="this.form.submit()" class="form-input w-full bg-black/40 border-white/10 rounded-xl font-bold">
+          {% for t in tournaments %}
+            <option value="{{ t.pk }}" {% if tournament.pk == t.pk %}selected{% endif %}>
+              🏆 {{ t.name }} ({{ t.year }})
+            </option>
+          {% endfor %}
+        </select>
+      </form>
+
+      {% if tournament %}
+      <!-- Print Button -->
+      <a href="{% url 'tournaments:calendar_print_detail' tournament.pk %}" class="filter-chip active flex items-center gap-2" style="height: 45px;">
+        🖼️ Template Pro (A4)
+      </a>
+      <a href="{% url 'tournaments:group_calendar_print_detail' tournament.pk %}" class="filter-chip active flex items-center gap-2" style="height: 45px; background: rgba(197, 160, 40, 0.2); border-color: var(--primary); color: var(--primary);">
+        🖼️ برنامج المجموعات (A4)
+      </a>
+      {% endif %}
+    </div>
+
+    <!-- Phase Filters -->
+    {% if tournament %}
+    <div class="filter-bar no-print">
+      <a href="?tournament={{ tournament.pk }}" class="filter-chip {% if not selected_stage %}active{% endif %}">
+        {% trans "Tous" %}
+      </a>
+      {% for val, label in stages %}
+        <a href="?tournament={{ tournament.pk }}&stage={{ val }}" 
+           class="filter-chip {% if selected_stage == val %}active{% endif %}">
+          {{ label }}
+        </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="space-y-6">
+      {% if matches %}
+        {% regroup matches by match_date|date:"l d F" as date_list %}
+        {% for day in date_list %}
+          <div class="mb-12">
+            <div class="flex items-center justify-between mb-6">
+              <div class="flex items-center gap-4 flex-1">
+                <h3 class="text-xl font-black text-primary uppercase tracking-widest whitespace-nowrap">{{ day.grouper }}</h3>
+                <div class="flex-1 h-px bg-white/10"></div>
+              </div>
+              <div class="flex flex-wrap gap-2 justify-end ml-4">
+                {% for match in day.list %}
+                    {% if not match.team2 %}
+                        <div class="bg-red-500/15 border border-dashed border-red-500 text-red-500 px-4 py-1.5 rounded-full font-bold text-sm flex items-center gap-2">
+                            <span>المعفى ({{ match.group.name }}):</span>
+                            {% if match.team1.logo %}<img src="{{ match.team1.logo.url }}" class="w-6 h-6 rounded-full object-cover">{% endif %}
+                            <span class="text-white">{{ match.team1.name }}</span>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+            
+            {% for match in day.list %}
+            {% if match.team2 %}
+            <div class="match-row">
+              <a href="{% url 'matches:detail' match.pk %}" class="match-main group">
+                <!-- Team 1 -->
+                <div class="team-info left">
+                  <div class="flex flex-col text-right">
+                    <span class="team-name" dir="ltr">{{ match.team1.abbreviation|default:match.team1.name|default:"TBD" }}</span>
+                    <span class="text-[11px] text-white/40 font-bold mt-1" dir="rtl">{{ match.team1.name|default:"" }}</span>
+                  </div>
+                  {% if match.team1.logo %}
+                    <img src="{{ match.team1.logo.url }}" class="team-logo">
+                  {% else %}
+                    <div class="w-[60px] h-[60px] bg-white/5 rounded-full flex items-center justify-center text-2xl">🛡️</div>
+                  {% endif %}
+                </div>
+
+                <!-- Score / VS -->
+                <div class="flex flex-col items-center">
+                  <div class="score-box">
+                    {% if match.status == 'finished' or match.status == 'live' %}
+                      <span>{{ match.score_team1|default:0 }}</span>
+                      <span class="text-white/20">-</span>
+                      <span>{{ match.score_team2|default:0 }}</span>
+                    {% else %}
+                      <span class="vs-label">VS</span>
+                    {% endif %}
+                  </div>
+                  {% if match.status == 'live' %}
+                    <span class="live-badge mt-2">LIVE</span>
+                  {% endif %}
+                </div>
+
+                <!-- Team 2 -->
+                <div class="team-info right">
+                  {% if match.team2.logo %}
+                    <img src="{{ match.team2.logo.url }}" class="team-logo">
+                  {% else %}
+                    <div class="w-[60px] h-[60px] bg-white/5 rounded-full flex items-center justify-center text-2xl">🛡️</div>
+                  {% endif %}
+                  <div class="flex flex-col text-left">
+                    <span class="team-name" dir="ltr">{{ match.team2.abbreviation|default:match.team2.name|default:"TBD" }}</span>
+                    <span class="text-[11px] text-white/40 font-bold mt-1" dir="rtl">{{ match.team2.name|default:"" }}</span>
+                  </div>
+                </div>
+              </a>
+
+              <div class="match-meta">
+                <span>🕒 {{ match.match_date|date:"H:i" }}</span>
+                <span>📍 {{ match.venue|default:tournament.location|upper }}</span>
+                <span>🏆 {{ match.get_stage_display }}</span>
+                {% if match.status == 'finished' %}
+                   <a href="{% url 'matches:motm' match.pk %}" class="text-primary hover:underline">🏅 MOTM</a>
+                   <span class="text-white/20 mx-1">|</span>
+                   <a href="{% url 'matches:best_goalkeeper' match.pk %}" class="text-teal-400 hover:underline">🧤 GK</a>
+                {% endif %}
+              </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="text-center py-20 opacity-20">
+          <div class="text-8xl mb-4">📅</div>
+          <p class="text-2xl font-bold uppercase tracking-widest">{% trans "Aucun match prévu" %}</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Standings Section -->
+  <div x-show="activeTab === 'groups'" class="animate-in">
+    {% if tournament %}
+    <div class="flex justify-center mb-8 no-print">
+      <a href="{% url 'tournaments:groups_print_detail' tournament.pk %}" class="filter-chip active flex items-center gap-2" style="height: 45px;">
+        🖼️ Template Pro (A4)
+      </a>
+    </div>
+    {% endif %}
+
+    {% if groups %}
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {% for group in groups %}
+          <div class="glass-container rounded-3xl p-6 border border-white/10 shadow-2xl overflow-hidden relative">
+            <!-- Decorative Background Letter -->
+            <div class="absolute -top-10 -right-10 text-[180px] font-black text-white/[0.03] pointer-events-none">{{ group.name|slice:"-1" }}</div>
+            
+            <h2 class="font-bebas text-4xl text-primary mb-6 flex items-center gap-3 relative z-10">
+              <span class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20 shadow-inner">{{ group.name|slice:"-1" }}</span>
+              {{ group.name }}
+            </h2>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="text-gray-500 uppercase text-[10px] tracking-widest border-b border-white/5">
+                    <th class="py-3 text-left">#</th>
+                    <th class="py-3 text-left">{% trans "Équipe" %}</th>
+                    <th class="py-3 text-center">J</th>
+                    <th class="py-3 text-center">GD</th>
+                    <th class="py-3 text-center text-primary">PTS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for s in group.sorted_standings %}
+                    <tr class="border-b border-white/5 hover:bg-white/[0.05] transition-colors relative z-10">
+                      <td class="py-4">
+                         <span class="w-8 h-8 rounded-full bg-black/20 flex items-center justify-center font-bebas text-lg {% if forloop.counter <= tournament.teams_advancing_per_group %}text-green-400 border border-green-400/30{% else %}text-gray-400{% endif %}">
+                            {{ forloop.counter }}
+                         </span>
+                      </td>
+                      <td class="py-4">
+                        <div class="flex items-center gap-4">
+                          {% if s.team.logo %}
+                            <div class="w-10 h-10 p-1 bg-white/5 rounded-lg border border-white/10 shadow-lg">
+                               <img src="{{ s.team.logo.url }}" class="w-full h-full object-contain">
+                            </div>
+                          {% endif %}
+                          <span class="font-bold text-lg tracking-tight">{{ s.team.name }}</span>
+                        </div>
+                      </td>
+                      <td class="py-4 text-center font-bebas text-xl">{{ s.played }}</td>
+                      <td class="py-4 text-center font-mono font-bold text-lg {% if s.goal_difference > 0 %}text-green-400{% elif s.goal_difference < 0 %}text-red-400{% else %}text-gray-500{% endif %}">
+                        {{ s.goal_difference|stringformat:"+d" }}
+                      </td>
+                      <td class="py-4 text-center">
+                         <span class="font-bebas text-3xl text-primary drop-shadow-[0_0_10px_rgba(197,160,40,0.3)]">{{ s.points }}</span>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+       <div class="text-center py-10">
+          <div class="text-6xl mb-4 opacity-20">🛡️</div>
+          <p class="text-xl font-bold uppercase tracking-widest text-primary mb-2">{% trans "Équipes Confirmées" %} / الفرق المشاركة</p>
+          <p class="text-xs text-gray-500 uppercase tracking-widest mb-8">{% trans "Les groupes n'ont pas encore été générés" %} / لم يتم تقسيم المجموعات بعد</p>
+          
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+            {% for pt in participating_teams %}
+              <div class="glass-container p-4 rounded-2xl border border-white/5 flex flex-col items-center gap-3 hover:border-primary/30 transition-colors group">
+                <div class="w-16 h-16 rounded-full overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  {% if pt.team.logo %}
+                    <img src="{{ pt.team.logo.url }}" class="w-full h-full object-contain p-1">
+                  {% else %}
+                    <span class="font-bebas text-2xl text-gray-500">{{ pt.team.name|slice:":2"|upper }}</span>
+                  {% endif %}
+                </div>
+                <div class="text-center">
+                  <div class="text-xs font-bold text-white truncate w-full">{{ pt.team.name }}</div>
+                  <div class="text-[9px] text-gray-500 font-bold uppercase tracking-[0.2em]">{{ pt.team.neighborhood }}</div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+    {% endif %}
+  </div>
+
+  <!-- Bracket Section -->
+  <div x-show="activeTab === 'bracket'" class="animate-in">
+    {% if tournament %}
+    <div class="flex justify-center mb-8 no-print">
+      <a href="{% url 'tournaments:tree_print' tournament.pk %}" target="_blank" class="filter-chip active flex items-center gap-2" style="height: 45px;">
+        🖼️ Template Pro (A4) - شجرة البطولة والمجموعات
+      </a>
+    </div>
+    {% endif %}
+
+    {% if bracket %}
+      <div class="flex gap-12 overflow-x-auto pb-12 px-4 justify-center">
+        {% for code, stage in bracket.items %}
+          <div class="flex flex-col gap-8 min-w-[280px]">
+            <h3 class="text-center font-bebas text-2xl text-primary tracking-widest">{{ stage.label|upper }}</h3>
+            <div class="flex flex-col justify-around flex-grow gap-12">
+              {% for match in stage.matches %}
+                <div class="relative">
+                  <a href="{% url 'matches:detail' match.pk %}" class="block glass-container p-4 rounded-2xl border border-white/10 hover:border-primary/50 transition-all shadow-xl bg-black/40 backdrop-blur-xl">
+                    <div class="flex flex-col gap-3">
+                      <!-- Team 1 -->
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                          {% if match.team1.logo %}
+                            <img src="{{ match.team1.logo.url }}" class="w-6 h-6 object-contain">
+                          {% else %}
+                            <div class="w-6 h-6 bg-white/5 rounded-full flex items-center justify-center text-[10px]">🛡️</div>
+                          {% endif %}
+                          <span class="font-bold text-sm {% if match.winner == match.team1 and match.team1 %}text-primary{% elif match.winner and match.team1 %}opacity-40{% endif %}">{{ match.team1.name|default:"TBD" }}</span>
+                        </div>
+                        <span class="font-bebas text-xl {% if match.winner == match.team1 and match.team1 %}text-primary{% endif %}">{{ match.score_team1|default:"-" }}</span>
+                      </div>
+                      <!-- Team 2 -->
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                          {% if match.team2.logo %}
+                            <img src="{{ match.team2.logo.url }}" class="w-6 h-6 object-contain">
+                          {% else %}
+                            <div class="w-6 h-6 bg-white/5 rounded-full flex items-center justify-center text-[10px]">🛡️</div>
+                          {% endif %}
+                          <span class="font-bold text-sm {% if match.winner == match.team2 and match.team2 %}text-primary{% elif match.winner and match.team2 %}opacity-40{% endif %}">{{ match.team2.name|default:"TBD" }}</span>
+                        </div>
+                        <span class="font-bebas text-xl {% if match.winner == match.team2 and match.team2 %}text-primary{% endif %}">{{ match.score_team2|default:"-" }}</span>
+                      </div>
+                    </div>
+                  </a>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+       <div class="text-center py-20 opacity-20">
+          <div class="text-8xl mb-4">🏆</div>
+          <p class="text-2xl font-bold uppercase tracking-widest">{% trans "Phase finale non disponible" %}</p>
+        </div>
+    {% endif %}
+  </div>
+
+  <!-- Teams Section -->
+  <div x-show="activeTab === 'teams'" class="animate-in">
+    {% if participating_teams %}
+    <div class="flex justify-end gap-3 mb-4 mx-4">
+      <a href="{% url 'tournaments:teams_by_group_print_detail' tournament.id %}" target="_blank" class="inline-flex items-center gap-2 bg-black/40 backdrop-blur-md hover:bg-black/60 text-white font-black font-cairo px-5 py-2.5 rounded-xl shadow-lg transition-all hover:-translate-y-1 border border-white/20">
+        <span class="text-xl">🖼️</span> 
+        <span>الفرق حسب المجموعات (صورة)</span>
+      </a>
+      <a href="{% url 'tournaments:teams_print_detail' tournament.id %}" target="_blank" class="inline-flex items-center gap-2 bg-primary/90 hover:bg-primary text-black font-black font-cairo px-5 py-2.5 rounded-xl shadow-lg transition-all hover:-translate-y-1 hover:shadow-primary/30 border border-primary/50">
+        <span class="text-xl">📥</span> 
+        <span>تحميل القائمة (PDF)</span>
+      </a>
+    </div>
+    <div class="glass-container rounded-3xl overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.5)] mx-4 mb-10">
+      <div class="overflow-x-auto">
+        <table class="w-full text-center border-collapse">
+          <thead>
+            <tr class="bg-black/60 border-b-2 border-primary">
+              <th class="py-4 px-4 text-primary font-bold text-lg whitespace-nowrap w-20 border-l border-white/10">رقم</th>
+              <th class="py-4 px-4 text-white font-bold text-lg border-l border-white/10 text-right">اسم الفريق</th>
+              <th class="py-4 px-4 text-white font-bold text-lg border-l border-white/10">الاسم بالفرنسية</th>
+              <th class="py-4 px-4 text-white font-bold text-lg whitespace-nowrap">الإختصار</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for tt in participating_teams %}
+            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors {% if forloop.counter|divisibleby:2 %}bg-black/20{% else %}bg-transparent{% endif %} group">
+              <td class="py-3 px-4 font-outfit font-black text-xl text-primary border-l border-white/10 bg-black/40">{{ forloop.counter|stringformat:"02d" }}</td>
+              <td class="py-3 px-4 border-l border-white/10">
+                <div class="flex items-center justify-start gap-4">
+                  <div class="w-14 h-14 shrink-0 bg-white rounded-full flex items-center justify-center p-1 border-2 border-primary/50 group-hover:border-primary transition-colors shadow-[0_0_15px_rgba(197,160,40,0.15)]">
+                    {% if tt.team.logo %}
+                      <img src="{{ tt.team.logo.url }}" class="w-full h-full object-contain rounded-full">
+                    {% else %}
+                      <div class="font-bebas text-lg text-slate-800">{{ tt.team.name|slice:":1" }}</div>
+                    {% endif %}
+                  </div>
+                  <div class="text-right">
+                    <div class="font-bold text-white text-base group-hover:text-primary transition-colors">{{ tt.team.name }}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="py-3 px-4 text-white/90 font-bold border-l border-white/10" dir="ltr">{{ tt.team.french_name|default:"---" }}</td>
+              <td class="py-3 px-4" dir="ltr">
+                <div class="inline-flex items-center justify-center text-white font-outfit font-black text-base px-4 py-1.5 rounded-md min-w-[70px] shadow-lg border border-white/20"
+                     style="background-color: {{ tt.team.color_primary|default:'#0a1c3a' }};">
+                  {{ tt.team.abbreviation|default:"---" }}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% else %}
+    <div class="text-center py-20 opacity-20">
+      <div class="text-8xl mb-4">🛡️</div>
+      <p class="text-2xl font-bold uppercase tracking-widest">لا توجد فرق مؤكدة لهذه الدورة / Aucune équipe confirmée</p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

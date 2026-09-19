@@ -1,0 +1,707 @@
+{% load i18n static turniq_tags %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>وصل دفع - {{ tt.team.name }} - Reçu de Paiement</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Bebas+Neue&family=Outfit:wght@800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blanc-casse: #FAF8F5;
+      --charcoal: #0F172A;
+      --slate-gray: #475569;
+      --euro-gold: #C5A028;
+      --gold-light: rgba(197, 160, 40, 0.08);
+      --gold-border: rgba(197, 160, 40, 0.25);
+      --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+      --card-border: rgba(0, 0, 0, 0.06);
+      --primary: #C5A028;
+    }
+
+    @page {
+      size: A5 landscape;
+      margin: 0;
+    }
+
+    body {
+      font-family: 'Cairo', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #F1EFEA;
+      -webkit-print-color-adjust: exact;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .print-page {
+      width: 210mm;
+      height: 148mm;
+      position: relative;
+      overflow: hidden;
+      background: var(--blanc-casse);
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      padding: 30px;
+      color: var(--charcoal);
+      box-shadow: 0 15px 45px rgba(0,0,0,0.1);
+      border: 3px double var(--euro-gold);
+    }
+
+    /* Repeating Authenticity Watermark Pattern */
+    .print-page::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 100 100"><text y="50" font-size="6" font-weight="bold" fill="rgb(197, 160, 40)" opacity="0.03" transform="rotate(-30, 50, 50)">PAYMENT</text></svg>');
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .content {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--euro-gold);
+      padding-bottom: 12px;
+      margin-bottom: 15px;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .app-logo {
+      width: 60px;
+      height: 50px;
+      object-fit: contain;
+      border-radius: 8px;
+      border: 1px solid var(--euro-gold);
+      background: transparent;
+      padding: 2px;
+      mix-blend-mode: multiply;
+    }
+
+    .brand-name {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 900;
+      font-size: 22px;
+      letter-spacing: 0.5px;
+      color: var(--charcoal);
+    }
+
+    .receipt-title-box {
+      text-align: left;
+    }
+
+    .receipt-title {
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--euro-gold);
+      margin: 0;
+      text-transform: uppercase;
+    }
+
+    .receipt-id {
+      font-family: 'Outfit', monospace;
+      font-size: 11px;
+      color: var(--slate-gray);
+      margin-top: 2px;
+    }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 15px;
+    }
+
+    .info-card {
+      background: #FFFFFF;
+      border-radius: 10px;
+      padding: 12px 15px;
+      border: 1px solid var(--card-border);
+      font-size: 13px;
+    }
+
+    .info-card h4 {
+      margin: 0 0 8px 0;
+      color: var(--euro-gold);
+      font-weight: 800;
+      font-size: 11px;
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      padding-bottom: 4px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .info-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .info-label {
+      color: var(--slate-gray);
+      font-weight: 600;
+    }
+
+    .info-value {
+      font-weight: 700;
+      color: var(--charcoal);
+    }
+
+    /* Financial breakdown table */
+    .finance-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+      font-size: 13px;
+    }
+
+    .finance-table th {
+      background: var(--gold-light);
+      color: var(--euro-gold);
+      border: 1px solid var(--gold-border);
+      padding: 6px 12px;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .finance-table td {
+      border: 1px solid var(--card-border);
+      padding: 8px 12px;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .text-right-aligned {
+      text-align: right !important;
+    }
+
+    .badge-status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .badge-paid {
+      background-color: #d1fae5;
+      color: #065f46;
+      border: 1px solid #10b981;
+    }
+
+    .badge-unpaid {
+      background-color: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #ef4444;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      font-size: 11px;
+    }
+
+    .signature-area {
+      text-align: center;
+      width: 160px;
+      padding-top: 35px;
+      border-top: 1px dashed var(--slate-gray);
+      font-weight: 700;
+    }
+
+    .footer-note {
+      color: var(--slate-gray);
+      opacity: 0.8;
+    }
+
+    /* Control Buttons */
+    .no-print-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background: var(--charcoal);
+      color: #FAF8F5;
+      padding: 10px 20px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--euro-gold);
+      z-index: 1000;
+      transition: all 0.2s ease;
+    }
+    
+    .no-print-btn:hover { 
+      transform: translateY(-2px); 
+      background: var(--euro-gold);
+      color: var(--charcoal);
+    }
+
+    @media print {
+      .no-print-btn { display: none; }
+      body {
+        background: none;
+      }
+      .print-page {
+        box-shadow: none;
+        border: 2px solid var(--euro-gold);
+      }
+      .stamp-resizer, .logo-overlay { display: none !important; }
+    }
+
+    /* Stamp Control */
+    .official-stamp-container {
+      position: absolute;
+      top: -50px;
+      left: 50%;
+      transform: translateX(-50%) rotate(-8deg);
+      width: 110px;
+      height: 110px;
+      z-index: 99;
+      cursor: move;
+      user-select: none;
+      mix-blend-mode: multiply;
+      opacity: 0.95;
+    }
+    .official-stamp-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: contrast(250%) brightness(1.1);
+      pointer-events: none;
+    }
+    .stamp-resizer {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      background: var(--euro-gold);
+      border: 2px solid white;
+      border-radius: 50%;
+      bottom: -5px;
+      left: -5px;
+      cursor: nesw-resize;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 100;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .official-stamp-container:hover .stamp-resizer,
+    .official-stamp-container:hover .logo-overlay {
+      opacity: 1;
+    }
+    .logo-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.85);
+      color: #0F172A;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+      border-radius: 8px;
+      border: 1px solid var(--euro-gold);
+      text-align: center;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div style="position: fixed; top: 20px; left: 20px; z-index: 1000; display: flex; gap: 10px;">
+    <a href="javascript:window.print()" class="no-print-btn" style="position: relative; top: 0; left: 0;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+        <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+      </svg>
+      <span>{% trans "Imprimer" %} / طباعة الوصل</span>
+    </a>
+    <button onclick="downloadReceiptImage(event)" class="no-print-btn" style="position: relative; top: 0; left: 0; background: #2563eb; border-color: #3b82f6; cursor: pointer;">
+      <span>📸 حفظ كصورة PNG</span>
+    </button>
+  </div>
+
+  <div class="print-page">
+    <div class="content">
+      
+      <!-- HEADER -->
+      <div class="header">
+        <div class="logo-container">
+          {% if site_settings.app_logo %}
+            <img src="{{ site_settings.app_logo.url }}" class="app-logo" alt="Logo">
+          {% endif %}
+          <span class="brand-name">{{ site_settings.app_name|default:"TurniQ" }}</span>
+        </div>
+        <div class="receipt-title-box">
+          <h2 class="receipt-title">وصل استلام اشتراك / REÇU</h2>
+          <span class="receipt-id">N° REC-{{ tt.tournament.year }}-{{ tt.id|stringformat:"04d" }}</span>
+        </div>
+      </div>
+
+      <!-- DETAILS GRID -->
+      <div class="details-grid">
+        
+        <!-- Tournament Info -->
+        <div class="info-card">
+          <h4>{% trans "Détails du tournoi" %} / تفاصيل الدورة</h4>
+          <div class="info-row">
+            <span class="info-label">{% trans "Tournoi" %} / الدورة:</span>
+            <span class="info-value">{{ tt.tournament.name }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">{% trans "Édition" %} / النسخة:</span>
+            <span class="info-value">{{ tt.tournament.edition }} ({{ tt.tournament.year }})</span>
+          </div>
+        </div>
+
+        <!-- Payer Info -->
+        <div class="info-card">
+          <h4>{% trans "Bénéficiaire" %} / المستفيد</h4>
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <div style="flex-shrink: 0; width: 45px; height: 45px; background: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.05); border-radius: 6px; display: flex; align-items: center; justify-content: center; padding: 3px;">
+              {% if tt.team.logo %}
+                <img src="{{ tt.team.logo.url }}" alt="Team Logo" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
+              {% else %}
+                <span style="font-size: 20px; opacity: 0.3;">🛡️</span>
+              {% endif %}
+            </div>
+            <div style="flex-grow: 1;">
+              <div class="info-row" style="margin-bottom: 4px;">
+                <span class="info-label">{% trans "Équipe" %} / الفريق:</span>
+                <span class="info-value" style="font-size: 13.5px; color: var(--euro-gold);">{{ tt.team.name }}</span>
+              </div>
+              <div class="info-row" style="margin-bottom: 0;">
+                <span class="info-label">{% trans "Quartier" %} / الحي:</span>
+                <span class="info-value">{{ tt.team.neighborhood }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- FINANCIAL TABLE -->
+      <table class="finance-table">
+        <thead>
+          <tr>
+            <th class="text-right-aligned">{% trans "Désignation" %} / التفاصيل</th>
+            <th>{% trans "Montant exigé" %} / قيمة الاشتراك</th>
+            <th>{% trans "Montant versé" %} / المبلغ المدفوع</th>
+            <th>{% trans "Reste à payer" %} / المتبقي</th>
+            <th>{% trans "Statut" %} / الحالة</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-right-aligned">Frais de participation / حقوق مشاركة فريق {{ tt.team.name }}</td>
+            <td style="font-family: 'Outfit', monospace;">{{ tt.tournament.subscription_price }} DZD</td>
+            <td style="font-family: 'Outfit', monospace; color: #10b981;">{{ tt.amount_paid }} DZD</td>
+            <td style="font-family: 'Outfit', monospace; color: {% if remaining > 0 %}#ef4444{% else %}#64748b{% endif %};">
+              {{ remaining }} DZD
+            </td>
+            <td>
+              {% if tt.payment_confirmed %}
+                <span class="badge-status badge-paid">{% trans "Confirmé / مؤكد" %}</span>
+              {% else %}
+                <span class="badge-status badge-unpaid">{% trans "Non validé / غير مؤكد" %}</span>
+              {% endif %}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- FOOTER -->
+      <div class="footer">
+        <div class="footer-note">
+          <span>{{ site_settings.site_name }} · {% trans "Reçu officiel généré le" %} {{ now|date:"d/m/Y H:i" }}</span>
+          <div style="margin-top: 12px; display: flex; align-items: center; gap: 10px;">
+            <img id="qrcode" style="border: 1px solid var(--euro-gold); padding: 4px; background: #fff; border-radius: 6px; display: block; width: 75px; height: 75px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); image-rendering: -webkit-optimize-contrast;" alt="QR Code">
+            <span style="font-size: 11px; opacity: 0.85; line-height: 1.4; font-weight: 800; color: var(--charcoal); letter-spacing: 0.2px;">رمز الاستجابة السريعة للتحقق<br><span style="font-size: 9px; opacity: 0.7; font-family: 'Outfit', sans-serif;">CODE QR D'AUTHENTICITÉ</span></span>
+          </div>
+        </div>
+        <div class="signature-area" style="position: relative;">
+          <!-- Professional Stamp Integration -->
+          <div class="official-stamp-container" id="draggable-stamp" title="اسحب لتحريك الختم، واستخدم الزاوية للتكبير/التصغير، واضغط لتغيير الصورة">
+            <img src="/media/logos/stamp_esm_v2.png" 
+                 onerror="this.src='/media/logos/stamp_esm.png'"
+                 alt="Stamp"
+                 id="receipt-stamp-img"
+                 crossorigin="anonymous"
+                 class="official-stamp-img">
+            <div class="logo-overlay"><span style="font-size: 16px;">📷</span><br>تغيير الختم</div>
+            <div class="stamp-resizer" id="stamp-resizer-handle"></div>
+            <input type="file" id="stamp-file-input" accept="image/*" style="display: none;">
+          </div>
+          {% trans "Cachet & Signature" %} / الختم والإمضاء
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+  <script>
+    window.onload = function() {
+      function toUTF8(str) {
+          try {
+              return unescape(encodeURIComponent(str));
+          } catch (e) {
+              return str;
+          }
+      }
+
+      // Generate QR Code with QRious
+      new QRious({
+        element: document.getElementById("qrcode"),
+        value: toUTF8("{{ qr_content|escapejs }}"),
+        size: 256, // render at ultra-high resolution for perfect clarity when exported to PNG
+        foreground: '#0f172a',
+        background: '#ffffff',
+        level: 'M'
+      });
+
+      // Auto open print dialog
+      setTimeout(function() {
+        window.print();
+      }, 500);
+    }
+
+    async function downloadReceiptImage(event) {
+        if (event) event.preventDefault();
+        const btn = event.currentTarget;
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<span>📸 جاري الحفظ...</span>';
+        btn.style.opacity = '0.7';
+        btn.style.pointerEvents = 'none';
+
+        try {
+            const resizerNode = document.getElementById('stamp-resizer-handle');
+            const overlayNode = document.querySelector('.logo-overlay');
+            if (resizerNode) resizerNode.style.display = 'none';
+            if (overlayNode) overlayNode.style.display = 'none';
+
+            const page = document.querySelector('.print-page');
+            
+            // Generate PNG using htmlToImage to preserve mix-blend-mode and CSS filters perfectly
+            const imgData = await htmlToImage.toPng(page, {
+                quality: 1,
+                pixelRatio: 3,
+                style: {
+                    transform: 'none',
+                    margin: '0',
+                    boxShadow: 'none'
+                },
+                backgroundColor: '#FAF8F5'
+            });
+
+            if (resizerNode) resizerNode.style.display = '';
+            if (overlayNode) overlayNode.style.display = '';
+
+            const link = document.createElement('a');
+            link.download = `Recu_Paiement_{{ tt.team.name }}.png`;
+            link.href = imgData;
+            link.click();
+        } catch (error) {
+            console.error("Error generating image:", error);
+            alert("حدث خطأ أثناء حفظ الصورة. يرجى المحاولة مرة أخرى.");
+        } finally {
+            btn.innerHTML = originalHtml;
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto';
+        }
+    }
+
+    function removeWhiteBackground(imgElement) {
+        if (!imgElement) return;
+        if (imgElement.dataset.bgRemoved === 'true') return;
+        
+        const proceed = () => {
+            if (imgElement.dataset.bgRemoved === 'true') return;
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const width = imgElement.naturalWidth || imgElement.width || 300;
+                const height = imgElement.naturalHeight || imgElement.height || 300;
+                canvas.width = width;
+                canvas.height = height;
+                
+                ctx.drawImage(imgElement, 0, 0);
+                const imgData = ctx.getImageData(0, 0, width, height);
+                const data = imgData.data;
+                
+                const tolerance = 45; 
+                const visited = new Uint8Array(width * height);
+                const corners = [{x:0, y:0}, {x:width-1, y:0}, {x:0, y:height-1}, {x:width-1, y:height-1}];
+                let removedAny = false;
+                
+                for (const corner of corners) {
+                    const cIdx = (corner.y * width + corner.x);
+                    if (visited[cIdx]) continue;
+                    
+                    const rBg = data[cIdx * 4];
+                    const gBg = data[cIdx * 4 + 1];
+                    const bBg = data[cIdx * 4 + 2];
+                    const aBg = data[cIdx * 4 + 3];
+                    
+                    if (aBg < 50) continue;
+                    
+                    const queue = [[corner.x, corner.y]];
+                    visited[cIdx] = 1;
+                    let head = 0;
+                    while (head < queue.length) {
+                        const [cx, cy] = queue[head++];
+                        const idx = (cy * width + cx) * 4;
+                        data[idx + 3] = 0;
+                        removedAny = true;
+                        
+                        const neighbors = [[cx+1, cy], [cx-1, cy], [cx, cy+1], [cx, cy-1]];
+                        for (const [nx, ny] of neighbors) {
+                            if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                const nIdx = ny * width + nx;
+                                if (!visited[nIdx]) {
+                                    const pIdx = nIdx * 4;
+                                    const r = data[pIdx];
+                                    const g = data[pIdx+1];
+                                    const b = data[pIdx+2];
+                                    const a = data[pIdx+3];
+                                    
+                                    if (a >= 50 &&
+                                        Math.abs(r - rBg) <= tolerance &&
+                                        Math.abs(g - gBg) <= tolerance &&
+                                        Math.abs(b - bBg) <= tolerance) {
+                                        queue.push([nx, ny]);
+                                        visited[nIdx] = 1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if (removedAny) {
+                    ctx.putImageData(imgData, 0, 0);
+                    imgElement.dataset.bgRemoved = 'true';
+                    imgElement.src = canvas.toDataURL('image/png');
+                }
+            } catch (e) {
+                console.warn("Could not remove background:", e);
+            }
+        };
+
+        if (imgElement.complete && imgElement.naturalWidth > 0) {
+            proceed();
+        } else {
+            imgElement.addEventListener('load', proceed);
+        }
+    }
+
+    // Stamp Control Logic
+    const stamp = document.getElementById('draggable-stamp');
+    const resizer = document.getElementById('stamp-resizer-handle');
+    const stampFileInput = document.getElementById('stamp-file-input');
+
+    let isDragging = false;
+    let isResizing = false;
+    let startX, startY, startLeft, startTop, startWidth;
+
+    stamp.addEventListener('mousedown', (e) => {
+        if (e.target === resizer || e.target.classList.contains('stamp-resizer')) return;
+        isDragging = true;
+        stamp.dataset.dragged = 'false';
+        startX = e.clientX;
+        startY = e.clientY;
+        startLeft = stamp.offsetLeft;
+        startTop = stamp.offsetTop;
+        stamp.style.cursor = 'grabbing';
+        e.preventDefault();
+    });
+
+    resizer.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        startX = e.clientX;
+        startWidth = parseFloat(window.getComputedStyle(stamp).width);
+        e.stopPropagation();
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+            stamp.dataset.dragged = 'true';
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            stamp.style.left = `${startLeft + dx}px`;
+            stamp.style.top = `${startTop + dy}px`;
+        } else if (isResizing) {
+            const dx = startX - e.clientX;
+            const newWidth = Math.max(50, Math.min(300, startWidth + dx));
+            stamp.style.width = `${newWidth}px`;
+            stamp.style.height = `${newWidth}px`;
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (isDragging) {
+            isDragging = false;
+            stamp.style.cursor = 'move';
+        }
+        isResizing = false;
+    });
+
+    stamp.addEventListener('click', (e) => {
+        if (e.target === resizer || e.target.classList.contains('stamp-resizer')) return;
+        if (!stamp.dataset.dragged || stamp.dataset.dragged === 'false') {
+            stampFileInput.click();
+        }
+    });
+
+    stampFileInput.addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const stampImg = document.getElementById('receipt-stamp-img');
+                delete stampImg.dataset.bgRemoved;
+                stampImg.src = event.target.result;
+            };
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+
+    // Apply on load
+    document.addEventListener("DOMContentLoaded", function() {
+        const stampImg = document.getElementById('receipt-stamp-img');
+        if (stampImg) removeWhiteBackground(stampImg);
+    });
+  </script>
+</body>
+</html>

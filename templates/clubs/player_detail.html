@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}Profil - {{ player.first_name }} {{ player.last_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 max-w-7xl mx-auto">
+    <div class="mb-6 flex justify-between items-center">
+        <a href="{% url 'clubs:player_list' %}" class="btn btn-ghost">
+            <i class="fas fa-arrow-left me-2"></i>قائمة اللاعبين
+        </a>
+        <div class="flex gap-2">
+            <a href="{% url 'clubs:subscription_add' %}?player={{ player.id }}" class="btn bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-xl">
+                <i class="fas fa-money-bill-wave me-2"></i>تسديد اشتراك
+            </a>
+            <a href="{% url 'clubs:medical_add' %}?player={{ player.id }}" class="btn bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-xl">
+                <i class="fas fa-briefcase-medical me-2"></i>سجل طبي
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Player Card Side -->
+        <div class="lg:col-span-4 space-y-6">
+            <div class="card rounded-3xl p-8 border border-white/10 text-center relative overflow-hidden" style="background: color-mix(in srgb, var(--card) 60%, transparent);">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-[50px] pointer-events-none"></div>
+                
+                <div class="relative z-10">
+                    <div class="w-40 h-40 mx-auto rounded-full bg-white/5 border-4 border-white/10 shadow-2xl overflow-hidden mb-6">
+                        {% if player.photo %}
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <div class="w-full h-full flex items-center justify-center text-5xl opacity-30"><i class="fas fa-user"></i></div>
+                        {% endif %}
+                    </div>
+                    
+                    <h2 class="text-2xl font-black mb-1">{{ player.first_name }} {{ player.last_name }}</h2>
+                    <h5 class="text-primary font-bold mb-4">{{ player.category.name }}</h5>
+                    
+                    <div class="flex justify-center gap-3">
+                        {% if player.jersey_number %}
+                        <div class="px-4 py-2 bg-white/5 rounded-xl border border-white/10 font-mono font-bold text-lg shadow-inner">#{{ player.jersey_number }}</div>
+                        {% endif %}
+                        {% if player.position %}
+                        <div class="px-4 py-2 bg-white/5 rounded-xl border border-white/10 font-bold text-lg shadow-inner">{{ player.position }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="card rounded-3xl p-6 border border-white/10" style="background: color-mix(in srgb, var(--card) 60%, transparent);">
+                <h3 class="font-bold mb-4 flex items-center gap-2"><i class="fas fa-address-book text-primary"></i> معلومات الاتصال</h3>
+                
+                <div class="space-y-4 text-sm">
+                    <div class="flex justify-between items-center pb-2 border-b border-white/5">
+                        <span class="opacity-60">ولي الأمر</span>
+                        <span class="font-bold">{{ player.parent_name|default:"-" }}</span>
+                    </div>
+                    <div class="flex justify-between items-center pb-2 border-b border-white/5">
+                        <span class="opacity-60">هاتف الولي</span>
+                        <div class="flex items-center gap-3">
+                            <span class="font-bold font-mono" dir="ltr">{{ player.parent_phone|default:"-" }}</span>
+                            {% if player.parent_phone %}
+                            <a href="https://wa.me/{{ player.parent_phone|urlencode }}?text={{ 'السلام عليكم، الأكاديمية تتواصل معكم بخصوص اللاعب: '|add:player.first_name|add:' '|add:player.last_name|urlencode }}" target="_blank" class="btn btn-sm btn-success rounded-circle shadow-sm" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; padding: 0;" title="مراسلة ولي الأمر عبر واتساب">
+                                <i class="fab fa-whatsapp"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center pb-2 border-b border-white/5">
+                        <span class="opacity-60">هاتف اللاعب</span>
+                        <div class="flex items-center gap-3">
+                            <span class="font-bold font-mono" dir="ltr">{{ player.player_phone|default:"-" }}</span>
+                            {% if player.player_phone %}
+                            <a href="https://wa.me/{{ player.player_phone|urlencode }}?text={{ 'السلام عليكم، الأكاديمية تتواصل معك يا '|add:player.first_name|urlencode }}" target="_blank" class="btn btn-sm btn-success rounded-circle shadow-sm" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; padding: 0;" title="مراسلة اللاعب عبر واتساب">
+                                <i class="fab fa-whatsapp"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <span class="opacity-60">العنوان</span>
+                        <span class="font-bold">{{ player.address|default:"-" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Details Side -->
+        <div class="lg:col-span-8 space-y-6">
+            
+            <!-- Personal Info -->
+            <div class="card rounded-3xl p-6 border border-white/10" style="background: color-mix(in srgb, var(--card) 60%, transparent);">
+                <h3 class="font-bold mb-4 flex items-center gap-2"><i class="fas fa-id-card text-primary"></i> المعلومات الشخصية والرياضية</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
+                        <div class="text-xs opacity-60 mb-1">تاريخ ومكان الميلاد</div>
+                        <div class="font-bold">{{ player.date_of_birth|date:"d M Y" }} <span class="opacity-50 mx-1">|</span> {{ player.place_of_birth|default:"-" }}</div>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-center justify-between">
+                        <div>
+                            <div class="text-xs opacity-60 mb-1">الزمرة الدموية</div>
+                            <div class="font-black text-red-500 text-lg" dir="ltr">{{ player.blood_type|default:"-" }}</div>
+                        </div>
+                        <i class="fas fa-tint text-3xl text-red-500/20"></i>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
+                        <div class="text-xs opacity-60 mb-1">تاريخ الانضمام للأكاديمية</div>
+                        <div class="font-bold">{{ player.joined_date|date:"d M Y" }}</div>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
+                        <div class="text-xs opacity-60 mb-1">رقم البطاقة التسلسلي</div>
+                        <div class="font-mono text-xs">{{ player.card_number }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subscriptions -->
+            {% if player.category and player.category.name in "U15,U16,U17,U19,U21,Seniors,Veterans" %}
+            <div class="card rounded-3xl p-6 border border-emerald-500/30 bg-emerald-500/10 backdrop-blur-md">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl font-black shrink-0">
+                        <i class="fas fa-id-card"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white text-base mb-1">منخرط في الرابطة الرسمية (فئة {{ player.category.name }})</h4>
+                        <p class="text-sm text-emerald-200/80 mb-0">تم إعفاء لاعبي هذه الفئة كلياً من سجل الاشتراكات المالية الشهرية نظراً لانخراطهم الرسمي في الرابطة.</p>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="card rounded-3xl p-6 border border-white/10" style="background: color-mix(in srgb, var(--card) 60%, transparent);">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold m-0 flex items-center gap-2"><i class="fas fa-wallet text-green-400"></i> الاشتراكات المالية</h3>
+                    <span class="badge bg-green-500/20 text-green-400">{{ player.subscriptions.count }} أشهر</span>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left rtl:text-right">
+                        <thead class="text-xs uppercase bg-white/5 text-white/70">
+                            <tr>
+                                <th class="px-4 py-3 rounded-s-xl">الشهر</th>
+                                <th class="px-4 py-3">المبلغ</th>
+                                <th class="px-4 py-3">الحالة</th>
+                                <th class="px-4 py-3">تاريخ الدفع</th>
+                                <th class="px-4 py-3 rounded-e-xl text-center">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sub in player.subscriptions.all %}
+                            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                <td class="px-4 py-3 font-bold">{{ sub.month|date:"F Y" }}</td>
+                                <td class="px-4 py-3 font-mono font-bold">{{ sub.amount }} دج</td>
+                                <td class="px-4 py-3">
+                                    {% if sub.is_paid %}
+                                        <span class="badge bg-green-500/20 text-green-400 border border-green-500/30"><i class="fas fa-check-circle me-1"></i>مسدد</span>
+                                    {% else %}
+                                        <span class="badge bg-red-500/20 text-red-400 border border-red-500/30"><i class="fas fa-times-circle me-1"></i>غير مسدد</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 opacity-70">{{ sub.paid_date|date:"d/m/Y"|default:"-" }}</td>
+                                <td class="px-4 py-3 text-center">
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <a href="{% url 'clubs:subscription_edit' sub.id %}" class="btn btn-sm btn-light border-0 shadow-sm" style="background: rgba(255,255,255,0.1); color: #fff;" title="تعديل">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'clubs:subscription_delete' sub.id %}" class="btn btn-sm btn-danger border-0 shadow-sm" style="background: rgba(239,68,68,0.2); color: #f87171;" title="حذف">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="px-4 py-6 text-center opacity-50">لم يتم تسجيل أي اشتراكات لهذا اللاعب.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Medical Records -->
+            <div class="card rounded-3xl p-6 border border-white/10" style="background: color-mix(in srgb, var(--card) 60%, transparent);">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold m-0 flex items-center gap-2"><i class="fas fa-notes-medical text-red-400"></i> السجل الطبي والإصابات</h3>
+                    <span class="badge bg-red-500/20 text-red-400">{{ player.medical_records.count }} سجلات</span>
+                </div>
+                
+                <div class="space-y-3">
+                    {% for record in player.medical_records.all %}
+                    <div class="p-4 bg-white/5 rounded-2xl border {% if record.is_recovered %}border-green-500/30{% else %}border-red-500/30{% endif %}">
+                        <div class="flex justify-between items-start mb-2">
+                            <h5 class="font-bold text-lg">{{ record.injury_type }}</h5>
+                            {% if record.is_recovered %}
+                                <span class="badge bg-green-500/20 text-green-400">متعافي</span>
+                            {% else %}
+                                <span class="badge bg-red-500/20 text-red-400 animate-pulse">في طور العلاج</span>
+                            {% endif %}
+                        </div>
+                        <div class="flex flex-wrap gap-4 text-xs opacity-70 mb-3">
+                            <div><i class="far fa-calendar-times me-1"></i>تاريخ الإصابة: {{ record.date_of_injury|date:"d/m/Y" }}</div>
+                            {% if record.expected_return %}
+                            <div><i class="far fa-calendar-check me-1"></i>العودة المتوقعة: {{ record.expected_return|date:"d/m/Y" }}</div>
+                            {% endif %}
+                        </div>
+                        {% if record.notes %}
+                        <div class="text-sm bg-black/20 p-3 rounded-xl border border-white/5">
+                            {{ record.notes }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-6 opacity-50 border border-dashed border-white/10 rounded-2xl">
+                        الحمد لله، لا توجد أي إصابات مسجلة للاعب.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Equipment -->
+            <div class="card rounded-3xl p-6 border border-white/10" style="background: color-mix(in srgb, var(--card) 60%, transparent);">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold m-0 flex items-center gap-2"><i class="fas fa-tshirt text-blue-400"></i> العتاد والألبسة</h3>
+                    <a href="{% url 'clubs:equipment_edit' player.id %}" class="btn btn-sm btn-light border-0 shadow-sm" style="background: rgba(255,255,255,0.1); color: #fff;"><i class="fas fa-edit me-1"></i> تعديل</a>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="p-4 bg-white/5 rounded-2xl border {% if player.equipment.first.received_training_kit %}border-green-500/30{% else %}border-red-500/30{% endif %} flex flex-col items-center justify-center text-center">
+                        <i class="fas fa-tshirt text-3xl mb-2 {% if player.equipment.first.received_training_kit %}text-green-400{% else %}opacity-30{% endif %}"></i>
+                        <h5 class="font-bold text-sm mb-1">بدلة التدريب</h5>
+                        {% if player.equipment.first.received_training_kit %}
+                        <span class="badge bg-green-500/20 text-green-400 text-xs">مستلم ({{ player.equipment.first.training_kit_date|date:"d/m/Y" }})</span>
+                        {% else %}
+                        <span class="badge bg-red-500/20 text-red-400 text-xs">غير مستلم</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="p-4 bg-white/5 rounded-2xl border {% if player.equipment.first.received_tracksuit %}border-green-500/30{% else %}border-red-500/30{% endif %} flex flex-col items-center justify-center text-center">
+                        <i class="fas fa-running text-3xl mb-2 {% if player.equipment.first.received_tracksuit %}text-green-400{% else %}opacity-30{% endif %}"></i>
+                        <h5 class="font-bold text-sm mb-1">بدلة الاستعراض (Survêtement)</h5>
+                        {% if player.equipment.first.received_tracksuit %}
+                        <span class="badge bg-green-500/20 text-green-400 text-xs">مستلم ({{ player.equipment.first.tracksuit_date|date:"d/m/Y" }})</span>
+                        {% else %}
+                        <span class="badge bg-red-500/20 text-red-400 text-xs">غير مستلم</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="p-4 bg-white/5 rounded-2xl border {% if player.equipment.first.received_bag %}border-green-500/30{% else %}border-red-500/30{% endif %} flex flex-col items-center justify-center text-center">
+                        <i class="fas fa-shopping-bag text-3xl mb-2 {% if player.equipment.first.received_bag %}text-green-400{% else %}opacity-30{% endif %}"></i>
+                        <h5 class="font-bold text-sm mb-1">الحقيبة الرياضية</h5>
+                        {% if player.equipment.first.received_bag %}
+                        <span class="badge bg-green-500/20 text-green-400 text-xs">مستلم ({{ player.equipment.first.bag_date|date:"d/m/Y" }})</span>
+                        {% else %}
+                        <span class="badge bg-red-500/20 text-red-400 text-xs">غير مستلم</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evaluations -->
+            <div class="card rounded-3xl p-6 border border-white/10" style="background: color-mix(in srgb, var(--card) 60%, transparent);">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold m-0 flex items-center gap-2"><i class="fas fa-chart-line text-purple-400"></i> التقييم الفني والبدني</h3>
+                    <a href="{% url 'clubs:evaluation_add' %}?player={{ player.id }}" class="btn btn-sm btn-primary border-0 shadow-sm rounded-pill fw-bold px-3">
+                        <i class="fas fa-plus me-1"></i> إضافة تقييم
+                    </a>
+                </div>
+                
+                <div class="space-y-3">
+                    {% for eval in player.evaluations.all %}
+                    <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h5 class="font-bold text-lg text-purple-300">تقييم {{ eval.date_evaluated|date:"F Y" }}</h5>
+                                <small class="opacity-70"><i class="fas fa-user-tie me-1"></i>المدرب: {{ eval.evaluator|default:"غير محدد" }}</small>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-white">{{ eval.total_score }}</div>
+                                <div class="text-xs opacity-60">المجموع / 50</div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
+                            <div class="text-center bg-black/20 rounded-xl p-2">
+                                <div class="text-xs opacity-70 mb-1">البدنية</div>
+                                <div class="font-bold text-green-400">{{ eval.physical_fitness }}/10</div>
+                            </div>
+                            <div class="text-center bg-black/20 rounded-xl p-2">
+                                <div class="text-xs opacity-70 mb-1">السرعة</div>
+                                <div class="font-bold text-green-400">{{ eval.speed }}/10</div>
+                            </div>
+                            <div class="text-center bg-black/20 rounded-xl p-2">
+                                <div class="text-xs opacity-70 mb-1">التمرير</div>
+                                <div class="font-bold text-blue-400">{{ eval.passing }}/10</div>
+                            </div>
+                            <div class="text-center bg-black/20 rounded-xl p-2">
+                                <div class="text-xs opacity-70 mb-1">التكتيك</div>
+                                <div class="font-bold text-blue-400">{{ eval.tactical_awareness }}/10</div>
+                            </div>
+                            <div class="text-center bg-black/20 rounded-xl p-2">
+                                <div class="text-xs opacity-70 mb-1">الانضباط</div>
+                                <div class="font-bold text-yellow-400">{{ eval.discipline }}/10</div>
+                            </div>
+                        </div>
+                        
+                        {% if eval.coach_remarks %}
+                        <div class="text-sm bg-black/30 p-3 rounded-xl border border-white/5 border-r-4 border-r-purple-500" dir="rtl">
+                            <strong class="block mb-1 text-purple-300">ملاحظات المدرب:</strong>
+                            {{ eval.coach_remarks }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-6 opacity-50 border border-dashed border-white/10 rounded-2xl">
+                        لم يتم تقييم هذا اللاعب بعد.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Attendance Record -->
+            <div class="card rounded-3xl p-6 border border-white/10" style="background: color-mix(in srgb, var(--card) 60%, transparent);">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold m-0 flex items-center gap-2"><i class="fas fa-clipboard-check text-green-400"></i> سجل الحضور للتدريبات</h3>
+                </div>
+                
+                <div class="flex items-center gap-6 mb-6 p-4 bg-black/20 rounded-2xl border border-white/5">
+                    <div class="text-center flex-1 border-e border-white/10">
+                        <div class="text-3xl font-bold text-white">{{ player.attendances.count }}</div>
+                        <div class="text-xs opacity-70">إجمالي الحصص</div>
+                    </div>
+                    <div class="text-center flex-1 border-e border-white/10">
+                        <div class="text-3xl font-bold text-green-400">
+                            {{ player.present_count }}
+                        </div>
+                        <div class="text-xs opacity-70">حضور</div>
+                    </div>
+                    <div class="text-center flex-1">
+                        <div class="text-3xl font-bold text-red-400">
+                           {{ player.absent_count }}
+                        </div>
+                        <div class="text-xs opacity-70">غياب</div>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    {% for attendance in player.attendances.all|slice:":5" %}
+                    <div class="flex justify-between items-center p-3 bg-white/5 rounded-xl border {% if attendance.is_present %}border-green-500/20{% else %}border-red-500/20{% endif %}">
+                        <div>
+                            <div class="font-bold text-sm">{{ attendance.session.date|date:"l d F Y" }}</div>
+                            <div class="text-xs opacity-60"><i class="far fa-clock me-1"></i>{{ attendance.session.start_time|time:"H:i" }}</div>
+                        </div>
+                        {% if attendance.is_present %}
+                        <span class="badge bg-green-500/20 text-green-400"><i class="fas fa-check me-1"></i>حاضر</span>
+                        {% else %}
+                        <span class="badge bg-red-500/20 text-red-400"><i class="fas fa-times me-1"></i>غائب</span>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-6 opacity-50 border border-dashed border-white/10 rounded-2xl">
+                        لم يتم تسجيل أي حضور أو غياب لهذا اللاعب حتى الآن.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

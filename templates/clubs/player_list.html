@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}Joueurs du Club — TurniQ{% endblock %}
+
+{% block content %}
+<div class="w-full max-w-7xl mx-auto space-y-8 animate-in">
+
+    <!-- ─── WORLD-CLASS HERO BANNER ─── -->
+    <div class="relative overflow-hidden rounded-3xl p-6 sm:p-8 lg:p-10 shadow-2xl border border-white/10" 
+         style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 50%, rgba(12, 35, 64, 0.95) 100%); backdrop-filter: blur(20px);">
+        
+        <!-- Ambient Mesh Background Glows -->
+        <div class="absolute -top-24 -right-24 w-96 h-96 bg-amber-500/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-500/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute top-0 right-0 left-0 h-px bg-gradient-to-r from-transparent via-amber-400/40 to-transparent"></div>
+
+        <div class="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6">
+            
+            <!-- Title & Description -->
+            <div class="flex items-center gap-5 text-right w-full lg:w-auto">
+                <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg border border-amber-400/30"
+                     style="background: linear-gradient(135deg, rgba(197, 160, 40, 0.2), rgba(15, 23, 42, 0.6)); backdrop-filter: blur(10px);">
+                    <i class="fas fa-users text-amber-400 text-2xl sm:text-3xl"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-3 mb-1">
+                        <h1 class="text-2xl sm:text-3xl font-black text-white tracking-wide font-cairo">لاعبي النادي</h1>
+                        <span class="px-3 py-1 text-xs font-bold rounded-full bg-amber-400/10 text-amber-300 border border-amber-400/20">
+                            {{ players|length }} لاعب
+                        </span>
+                    </div>
+                    <p class="text-slate-400 text-sm sm:text-base font-medium mb-0">إدارة قائمة اللاعبين، الأرشيف، وطباعة البطاقات الرياضية الاحترافية</p>
+                </div>
+            </div>
+            
+            <!-- Quick Actions Toolbar -->
+            <div class="flex flex-wrap items-center justify-center lg:justify-end gap-3 w-full lg:w-auto">
+                <a href="{% url 'clubs:dashboard' %}" 
+                   class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-slate-200 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 shadow-md transition-all hover:-translate-y-0.5">
+                    <i class="fas fa-arrow-right text-xs"></i> الرجوع للوحة التحكم
+                </a>
+                <a href="{% url 'clubs:player_cards_print' %}?{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.position %}position={{ request.GET.position }}{% endif %}" 
+                   class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-slate-900 bg-amber-400 hover:bg-amber-300 shadow-lg shadow-amber-400/20 transition-all hover:-translate-y-0.5" 
+                   target="_blank">
+                    <i class="fas fa-id-card"></i> طباعة البطاقات
+                </a>
+                <a href="{% url 'clubs:player_list_print' %}?{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.position %}position={{ request.GET.position }}{% endif %}" 
+                   class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/20 transition-all hover:-translate-y-0.5" 
+                   target="_blank">
+                    <i class="fas fa-print"></i> طباعة القائمة
+                </a>
+                <a href="{% url 'clubs:player_list_print' %}?blank=1{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" 
+                   class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-emerald-700 hover:bg-emerald-600 border border-emerald-600/60 shadow-lg shadow-emerald-700/20 transition-all hover:-translate-y-0.5" 
+                   target="_blank">
+                    <i class="fas fa-file-signature"></i> قائمة فارغة
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── ADVANCED SEARCH & FILTER BAR ─── -->
+    <div class="relative rounded-2xl p-4 sm:p-5 border border-white/10 shadow-xl" 
+         style="background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(15px);">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center m-0">
+            
+            <!-- Search Input Field -->
+            <div class="md:col-span-5 relative">
+                <div class="relative flex items-center w-full">
+                    <i class="fas fa-search absolute right-4 text-slate-400 pointer-events-none z-10"></i>
+                    <input type="text" 
+                           name="q" 
+                           class="w-full pr-11 pl-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700/80 text-white placeholder-slate-400 text-sm font-semibold focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all" 
+                           placeholder="ابحث عن لاعب (الاسم، اللقب، أو المركز)..." 
+                           value="{{ request.GET.q }}">
+                </div>
+            </div>
+            
+            <!-- Category Filter Dropdown -->
+            <div class="md:col-span-3 relative">
+                <div class="relative flex items-center w-full">
+                    <i class="fas fa-filter absolute right-4 text-amber-400 pointer-events-none z-10"></i>
+                    <select name="category" 
+                            class="w-full pr-11 pl-8 py-3 rounded-xl bg-slate-900/80 border border-slate-700/80 text-white text-sm font-semibold focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all appearance-none cursor-pointer" 
+                            onchange="this.form.submit()">
+                        <option value="" class="bg-slate-900 text-white">-- جميع الفئات --</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" class="bg-slate-900 text-white" {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>
+                            {{ cat.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <i class="fas fa-chevron-down absolute left-4 text-slate-500 text-xs pointer-events-none z-10"></i>
+                </div>
+            </div>
+
+            <!-- Position Filter Dropdown -->
+            <div class="md:col-span-2 relative">
+                <div class="relative flex items-center w-full">
+                    <i class="fas fa-running absolute right-4 text-amber-400 pointer-events-none z-10"></i>
+                    <select name="position" 
+                            class="w-full pr-11 pl-8 py-3 rounded-xl bg-slate-900/80 border border-slate-700/80 text-white text-sm font-semibold focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all appearance-none cursor-pointer" 
+                            onchange="this.form.submit()">
+                        <option value="" class="bg-slate-900 text-white">-- المراكز --</option>
+                        {% for pos_val, pos_label in positions %}
+                        <option value="{{ pos_val }}" class="bg-slate-900 text-white" {% if request.GET.position == pos_val %}selected{% endif %}>
+                            {{ pos_val }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <i class="fas fa-chevron-down absolute left-4 text-slate-500 text-xs pointer-events-none z-10"></i>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="md:col-span-2">
+                <button type="submit" 
+                        class="w-full py-3 px-4 rounded-xl font-bold text-sm text-slate-900 bg-amber-400 hover:bg-amber-300 shadow-md shadow-amber-400/10 flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5">
+                    <i class="fas fa-search"></i>
+                    <span>تصفية</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ─── ULTIMATE SAAS PLAYERS TABLE ─── -->
+    <div class="relative rounded-3xl border border-white/10 shadow-2xl overflow-hidden"
+         style="background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(25px);">
+        
+        <div class="overflow-x-auto">
+            <table class="w-full text-right border-collapse">
+                <thead>
+                    <tr class="border-b border-white/10 bg-slate-900/60 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                        <th scope="col" class="py-4 px-6">معلومات اللاعب</th>
+                        <th scope="col" class="py-4 px-6 text-center">الفئة</th>
+                        <th scope="col" class="py-4 px-6 text-center">تاريخ الميلاد</th>
+                        <th scope="col" class="py-4 px-6 text-center">رقم القميص</th>
+                        <th scope="col" class="py-4 px-6 text-center">سجل الاشتراكات</th>
+                        <th scope="col" class="py-4 px-6 text-left">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5 text-sm">
+                    {% for player in players %}
+                    <tr class="hover:bg-slate-800/40 transition-colors duration-150 group">
+                        
+                        <!-- Player Info -->
+                        <td class="py-4 px-6">
+                            <div class="flex items-center gap-4">
+                                <div class="relative flex-shrink-0">
+                                    {% if player.photo %}
+                                        <img src="{{ player.photo.url }}" 
+                                             class="w-12 h-12 rounded-full object-cover shadow-md border-2 border-amber-400/40 group-hover:border-amber-400 transition-all" 
+                                             alt="{{ player.first_name }}">
+                                    {% else %}
+                                        <div class="w-12 h-12 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-slate-400 text-lg shadow-md group-hover:border-amber-400/50 transition-all">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                    {% endif %}
+                                    {% if player.is_captain %}
+                                    <span class="absolute -bottom-1 -right-1 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center shadow-lg border border-slate-900" title="كابتن الفريق">
+                                        <i class="fas fa-star text-slate-950 text-[10px]"></i>
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-white text-base group-hover:text-amber-400 transition-colors mb-0.5">
+                                        {{ player.first_name }} {{ player.last_name }}
+                                    </h3>
+                                    <span class="text-xs text-slate-400 font-medium">
+                                        <i class="fas fa-futbol text-[10px] ml-1 text-slate-500"></i>{{ player.position|default:"لاعب" }}
+                                    </span>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Category -->
+                        <td class="py-4 px-6 text-center whitespace-nowrap">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                {{ player.category.name|default:"بدون فئة" }}
+                            </span>
+                        </td>
+
+                        <!-- Date of birth -->
+                        <td class="py-4 px-6 text-center whitespace-nowrap">
+                            <div class="flex flex-col items-center">
+                                <span class="font-bold text-slate-200">
+                                    {{ player.date_of_birth|date:"Y-m-d"|default:"-" }}
+                                </span>
+                                {% if player.date_of_birth %}
+                                <span class="text-[11px] text-slate-400 font-medium mt-0.5">
+                                    {{ player.date_of_birth|timesince }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </td>
+
+                        <!-- Jersey Number -->
+                        <td class="py-4 px-6 text-center whitespace-nowrap">
+                            {% if player.jersey_number %}
+                            <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl font-black text-blue-400 bg-blue-500/10 border border-blue-500/20 shadow-sm text-base">
+                                {{ player.jersey_number }}
+                            </span>
+                            {% else %}
+                            <span class="text-slate-600 font-bold">-</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Subscription Tracking / League Affiliation -->
+                        <td class="py-4 px-6 text-center">
+                            {% if player.category and player.category.name in "U15,U16,U17,U19,U20,U21,Seniors,Veterans" %}
+                                <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow-sm">
+                                    <i class="fas fa-id-card text-emerald-400"></i> منخرط في الرابطة
+                                </span>
+                            {% else %}
+                                <div class="flex flex-wrap items-center justify-center gap-1.5 min-w-[250px] mx-auto py-1" dir="ltr">
+                                    {% for m in player.payment_tracking %}
+                                        {% if m.status == 'paid' %}
+                                        <span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm cursor-help" title="مسدد لشهر {{ m.month }}">
+                                            م{{ m.month }}
+                                        </span>
+                                        {% elif m.status == 'unpaid' %}
+                                        <span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 shadow-sm cursor-help" title="غير مسدد لشهر {{ m.month }}">
+                                            م{{ m.month }}
+                                        </span>
+                                        {% else %}
+                                        <span class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-help" title="لم ينخرط في هذا الشهر">
+                                            م{{ m.month }}
+                                        </span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </td>
+
+                        <!-- Actions -->
+                        <td class="py-4 px-6 text-left whitespace-nowrap">
+                            <div class="flex items-center justify-end gap-2">
+                                <a href="{% url 'clubs:player_detail' player.id %}" 
+                                   class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white border border-blue-500/20 flex items-center justify-center transition-all shadow-sm" 
+                                   title="عرض التفاصيل">
+                                    <i class="fas fa-eye text-xs"></i>
+                                </a>
+                                <a href="{% url 'clubs:player_edit' player.id %}" 
+                                   class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-slate-950 border border-amber-500/20 flex items-center justify-center transition-all shadow-sm" 
+                                   title="تعديل بيانات اللاعب">
+                                    <i class="fas fa-edit text-xs"></i>
+                                </a>
+                                <a href="{% url 'clubs:player_delete' player.id %}" 
+                                   class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white border border-rose-500/20 flex items-center justify-center transition-all shadow-sm" 
+                                   title="حذف اللاعب">
+                                    <i class="fas fa-trash-alt text-xs"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="py-16 text-center">
+                            <div class="w-20 h-20 rounded-full bg-slate-800/80 border border-slate-700/50 flex items-center justify-center mx-auto mb-4 text-slate-500 text-2xl shadow-inner">
+                                <i class="fas fa-users-slash"></i>
+                            </div>
+                            <h3 class="text-slate-300 font-bold text-lg mb-1">لا يوجد لاعبين يطابقون بحثك حتى الآن</h3>
+                            <p class="text-slate-500 text-sm font-medium">جرب ضبط البحث أو اختيار فئة عمرية أخرى</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

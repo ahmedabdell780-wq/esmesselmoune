@@ -1,0 +1,819 @@
+{% load i18n turniq_tags static %}
+<!DOCTYPE html>
+<html lang="{{ appearance.language|default:'fr' }}"
+      dir="{% if appearance.language == 'ar' %}rtl{% else %}ltr{% endif %}"
+      data-theme="{{ appearance.theme|default:'dark' }}"
+      data-font="{{ appearance.font_size|default:'base' }}"
+      data-fontfamily="{{ appearance.font_family|default:'cairo' }}">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta name="theme-color" content="#0d1117"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <link rel="manifest" href="/static/manifest.json"/>
+  <title>{% block title %}TurniQ{% endblock %} — {% trans "Tournoi Inter-Quartiers" %}</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: { fontFamily: {
+        cairo:   ['Cairo','Noto Sans Arabic','sans-serif'],
+        amiri:   ['Amiri','serif'],
+        bebas:   ['"Bebas Neue"','sans-serif'],
+        inter:   ['Inter','sans-serif'],
+        roboto:  ['Roboto','sans-serif'],
+        mono:    ['"JetBrains Mono"','monospace'],
+      }}}
+    }
+  </script>
+
+  <!-- Google Fonts: Arabic + Latin -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cairo:wght@300;400;600;700;900&family=Amiri:wght@400;700&family=Noto+Sans+Arabic:wght@300;400;600;700;900&family=Inter:wght@300;400;600;700&family=Roboto:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" crossorigin="anonymous"/>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- HTMX -->
+  <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+  <!-- Alpine.js -->
+  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+  <link rel="stylesheet" href="/static/css/global.css"/>
+  <style>
+    /* ── DYNAMIC CSS VARIABLES ── */
+    :root {
+      --primary:  {{ appearance.primary_color|default:'#C5A028' }};
+      --primary-dark: color-mix(in srgb, var(--primary) 70%, black);
+      --primary-glow: color-mix(in srgb, var(--primary) 20%, transparent);
+    }
+
+    /* ── LANGUAGE SPECIFIC POSITIONING ── */
+    #toast-container {
+      {% if appearance.language == 'ar' %}left: 1.5rem;{% else %}right: 1.5rem;{% endif %}
+    }
+    #search-results {
+      {% if appearance.language == 'ar' %}right: 0;{% else %}left: 0;{% endif %}
+    }
+
+    /* ── GLOBAL APP BACKGROUND ── */
+    #global-bg {
+      background-image: url('{% static "img/bg.png" %}');
+    }
+  </style>
+
+  <link rel="stylesheet" href="/static/css/match_scoreboard.css"/>
+  <script>
+    // Automatic background removal for logo images
+    function removeWhiteBackground(imgElement) {
+        if (!imgElement) return;
+        if (imgElement.dataset.bgRemoved === 'true') return;
+        
+        const proceed = () => {
+            if (imgElement.dataset.bgRemoved === 'true') return;
+            
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const width = imgElement.naturalWidth || imgElement.width || 300;
+                const height = imgElement.naturalHeight || imgElement.height || 300;
+                canvas.width = width;
+                canvas.height = height;
+                
+                ctx.drawImage(imgElement, 0, 0);
+                const imgData = ctx.getImageData(0, 0, width, height);
+                const data = imgData.data;
+                
+                // Flood-fill starting from the four corners to remove only the outer background
+                const tolerance = 55; // optimized color match tolerance
+                const visited = new Uint8Array(width * height);
+                
+                const corners = [
+                    {x: 0, y: 0},
+                    {x: width - 1, y: 0},
+                    {x: 0, y: height - 1},
+                    {x: width - 1, y: height - 1}
+                ];
+                
+                let removedAny = false;
+                
+                for (const corner of corners) {
+                    const cIdx = (corner.y * width + corner.x);
+                    if (visited[cIdx]) continue;
+                    
+                    const rBg = data[cIdx * 4];
+                    const gBg = data[cIdx * 4 + 1];
+                    const bBg = data[cIdx * 4 + 2];
+                    const aBg = data[cIdx * 4 + 3];
+                    
+                    // If the corner is already transparent, skip
+                    if (aBg < 50) continue;
+                    
+                    // Only remove light backgrounds (R, G, B > 190) to prevent deleting logo details
+                    if (rBg < 190 || gBg < 190 || bBg < 190) continue;
+                    
+                    // Start BFS from this corner
+                    const queue = [[corner.x, corner.y]];
+                    visited[cIdx] = 1;
+                    
+                    let head = 0;
+                    while (head < queue.length) {
+                        const [cx, cy] = queue[head++];
+                        const idx = (cy * width + cx) * 4;
+                        
+                        // Set this pixel to transparent
+                        data[idx + 3] = 0;
+                        removedAny = true;
+                        
+                        const neighbors = [
+                            [cx + 1, cy],
+                            [cx - 1, cy],
+                            [cx, cy + 1],
+                            [cx, cy - 1]
+                        ];
+                        
+                        for (const [nx, ny] of neighbors) {
+                            if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                const nIdx = ny * width + nx;
+                                if (!visited[nIdx]) {
+                                    const pIdx = nIdx * 4;
+                                    const r = data[pIdx];
+                                    const g = data[pIdx+1];
+                                    const b = data[pIdx+2];
+                                    const a = data[pIdx+3];
+                                    
+                                    // Match if neighbor color is close to the corner background color
+                                    if (a >= 50 &&
+                                        Math.abs(r - rBg) <= tolerance &&
+                                        Math.abs(g - gBg) <= tolerance &&
+                                        Math.abs(b - bBg) <= tolerance) {
+                                        queue.push([nx, ny]);
+                                        visited[nIdx] = 1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if (removedAny) {
+                    ctx.putImageData(imgData, 0, 0);
+                    imgElement.dataset.bgRemoved = 'true';
+                    imgElement.src = canvas.toDataURL('image/png');
+                }
+            } catch (e) {
+                console.warn("Could not remove background (CORS restrict?):", e);
+            }
+        };
+
+        if (imgElement.complete && imgElement.naturalWidth > 0) {
+            proceed();
+        } else {
+            imgElement.addEventListener('load', proceed);
+        }
+    }
+
+    // Run background removal on DOMContentLoaded to guarantee all cached images are processed
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('img[onload^="removeWhiteBackground"]').forEach(img => {
+            removeWhiteBackground(img);
+        });
+    });
+  </script>
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body class="{% if appearance.theme == 'dark' %}dark{% endif %}">
+
+<!-- GLOBAL BACKGROUND -->
+<div id="global-bg" class="no-print"></div>
+
+<!-- PAGE LOADER (hidden after load) -->
+<div id="page-loader" style="display:none"></div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<!-- CONFIRM DIALOG -->
+<div id="confirm-overlay">
+  <div id="confirm-box">
+    <div class="text-xl font-bold mb-2" id="confirm-title">{% trans "Confirmer" %}</div>
+    <p class="text-sm mb-5" id="confirm-msg" style="color:var(--muted)"></p>
+    <div class="flex gap-3 justify-end">
+      <button onclick="closeConfirm()" class="btn btn-ghost">❌ {% trans "Annuler" %}</button>
+      <form id="confirm-form" method="post" style="margin:0">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger" id="confirm-btn">✅ {% trans "Confirmer" %}</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ══ NAVBAR ══ -->
+<nav class="card sticky top-0 z-50 rounded-none border-x-0 border-t-0 backdrop-blur-xl bg-opacity-80" style="background: color-mix(in srgb, var(--card) 80%, transparent);">
+  <div class="max-w-7xl mx-auto px-4 flex items-center justify-between h-14 gap-3">
+
+    <!-- LOGO -->
+    <a href="{% url 'core:home' %}" class="flex items-center gap-2 flex-shrink-0 group">
+        <div class="h-10 flex items-center justify-center overflow-hidden bg-transparent transition-transform group-hover:scale-110">
+          <img src="{% static 'img/logo.png' %}" alt="Logo" class="h-full w-auto max-w-[120px] object-contain" onload="removeWhiteBackground(this)" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+        </div>
+      <div class="flex flex-col leading-none">
+        <span class="font-bebas text-xl tracking-widest">{{ site_settings.app_name|upper }}</span>
+        <span class="text-[8px] uppercase tracking-[0.2em] opacity-50">{% trans "Championnat" %}</span>
+      </div>
+      {% if active_tournament %}
+        <span class="hidden lg:block badge badge-gold ml-1">{{ active_tournament.name|truncatechars:16 }}</span>
+      {% endif %}
+    </a>
+
+    <!-- GLOBAL SEARCH -->
+    <div class="flex-1 max-w-xs relative hidden md:block" id="search-wrapper">
+      <form onsubmit="handleSearchSubmit(event)" class="relative flex items-center">
+        <input type="text" id="global-search"
+               placeholder="{% trans 'Rechercher... / ابحث عن فريق، لاعب، بطولة' %}"
+               autocomplete="off"
+               class="form-input py-2 ps-9 pe-8 text-xs font-bold rounded-2xl w-full border border-white/10 transition-all focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
+               style="background:var(--card2); color: var(--text-light);"/>
+        <span class="absolute inset-y-0 start-3 flex items-center text-xs pointer-events-none" style="color:var(--muted)">🔍</span>
+        <button id="search-clear-btn" type="button" onclick="clearGlobalSearch()" class="hidden absolute inset-y-0 end-3 items-center text-xs text-gray-400 hover:text-white transition-colors">✕</button>
+      </form>
+      
+      <!-- Dropdown Results Box -->
+      <div id="search-results" 
+           class="absolute top-full mt-2 end-0 w-80 md:w-96 card rounded-2xl shadow-2xl z-50 overflow-hidden backdrop-blur-2xl border border-white/10"
+           style="display:none; max-height:420px; overflow-y:auto; background: color-mix(in srgb, var(--card) 95%, black);">
+      </div>
+    </div>
+
+    <!-- DESKTOP NAV -->
+    <div class="hidden md:flex items-center gap-0.5">
+      <a href="{% url 'core:home' %}"                class="nav-link">🏠</a>
+      <a href="{% url 'matches:calendar' %}"         class="nav-link">📅 {% trans "Calendrier" %}</a>
+      <a href="{% url 'tournaments:standings' %}"    class="nav-link">📊 {% trans "Classement" %}</a>
+      <a href="{% url 'tournaments:bracket' %}"      class="nav-link">🏆 {% trans "Bracket" %}</a>
+      <a href="{% url 'teams:list' %}"               class="nav-link">⚽ {% trans "Équipes" %}</a>
+      <a href="{% url 'teams:global_ranking' %}"     class="nav-link">🌍 {% trans "Classement Global" %}</a>
+      <a href="{% url 'clubs:dashboard' %}"          class="nav-link">🛡️ أكاديمية الوفاق</a>
+      <a href="{% url 'clubs:academy_register' %}"   class="nav-link text-emerald-400 font-bold">📝 التسجيل في الأكاديمية</a>
+      <a href="{% url 'matches:stats' %}"            class="nav-link">📈 {% trans "Stats" %}</a>
+      {% if registration_open_tournament %}
+      <a href="{% url 'teams:registration' %}" class="btn btn-primary btn-sm ml-2 animate-pulse">
+        🚀 {% trans "S'inscrire" %}
+      </a>
+      {% endif %}
+    </div>
+
+    <!-- RIGHT CONTROLS -->
+    <div class="flex items-center gap-1.5 flex-shrink-0">
+
+      <!-- Theme cycle -->
+      <button onclick="cycleTheme()" title="{% trans 'Changer le thème' %}"
+              class="nav-link px-2" id="theme-btn">
+        {% if appearance.theme == 'dark' %}🌙{% elif appearance.theme == 'light' %}☀️{% elif appearance.theme == 'emerald' %}🌿{% else %}🌊{% endif %}
+      </button>
+
+      <!-- Fullscreen toggle -->
+      <button onclick="toggleFullScreen()" title="{% trans 'Plein écran' %} / ملء الشاشة"
+              class="nav-link px-2 hidden sm:flex no-print" id="fullscreen-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+        </svg>
+      </button>
+
+      <!-- Print -->
+      <button onclick="window.print()" title="{% trans 'Imprimer' %}"
+              class="nav-link px-2 hidden md:flex no-print">🖨️</button>
+
+      {% if user.is_authenticated %}
+        {% if user.role == 'admin' or user.role == 'organizer' %}
+          <a href="{% url 'teams:approval_list' %}"
+             class="btn btn-ghost btn-sm hidden sm:flex no-print relative" title="{% trans 'Demandes d\'équipes' %}">
+             📋
+             {% if pending_teams_count > 0 %}
+             <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center animate-pulse">
+               {{ pending_teams_count }}
+             </span>
+             {% endif %}
+          </a>
+
+          {% if user.role == 'admin' %}
+          <a href="{% url 'accounts:pending_users' %}"
+             class="btn btn-ghost btn-sm hidden sm:flex no-print relative" title="{% trans 'Demandes d\'adhésion' %}">
+             👤
+             {% if pending_users_count > 0 %}
+             <span class="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 text-white text-[10px] rounded-full flex items-center justify-center animate-pulse">
+               {{ pending_users_count }}
+             </span>
+             {% endif %}
+          </a>
+          {% endif %}
+          <a href="{% url 'tournaments:admin_panel' %}"
+             class="btn btn-danger btn-sm hidden sm:flex no-print">⚙️ Admin</a>
+        {% endif %}
+
+        <!-- NOTIFICATIONS DROPDOWN -->
+        <div class="relative group no-print">
+          <button class="nav-link px-2 relative">
+            <span class="text-lg">🔔</span>
+            {% if unread_notifications_count > 0 %}
+            <span class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center border-2 border-card">
+              {{ unread_notifications_count }}
+            </span>
+            {% endif %}
+          </button>
+          
+          <div class="absolute end-0 top-full mt-1 w-80 card rounded-2xl shadow-2xl overflow-hidden z-50
+                      opacity-0 invisible group-hover:opacity-100 group-hover:visible
+                      transition-all duration-200 origin-top-right">
+            <div class="px-4 py-3 border-b flex items-center justify-between bg-card2" style="border-color:var(--border)">
+              <span class="text-xs font-bold uppercase tracking-wider">{% trans "Notifications" %}</span>
+              {% if unread_notifications_count > 0 %}
+              <button onclick="markAllRead()" class="text-[10px] text-primary hover:underline">{% trans "Tout marquer comme lu" %}</button>
+              {% endif %}
+            </div>
+            <div class="max-h-[350px] overflow-y-auto">
+              {% for notif in unread_notifications %}
+              <div id="notif-{{ notif.pk }}" class="p-4 border-b last:border-0 hover:bg-white/5 transition relative group/item" style="border-color:var(--border)">
+                <div class="flex gap-3">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 text-primary flex-shrink-0">
+                    {% if notif.notif_type == 'tournament' %}🏆
+                    {% elif notif.notif_type == 'team_registration' %}⚽
+                    {% else %}🔔{% endif %}
+                  </div>
+                  <div class="flex-1">
+                    <p class="text-[11px] font-bold leading-tight">{{ notif.title }}</p>
+                    <p class="text-[10px] opacity-70 mt-0.5">{{ notif.message }}</p>
+                    <p class="text-[9px] opacity-40 mt-1">{{ notif.created_at|timesince }}</p>
+                    
+                    {% if notif.link %}
+                    <a href="{{ notif.link }}" onclick="markRead({{ notif.pk }})" class="mt-2 btn btn-primary btn-xs w-full justify-center">
+                      {% trans "Voir" %}
+                    </a>
+                    {% endif %}
+                  </div>
+                  <button onclick="markRead({{ notif.pk }})" class="opacity-0 group-hover/item:opacity-100 text-xs text-muted hover:text-white transition">✕</button>
+                </div>
+              </div>
+              {% empty %}
+              <div class="p-8 text-center opacity-40">
+                <p class="text-3xl mb-2">📭</p>
+                <p class="text-xs">{% trans "Aucune nouvelle notification" %}</p>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- USER MENU -->
+        <div class="relative group">
+          <button class="flex items-center gap-1.5 nav-link">
+            <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold overflow-hidden flex-shrink-0"
+                 style="background:var(--primary-glow);color:var(--primary);border:1px solid var(--primary)">
+              {% if user.avatar %}
+                <img src="{{ user.avatar.url }}" class="w-full h-full object-cover"/>
+              {% else %}
+                {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+              {% endif %}
+            </div>
+            <span class="hidden sm:inline text-sm">{{ user.get_short_name|default:user.username }}</span>
+            <span class="text-xs" style="color:var(--muted)">▾</span>
+          </button>
+
+          <div class="absolute end-0 top-full mt-1 w-48 card rounded-xl shadow-2xl py-1 z-50
+                      opacity-0 invisible group-hover:opacity-100 group-hover:visible
+                      transition-all duration-150">
+            <div class="px-4 py-2 border-b" style="border-color:var(--border)">
+              <div class="text-xs font-bold">{{ user.get_full_name|default:user.username }}</div>
+              <div class="text-xs mt-0.5 badge badge-gray">{{ user.get_role_display }}</div>
+            </div>
+            <a href="{% url 'accounts:profile' %}"    class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-white/5 transition">👤 {% trans "Profil" %}</a>
+            <a href="{% url 'accounts:appearance' %}" class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-white/5 transition">🎨 {% trans "Apparence" %}</a>
+            {% if user.role == 'admin' or user.role == 'organizer' %}
+            <a href="{% url 'teams:create' %}"        class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-white/5 transition">➕ {% trans "Nouvelle équipe" %}</a>
+            {% endif %}
+            <div class="border-t my-1" style="border-color:var(--border)"></div>
+            <form method="post" action="{% url 'accounts:logout' %}">
+              {% csrf_token %}
+              <button type="submit" class="w-full text-left flex items-center gap-2 px-4 py-2 text-sm hover:bg-white/5 transition text-red-400">
+                🚪 {% trans "Déconnexion" %}
+              </button>
+            </form>
+          </div>
+        </div>
+
+      {% else %}
+        <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-sm">{% trans "Connexion" %}</a>
+      {% endif %}
+
+      <!-- Mobile menu btn -->
+      <button class="md:hidden nav-link px-2" onclick="toggleMobileNav()">☰</button>
+    </div>
+
+  </div>
+
+  <!-- MOBILE NAV -->
+  <div id="mobile-nav" class="hidden md:hidden border-t px-4 py-3 grid grid-cols-3 gap-2 no-print"
+       style="border-color:var(--border)">
+    <a href="{% url 'core:home' %}"             class="nav-link justify-center text-center flex-col text-xs gap-0.5">🏠<span>{% trans "Accueil" %}</span></a>
+    <a href="{% url 'matches:calendar' %}"      class="nav-link justify-center text-center flex-col text-xs gap-0.5">📅<span>{% trans "Calendrier" %}</span></a>
+    <a href="{% url 'tournaments:standings' %}" class="nav-link justify-center text-center flex-col text-xs gap-0.5">📊<span>{% trans "Classement" %}</span></a>
+    <a href="{% url 'tournaments:bracket' %}"   class="nav-link justify-center text-center flex-col text-xs gap-0.5">🏆<span>{% trans "Bracket" %}</span></a>
+    <a href="{% url 'teams:list' %}"            class="nav-link justify-center text-center flex-col text-xs gap-0.5">⚽<span>{% trans "Équipes" %}</span></a>
+    <a href="{% url 'teams:global_ranking' %}"  class="nav-link justify-center text-center flex-col text-xs gap-0.5">🌍<span>{% trans "Class. Global" %}</span></a>
+    <a href="{% url 'clubs:dashboard' %}"  class="nav-link justify-center text-center flex-col text-xs gap-0.5">🛡️<span>أكاديمية الوفاق</span></a>
+    <a href="{% url 'clubs:academy_register' %}" class="nav-link justify-center text-center flex-col text-xs gap-0.5" style="color: #34d399;">📝<span class="font-bold">تسجيل</span></a>
+    <a href="{% url 'matches:stats' %}"         class="nav-link justify-center text-center flex-col text-xs gap-0.5">📈<span>{% trans "Stats" %}</span></a>
+    {% if registration_open_tournament %}
+    <a href="{% url 'teams:registration' %}" class="nav-link justify-center text-center flex-col text-xs gap-0.5" style="color:var(--primary)">🚀<span>{% trans "S'inscrire" %}</span></a>
+    {% endif %}
+    <!-- Mobile search -->
+    <div class="col-span-3 mt-1 relative">
+      <form onsubmit="handleMobileSearchSubmit(event)" class="relative flex items-center">
+        <input type="text" id="mobile-search-input" placeholder="{% trans 'Rechercher... / ابحث عن فريق، لاعب، بطولة' %}"
+               class="form-input py-2 ps-9 pe-4 text-xs font-bold rounded-xl w-full border border-white/10"
+               style="background:var(--card2); color: var(--text-light);"/>
+        <span class="absolute inset-y-0 start-3 flex items-center text-xs pointer-events-none" style="color:var(--muted)">🔍</span>
+      </form>
+    </div>
+  </div>
+</nav>
+
+<!-- DJANGO MESSAGES → auto toast -->
+{% if messages %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  {% for msg in messages %}
+    showToast("{{ msg|escapejs }}", "{{ msg.tags|default:'info' }}");
+  {% endfor %}
+});
+</script>
+{% endif %}
+
+<!-- MAIN WORKSPACE -->
+<div class="max-w-[95rem] mx-auto px-2 sm:px-4 lg:px-8 pt-8 pb-16 relative z-10 transition-all duration-700 animate-in">
+  
+  <!-- Outer Glow for Premium Feel -->
+  <div class="absolute inset-0 bg-gradient-to-b from-blue-500/5 via-transparent to-transparent blur-3xl -z-10 pointer-events-none"></div>
+
+  <main class="relative w-full min-h-[85vh] rounded-[2.5rem] bg-gray-900/40 backdrop-blur-[40px] border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),_0_25px_50px_-12px_rgba(0,0,0,0.5)] p-4 sm:p-6 lg:p-10 overflow-hidden group/main" style="background-color: rgba(15, 23, 42, 0.45);">
+    
+    <!-- Sophisticated Grid Background -->
+    <div class="absolute inset-0 pointer-events-none opacity-40" 
+         style="background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 32px 32px; -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%); mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);"></div>
+
+    <!-- Animated Gradient Borders -->
+    <div class="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-yellow-500/60 to-transparent opacity-80 group-hover/main:opacity-100 transition-opacity duration-700"></div>
+    <div class="absolute inset-x-0 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-yellow-500/30 to-transparent opacity-40"></div>
+    <div class="absolute inset-y-0 left-0 w-[1px] bg-gradient-to-b from-transparent via-yellow-500/40 to-transparent opacity-50"></div>
+    <div class="absolute inset-y-0 right-0 w-[1px] bg-gradient-to-b from-transparent via-yellow-500/40 to-transparent opacity-50"></div>
+    
+    <!-- Dynamic Glowing Orbs -->
+    <div class="absolute -top-40 -right-40 w-[30rem] h-[30rem] bg-yellow-500/15 rounded-full blur-[100px] pointer-events-none group-hover/main:bg-yellow-500/25 group-hover/main:blur-[130px] group-hover/main:scale-110 transition-all duration-1000 ease-out"></div>
+    <div class="absolute -bottom-40 -left-40 w-[30rem] h-[30rem] bg-indigo-500/15 rounded-full blur-[100px] pointer-events-none group-hover/main:bg-indigo-500/25 group-hover/main:blur-[130px] group-hover/main:scale-110 transition-all duration-1000 ease-out delay-150"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40rem] h-[40rem] bg-blue-500/5 rounded-full blur-[150px] pointer-events-none"></div>
+
+    <!-- Cinematic Noise Texture -->
+    <div class="absolute inset-0 opacity-[0.035] mix-blend-overlay pointer-events-none" style="background-image: url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noise%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.85%22 numOctaves=%224%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noise)%22/%3E%3C/svg%3E');"></div>
+    
+    <!-- Glass Reflection Highlight (Top Edge) -->
+    <div class="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/[0.05] to-transparent pointer-events-none rounded-t-[2.5rem]"></div>
+
+    <!-- Content Wrapper -->
+    <div class="relative z-20 h-full flex flex-col w-full">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+</div>
+
+<!-- FOOTER -->
+<footer class="mt-12 border-t py-6 no-print" style="border-color:var(--border)">
+  <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+    <div>
+      <p class="font-bebas text-lg tracking-widest" style="color:var(--muted)">{{ site_settings.app_name|upper }}</p>
+      <p class="text-xs" style="color:var(--border)">{% trans "Tournoi Inter-Quartiers" %} · مسلمون · تيبازة 🇩🇿</p>
+    </div>
+    <div class="flex items-center gap-3 text-xs" style="color:var(--muted)">
+      <a href="{% url 'tournaments:standings' %}" class="hover:underline">{% trans "Classement" %}</a>
+      <a href="{% url 'matches:calendar' %}"      class="hover:underline">{% trans "Calendrier" %}</a>
+      <a href="{% url 'matches:stats' %}"         class="hover:underline">{% trans "Stats" %}</a>
+      {% if user.is_authenticated %}
+      <a href="{% url 'accounts:appearance' %}"   class="hover:underline">🎨</a>
+      {% endif %}
+    </div>
+  </div>
+</footer>
+
+<script>
+// ── THEME CYCLE ─────────────────────────────────────────────────────────────
+const THEMES = ['dark','light','emerald','ocean'];
+const THEME_ICONS = {dark:'🌙', light:'☀️', emerald:'🌿', ocean:'🌊'};
+
+function cycleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme') || 'dark';
+  const idx = THEMES.indexOf(current);
+  const next = THEMES[(idx + 1) % THEMES.length];
+  html.setAttribute('data-theme', next);
+  html.classList.toggle('dark', next === 'dark' || next === 'emerald' || next === 'ocean');
+  document.getElementById('theme-btn').textContent = THEME_ICONS[next];
+  // Persist
+  fetch('/accounts/appearance/', {
+    method: 'POST',
+    headers: {'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken':getCsrf()},
+    body: 'theme=' + next
+  });
+}
+
+// ── TOAST ────────────────────────────────────────────────────────────────────
+function showToast(msg, type = 'info') {
+  const ct = document.getElementById('toast-container');
+  const t  = document.createElement('div');
+  const cls = type.includes('success') ? 'toast-success' :
+              type.includes('error')   ? 'toast-error'   : 'toast-info';
+  const ic  = type.includes('success') ? '✅' :
+              type.includes('error')   ? '❌' : 'ℹ️';
+  t.className = `toast ${cls}`;
+  t.innerHTML = `<span>${ic}</span><span>${msg}</span>`;
+  ct.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(10px)';
+    setTimeout(() => t.remove(), 300); }, 4000);
+}
+
+// ── CONFIRM DIALOG ────────────────────────────────────────────────────────────
+function confirmDelete(title, msg, formAction) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent   = msg;
+  document.getElementById('confirm-form').action       = formAction;
+  document.getElementById('confirm-overlay').classList.add('show');
+}
+function closeConfirm() {
+  document.getElementById('confirm-overlay').classList.remove('show');
+}
+document.getElementById('confirm-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeConfirm();
+});
+
+// ── GLOBAL SEARCH ─────────────────────────────────────────────────────────────
+let searchTimeout;
+const searchInput    = document.getElementById('global-search');
+const searchResults  = document.getElementById('search-results');
+const searchClearBtn = document.getElementById('search-clear-btn');
+
+function triggerSearch(q) {
+  if (q.length < 2) {
+    if (searchResults) searchResults.style.display = 'none';
+    if (searchClearBtn) searchClearBtn.classList.add('hidden');
+    return;
+  }
+  if (searchClearBtn) searchClearBtn.classList.remove('hidden');
+  
+  if (searchResults) {
+    searchResults.innerHTML = `<div class="px-4 py-4 text-center text-xs font-bold" style="color:var(--muted)">⏳ {% trans "Recherche en cours..." %} / جاري البحث...</div>`;
+    searchResults.style.display = 'block';
+  }
+
+  fetch(`/teams/search/?q=${encodeURIComponent(q)}`)
+    .then(r => r.json())
+    .then(data => renderSearchResults(data, q))
+    .catch(err => {
+      console.error('Search error:', err);
+      if (searchResults) searchResults.style.display = 'none';
+    });
+}
+
+if (searchInput) {
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    const q = this.value.trim();
+    if (q.length < 2) {
+      if (searchResults) searchResults.style.display = 'none';
+      if (searchClearBtn) searchClearBtn.classList.add('hidden');
+      return;
+    }
+    if (searchClearBtn) searchClearBtn.classList.remove('hidden');
+    searchTimeout = setTimeout(() => triggerSearch(q), 200);
+  });
+
+  searchInput.addEventListener('focus', function() {
+    const q = this.value.trim();
+    if (q.length >= 2) triggerSearch(q);
+  });
+
+  searchInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      if (searchResults) searchResults.style.display = 'none';
+    }
+  });
+
+  document.addEventListener('click', function(e) {
+    const wrapper = document.getElementById('search-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+      if (searchResults) searchResults.style.display = 'none';
+    }
+  });
+}
+
+function clearGlobalSearch() {
+  if (searchInput) {
+    searchInput.value = '';
+    searchInput.focus();
+  }
+  if (searchClearBtn) searchClearBtn.classList.add('hidden');
+  if (searchResults) searchResults.style.display = 'none';
+}
+
+function handleSearchSubmit(e) {
+  if (e) e.preventDefault();
+  const q = searchInput ? searchInput.value.trim() : '';
+  if (!q) return;
+
+  const firstItem = searchResults ? searchResults.querySelector('a.search-item') : null;
+  if (firstItem && firstItem.href) {
+    window.location.href = firstItem.href;
+  } else {
+    window.location.href = `/teams/?q=${encodeURIComponent(q)}`;
+  }
+}
+
+function handleMobileSearchSubmit(e) {
+  if (e) e.preventDefault();
+  const input = document.getElementById('mobile-search-input');
+  const q = input ? input.value.trim() : '';
+  if (q.length >= 2) {
+    window.location.href = `/teams/?q=${encodeURIComponent(q)}`;
+  }
+}
+
+function renderSearchResults(data, q) {
+  const { teams = [], players = [], tournaments = [], matches = [] } = data;
+  if (!teams.length && !players.length && !tournaments.length && !matches.length) {
+    searchResults.innerHTML = `<div class="px-4 py-4 text-center text-xs font-bold" style="color:var(--muted)">لا نتائج / Aucun résultat pour « ${q} »</div>`;
+  } else {
+    let html = '';
+    
+    if (tournaments.length) {
+      html += `<div class="px-3 pt-3 pb-1 text-[10px] font-black uppercase tracking-wider text-primary border-b border-white/5">🏆 البطولات / Tournois</div>`;
+      tournaments.forEach(t => {
+        html += `<a href="/tournaments/standings/?tournament=${t.id}" class="search-item flex items-center gap-3 px-3 py-2.5 hover:bg-white/10 transition text-xs border-b border-white/5">
+          <div class="w-7 h-7 rounded-xl bg-primary/20 text-primary flex items-center justify-center text-xs font-black">🏆</div>
+          <div>
+            <div class="font-bold text-white">${t.name} (${t.year})</div>
+            <div class="text-[10px]" style="color:var(--muted)">Édition ${t.edition}</div>
+          </div>
+        </a>`;
+      });
+    }
+
+    if (teams.length) {
+      html += `<div class="px-3 pt-3 pb-1 text-[10px] font-black uppercase tracking-wider text-blue-400 border-b border-white/5">⚽ الفرق / Équipes</div>`;
+      teams.forEach(t => {
+        html += `<a href="/teams/${t.id}/" class="search-item flex items-center gap-3 px-3 py-2.5 hover:bg-white/10 transition text-xs border-b border-white/5">
+          <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+               style="background:${t.color_primary||'#3b82f6'}30;color:${t.color_primary||'#3b82f6'};border:1px solid ${t.color_primary||'#3b82f6'}50">🛡️</div>
+          <div><div class="font-bold text-white">${t.name}</div><div class="text-[10px]" style="color:var(--muted)">${t.neighborhood||''}</div></div>
+        </a>`;
+      });
+    }
+
+    if (players.length) {
+      html += `<div class="px-3 pt-3 pb-1 text-[10px] font-black uppercase tracking-wider text-green-400 border-b border-white/5">🧑 اللاعبون / Joueurs</div>`;
+      players.forEach(p => {
+        const posColors = {GK:'#f59e0b',DEF:'#3b82f6',MID:'#10b981',FWD:'#ef4444'};
+        html += `<a href="/teams/player/${p.id}/" class="search-item flex items-center gap-3 px-3 py-2.5 hover:bg-white/10 transition text-xs border-b border-white/5">
+          <div class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black flex-shrink-0"
+               style="background:${posColors[p.position]||'#6b7280'}30;color:${posColors[p.position]||'#6b7280'}">${p.position}</div>
+          <div>
+            <div class="font-bold text-white">${p.first_name} ${p.last_name} <span class="font-mono text-[10px] text-primary">#${p.jersey_number}</span></div>
+            <div class="text-[10px]" style="color:var(--muted)">${p.team__name}</div>
+          </div>
+        </a>`;
+      });
+    }
+
+    if (matches.length) {
+      html += `<div class="px-3 pt-3 pb-1 text-[10px] font-black uppercase tracking-wider text-purple-400 border-b border-white/5">🏟️ المباريات / Matchs</div>`;
+      matches.forEach(m => {
+        const score = m.status === 'finished' ? `${m.score_team1} - ${m.score_team2}` : 'vs';
+        const team2Name = m.team2__name || 'TBD';
+        html += `<a href="/matches/${m.id}/" class="search-item flex items-center justify-between px-3 py-2.5 hover:bg-white/10 transition text-xs border-b border-white/5">
+          <div class="font-bold text-white">${m.team1__name} <span class="text-primary font-mono">${score}</span> ${team2Name}</div>
+          <div class="text-[10px]" style="color:var(--muted)">${m.tournament__name}</div>
+        </a>`;
+      });
+    }
+
+    searchResults.innerHTML = html;
+  }
+  searchResults.style.display = 'block';
+}
+
+// ── MOBILE NAV ────────────────────────────────────────────────────────────────
+function toggleMobileNav() {
+  document.getElementById('mobile-nav').classList.toggle('hidden');
+}
+
+// ── CSRF ──────────────────────────────────────────────────────────────────────
+function getCsrf() {
+  return document.cookie.split(';').find(c => c.trim().startsWith('csrftoken='))?.split('=')[1] || '';
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+(function() {
+  const t = document.documentElement.getAttribute('data-theme');
+  if (t && t !== 'light') document.documentElement.classList.add('dark');
+})();
+
+// ── FULLSCREEN (PERSISTENT ACROSS PAGES) ───────────────────────────────────
+const FS_KEY = 'turniq_fullscreen';
+
+const FS_ICON_ENTER = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+</svg>`;
+const FS_ICON_EXIT = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M4 14h4v4m0-4l-5 5m11-5h4v4m-4-4l5 5M4 10V6h4m0 4l-5-5m11 5V6h4m-4 4l5-5" />
+</svg>`;
+
+function isFullscreen() {
+  return !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+}
+
+function updateFullscreenIcon() {
+  const btn = document.getElementById('fullscreen-btn');
+  if (!btn) return;
+  const active = isFullscreen();
+  btn.innerHTML = active ? FS_ICON_EXIT : FS_ICON_ENTER;
+  btn.title = active ? 'إغلاق ملء الشاشة / Quitter' : 'ملء الشاشة / Plein écran';
+}
+
+function enterFullscreen() {
+  const el = document.documentElement;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+  if (req) req.call(el).catch(() => {});
+}
+
+function exitFullscreen() {
+  const ex = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+  if (ex) ex.call(document).catch(() => {});
+}
+
+function toggleFullScreen() {
+  if (!isFullscreen()) {
+    localStorage.setItem(FS_KEY, '1');
+    enterFullscreen();
+  } else {
+    localStorage.setItem(FS_KEY, '0');
+    exitFullscreen();
+  }
+}
+
+// When user presses Esc or exits another way — save the 'off' state
+['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(evt => {
+  document.addEventListener(evt, () => {
+    updateFullscreenIcon();
+    // If exited without our button (e.g. Esc), save preference as off
+    if (!isFullscreen()) {
+      localStorage.setItem(FS_KEY, '0');
+    }
+  });
+});
+
+// On page load: restore fullscreen if user had it enabled
+document.addEventListener('DOMContentLoaded', () => {
+  updateFullscreenIcon();
+  if (localStorage.getItem(FS_KEY) === '1') {
+    // Small delay needed — browsers block immediate fullscreen on load
+    setTimeout(enterFullscreen, 300);
+  }
+});
+
+function markRead(pk) {
+  fetch(`/notifications/mark-read/${pk}/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+  }).then(res => {
+    if (res.ok) {
+      const el = document.getElementById(`notif-${pk}`);
+      if (el) el.classList.add('opacity-0', 'scale-95');
+      setTimeout(() => { if (el) el.remove(); }, 300);
+      // Update count if possible, or just let it stay until reload
+    }
+  });
+}
+
+function markAllRead() {
+  fetch(`/notifications/mark-all-read/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+  }).then(res => {
+    if (res.ok) location.reload();
+  });
+}
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

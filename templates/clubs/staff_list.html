@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}Staff de l'Académie - Wifaq{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 max-w-7xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-3xl font-black flex items-center gap-3 text-white">
+            <i class="fas fa-user-tie text-primary"></i>الطاقم الفني والإداري
+        </h2>
+        <div>
+            <a href="{% url 'clubs:dashboard' %}" class="btn btn-ghost">رجوع للوحة التحكم</a>
+            <a href="{% url 'clubs:staff_add' %}" class="btn btn-primary ml-2 rounded-xl">إضافة عضو +</a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for member in staff_members %}
+        <div class="card rounded-3xl p-6 border border-white/10 relative overflow-hidden group" style="background: color-mix(in srgb, var(--card) 60%, transparent);">
+            <div class="absolute -right-10 -top-10 w-32 h-32 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all"></div>
+            
+            <div class="flex items-center gap-4 relative z-10">
+                <div class="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-lg">
+                    {% if member.photo %}
+                        <img src="{{ member.photo.url }}" class="w-full h-full object-cover">
+                    {% else %}
+                        <i class="fas fa-user text-3xl opacity-30"></i>
+                    {% endif %}
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold">{{ member.first_name }} {{ member.last_name }}</h3>
+                    <div class="text-primary font-bold text-sm mb-1">{{ member.get_role_display }}</div>
+                    {% if member.category_assigned %}
+                        <span class="badge bg-white/10 text-xs">{{ member.category_assigned.name }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if member.phone %}
+            <div class="mt-4 pt-4 border-t border-white/10 flex items-center gap-2 opacity-80 text-sm font-mono" dir="ltr">
+                <i class="fas fa-phone-alt text-primary/70"></i> {{ member.phone }}
+            </div>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="col-span-full py-12 text-center opacity-50">
+            <i class="fas fa-users-slash text-5xl mb-4"></i>
+            <p>لم يتم تسجيل أي أعضاء في الطاقم بعد.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

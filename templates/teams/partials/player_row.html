@@ -1,0 +1,38 @@
+{% load i18n %}
+<div class="flex items-center gap-3 px-4 py-3 border-b hover:bg-white/3 transition"
+     style="border-color:var(--border)" id="player-row-{{ player.pk }}">
+  <!-- Jersey -->
+  <div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
+       style="background:{{ player.team.color_primary }}15;color:{{ player.team.color_primary }};border:1px solid {{ player.team.color_primary }}30">
+    {{ player.jersey_number }}
+  </div>
+  <!-- Photo -->
+  <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold flex-shrink-0"
+       style="background:var(--card2);color:var(--muted)">
+    {% if player.photo %}
+      <img src="{{ player.photo.url }}" class="w-full h-full object-cover"/>
+    {% else %}
+      {{ player.first_name|first }}{{ player.last_name|first }}
+    {% endif %}
+  </div>
+  <!-- Name -->
+  <a href="{% url 'teams:player_detail' player.pk %}" class="flex-1 hover:underline min-w-0">
+    <div class="font-semibold text-sm truncate {% if player.is_suspended %}line-through text-red-400{% endif %}">
+      {{ player.full_name }}
+      {% if player.is_suspended %}<span class="no-underline ms-1 badge badge-red text-xs">🚫</span>{% endif %}
+    </div>
+    {% if player.age %}<div class="text-xs" style="color:var(--muted)">{{ player.age }} {% trans "ans" %}</div>{% endif %}
+  </a>
+  <!-- Height -->
+  <div class="hidden sm:block text-xs font-mono" style="color:var(--muted)">
+    {% if player.height_cm %}{{ player.height_cm }}cm{% endif %}
+  </div>
+  <!-- Actions -->
+  {% if can_manage %}
+  <div class="flex gap-1 flex-shrink-0 no-print">
+    <a href="{% url 'teams:player_edit' player.pk %}" class="btn btn-ghost btn-xs" title="تعديل / Modifier">✏️</a>
+    <button onclick="confirmDelete('{{ player.full_name|escapejs }}','هل أنت متأكد من حذف هذا اللاعب؟','{% url "teams:player_delete" player.pk %}')"
+            class="btn btn-danger btn-xs" title="حذف / Supprimer">🗑️</button>
+  </div>
+  {% endif %}
+</div>

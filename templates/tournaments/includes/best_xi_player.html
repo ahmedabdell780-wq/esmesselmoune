@@ -1,0 +1,51 @@
+<div class="flex flex-col items-center group cursor-pointer perspective-1000">
+    <div class="relative mb-3 transform-gpu group-hover:-translate-y-2 group-hover:rotate-3 transition-all duration-500">
+        <!-- Glow Ring -->
+        <div class="absolute -inset-1 bg-gradient-to-tr from-primary via-white/50 to-primary rounded-full blur opacity-20 group-hover:opacity-100 transition-opacity duration-500"></div>
+        
+        <!-- Main Avatar Circle -->
+        <div class="relative w-20 h-20 md:w-24 md:h-24 rounded-full bg-slate-900 border-2 border-white/20 overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.5)] z-10 flex items-center justify-center">
+            {% if player.photo %}
+                <img src="{{ player.photo.url }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+            {% else %}
+                <div class="w-full h-full flex items-center justify-center font-bebas text-3xl text-white/10">{{ player.first_name|first }}{{ player.last_name|first }}</div>
+            {% endif %}
+            
+            <!-- Futuristic Scanline Effect -->
+            <div class="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent pointer-events-none"></div>
+            <div class="absolute top-0 left-0 w-full h-1 bg-primary/20 animate-scanline"></div>
+        </div>
+
+        <!-- Position Badge -->
+        <div class="absolute -top-1 -left-1 w-8 h-8 rounded-xl bg-black/80 backdrop-blur-md border border-primary/50 flex items-center justify-center text-[10px] font-black text-primary shadow-lg z-20">
+            {{ player.position }}
+        </div>
+
+        <!-- Score Badge -->
+        <div class="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-lg bg-primary text-black text-[9px] font-black shadow-lg z-20">
+            {{ player.dream_score|floatformat:1 }}
+        </div>
+    </div>
+    
+    <!-- Info Label -->
+    <div class="relative z-20">
+        <div class="bg-slate-900/80 backdrop-blur-xl px-4 py-1.5 rounded-xl border border-white/10 shadow-2xl text-center transform-gpu group-hover:scale-105 transition-transform">
+            <div class="text-[11px] font-black text-white uppercase tracking-wider mb-0.5 truncate max-w-[90px]" title="{{ player.first_name }} {{ player.last_name }}">{{ player.last_name }}</div>
+            <div class="flex items-center justify-center gap-1.5">
+                <div class="w-2 h-2 rounded-full flex-shrink-0" style="background:{{ player.team.color_primary }}"></div>
+                <div class="text-[9px] font-bold text-gray-400 uppercase tracking-tighter truncate max-w-[80px]" title="{{ player.team.name }}">{{ player.team.name }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .perspective-1000 { perspective: 1000px; }
+    @keyframes scanline {
+        0% { transform: translateY(-100%); }
+        100% { transform: translateY(1000%); }
+    }
+    .animate-scanline {
+        animation: scanline 3s linear infinite;
+    }
+</style>

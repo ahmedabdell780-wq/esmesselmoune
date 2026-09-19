@@ -1,0 +1,395 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قائمة اللاعبين - {{ selected_category.name|default:"جميع الفئات" }}</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts for Professional Arabic Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-color: #0f172a;
+            --accent-color: #0b8772;
+            --border-color: #cbd5e1;
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: 10mm;
+        }
+        
+        body {
+            background-color: #f8fafc;
+            color: #0f172a;
+            font-family: 'Amiri', 'Traditional Arabic', 'Times New Roman', serif;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            font-size: 15px;
+            word-spacing: 0.15em;
+            letter-spacing: 0px !important;
+        }
+
+        .print-container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 15px 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Header Style */
+        .official-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px double #0f172a;
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            page-break-after: avoid !important;
+            break-after: avoid !important;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            width: 35%;
+        }
+
+        .header-brand img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+        }
+
+        .header-title {
+            text-align: center;
+            width: 38%;
+        }
+
+        .header-meta {
+            width: 27%;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .season-badge {
+            border: 2px solid #0f172a;
+            border-radius: 12px;
+            padding: 8px 16px;
+            background-color: #f8fafc;
+            text-align: center;
+            min-width: 150px;
+        }
+
+        /* Table Design */
+        .premium-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+            border: 1px solid #cbd5e1;
+            page-break-inside: auto;
+        }
+
+        .premium-table tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
+        .premium-table th {
+            background-color: #0f172a !important;
+            color: #ffffff !important;
+            padding: 10px 12px;
+            font-weight: 700;
+            text-align: center;
+            border: 1px solid #0f172a;
+            font-size: 15px;
+            font-family: 'Times New Roman', 'Traditional Arabic', 'Amiri', serif;
+            letter-spacing: normal !important;
+        }
+
+        .premium-table td {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .premium-table tbody tr:nth-child(even) {
+            background-color: #f8fafc !important;
+        }
+
+        .jersey-badge {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-color: #0f172a;
+            color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 12px;
+        }
+
+        /* Signatures */
+        .signature-section {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-around;
+            page-break-inside: avoid;
+        }
+
+        .signature-box {
+            text-align: center;
+            width: 260px;
+        }
+
+        .signature-box h6 {
+            font-weight: 800;
+            margin-bottom: 4px;
+            color: #0f172a;
+            font-size: 16px;
+        }
+
+        .signature-space {
+            height: 90px;
+            border: 2px dashed #94a3b8;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fafafa;
+            color: #64748b;
+            margin-top: 10px;
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: #fff !important; padding: 0 !important; }
+            .print-container { box-shadow: none !important; border-radius: 0 !important; padding: 0 !important; }
+            .premium-table th { background-color: #000 !important; color: #fff !important; }
+            .signature-space { border-color: #000 !important; background: transparent !important; }
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Controls -->
+    <div class="no-print position-fixed top-0 start-50 translate-middle-x mt-3 d-flex gap-2 z-3">
+        <button onclick="window.print()" class="btn btn-dark shadow-lg px-4 rounded-pill fw-bold">
+            <i class="fas fa-print me-2"></i> طباعة القائمة
+        </button>
+        <button id="btn-pdf-export" onclick="generatePDF()" class="btn btn-danger shadow-lg px-4 rounded-pill fw-bold">
+            <i class="fas fa-file-pdf me-2"></i> تحميل ملف PDF
+        </button>
+        <button onclick="window.close()" class="btn btn-light shadow-lg px-4 rounded-pill fw-bold border">
+            إغلاق
+        </button>
+    </div>
+
+    <div class="print-container pt-5 pt-print-0" id="pdf-content">
+        <!-- Official Header -->
+        <div class="official-header">
+            <!-- Logo & Club Info -->
+            <div class="header-brand">
+                {% if settings.logo %}
+                <img src="{{ settings.logo.url }}" alt="" onerror="this.style.display='none';">
+                {% endif %}
+                <div>
+                    <h4 class="mb-1 fw-bold text-dark" style="font-size: 20px;">{{ settings.club_name }}</h4>
+                    <p class="mb-0 text-secondary" style="font-size: 14px; font-weight: 600;">{{ settings.club_subtitle }}</p>
+                </div>
+            </div>
+
+            <!-- Title -->
+            <div class="header-title">
+                <h2 class="fw-bold mb-2" style="font-size: 25px; color: #0f172a; border-bottom: 3px solid #0f172a; display: inline-block; padding-bottom: 4px;">
+                    قائمة&nbsp;اللاعبين&nbsp;المنخرطين
+                </h2>
+                <div class="mt-1 fw-bold text-dark" style="font-size: 16px;">
+                    {% if selected_category %}
+                        فئة&nbsp;<span class="badge bg-dark px-3 py-1 rounded-pill" style="font-size: 14px;">{{ selected_category.name }}</span>
+                    {% else %}
+                        جميع&nbsp;الفئات&nbsp;العمرية
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Season Meta Box -->
+            <div class="header-meta">
+                <div class="season-badge shadow-sm">
+                    <div class="text-muted fw-bold mb-1" style="font-size: 12px; letter-spacing: normal;">الموسم&nbsp;الرياضي</div>
+                    <div class="fw-bold text-dark" style="font-size: 15px;" dir="ltr">2026 / 2027</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Meta Info Bar -->
+        <div class="d-flex justify-content-between align-items-center mb-3 fw-bold px-2" style="font-size: 14px; page-break-inside: avoid; break-inside: avoid; page-break-after: avoid; break-after: avoid;">
+            <div class="d-flex align-items-center gap-2">
+                <span>العدد&nbsp;الإجمالي:</span>
+                {% if is_blank %}
+                <span class="badge bg-dark rounded-pill px-3 py-1 fs-6">......&nbsp;لاعب</span>
+                {% else %}
+                <span class="badge bg-dark rounded-pill px-3 py-1 fs-6">{{ players|length }}&nbsp;لاعب</span>
+                {% endif %}
+            </div>
+            <div class="text-secondary d-flex align-items-center gap-2" dir="rtl">
+                <span>تاريخ&nbsp;الاستخراج:</span>
+                <span class="text-dark bg-light px-2 py-1 rounded border" style="font-weight: 700;">{% now "Y-m-d" %}</span>
+            </div>
+        </div>
+
+        <!-- Players Table -->
+        <table class="premium-table">
+            <thead>
+                <tr>
+                    <th style="width: 5%;">#</th>
+                    <th style="width: 30%; text-align: right; padding-right: 12px;">الاسم&nbsp;واللقب</th>
+                    <th style="width: 15%;">تاريخ&nbsp;الميلاد</th>
+                    <th style="width: 15%;">مكان&nbsp;الميلاد</th>
+                    <th style="width: 12%;">فصيلة&nbsp;الدم</th>
+                    {% if not selected_category %}
+                    <th style="width: 8%;">الفئة</th>
+                    {% endif %}
+                    <th style="width: 20%;">المركز&nbsp;/&nbsp;رقم&nbsp;القميص</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if is_blank %}
+                    {% for i in blank_rows %}
+                    <tr style="height: 30px;">
+                        <td class="fw-bold text-secondary">{{ i }}</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        {% if not selected_category %}
+                        <td>&nbsp;</td>
+                        {% endif %}
+                        <td>&nbsp;</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    {% for player in players %}
+                    <tr>
+                        <td class="fw-bold text-secondary">{{ forloop.counter }}</td>
+                        <td style="text-align: right; padding-right: 15px;">
+                            <span class="fw-bold text-dark fs-6">{{ player.last_name }}&nbsp;{{ player.first_name }}</span>
+                        </td>
+                        <td class="fw-bold" dir="ltr" style="font-size: 14px;">{{ player.date_of_birth|date:"Y-m-d"|default:"-" }}</td>
+                        <td style="font-weight: 600;">{{ player.place_of_birth|default:"-" }}</td>
+                        <td class="fw-bold text-danger">{{ player.blood_type|default:"-" }}</td>
+                        {% if not selected_category %}
+                        <td class="fw-bold">{{ player.category.name|default:"-" }}</td>
+                        {% endif %}
+                        <td>
+                            <div class="d-flex align-items-center justify-content-center gap-2">
+                                <span class="fw-bold">{{ player.position|default:"-" }}</span>
+                                {% if player.jersey_number %}
+                                <span class="jersey-badge">{{ player.jersey_number }}</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="py-5 text-center text-muted fw-bold fs-5">لا يوجد لاعبين مسجلين في هذه القائمة.</td>
+                    </tr>
+                    {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+
+        <!-- Signatures -->
+        <div class="signature-section">
+            <div class="signature-box">
+                <h6>إمضاء ومواكبة المدرب</h6>
+                {% if selected_category and selected_category.coach_display != '-' and selected_category.coach_display != 'غير محدد' %}
+                    <p class="mb-0 fw-bold text-dark fs-6">{{ selected_category.coach_display }}</p>
+                {% elif coach %}
+                    <p class="mb-0 fw-bold text-dark fs-6">{{ coach.first_name }}&nbsp;{{ coach.last_name }}</p>
+                {% else %}
+                    <p class="mb-0 fw-bold text-secondary fs-6">المدرب الفني للفئة</p>
+                {% endif %}
+                <div class="signature-space">
+                    <span>الختم والتوقيع الرسمي</span>
+                </div>
+            </div>
+
+            <div class="signature-box">
+                <h6>إمضاء رئيس النادي</h6>
+                <p class="mb-0 fw-bold text-dark fs-6">{{ settings.president_name|default:"بيرم نصرالدين" }}</p>
+                <div class="signature-space">
+                    <span>الختم والتوقيع الرسمي</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- html2pdf Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <script>
+        function generatePDF() {
+            var btn = document.getElementById('btn-pdf-export');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> جاري التحميل...';
+            }
+
+            var element = document.getElementById('pdf-content');
+            
+            var opt = {
+                margin:       [8, 8, 8, 8],
+                filename:     'قائمة_اللاعبين_{{ selected_category.name|default:"جميع_الفئات" }}.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true,
+                    allowTaint: true,
+                    logging: false
+                },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:    { mode: ['css', 'legacy'] }
+            };
+
+            var triggerSave = function() {
+                html2pdf().set(opt).from(element).save().then(function() {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-file-pdf me-2"></i> تحميل ملف PDF';
+                    }
+                }).catch(function(err) {
+                    console.error("PDF Export Error:", err);
+                    window.print();
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-file-pdf me-2"></i> تحميل ملف PDF';
+                    }
+                });
+            };
+
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(triggerSave);
+            } else {
+                setTimeout(triggerSave, 300);
+            }
+        }
+    </script>
+</body>
+</html>

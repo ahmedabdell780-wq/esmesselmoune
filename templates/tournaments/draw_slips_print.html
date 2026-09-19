@@ -1,0 +1,268 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}">
+<head>
+    <meta charset="UTF-8">
+    <title>{% trans "قصاصات القرعة - " %} {{ tournament.name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #006233;
+            --primary-dark: #004d28;
+            --secondary: #D21034;
+            --gold: #C5A028;
+            --bg-color: #f8fafc;
+            --text-main: #1e293b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-color);
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        /* Print Controls */
+        .no-print {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-print {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-print:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            background: var(--primary-dark);
+        }
+
+        /* Page Layout */
+        .print-page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 10mm;
+            margin: 20px auto;
+            background: white;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            page-break-after: always;
+            
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: repeat(4, 1fr);
+            gap: 5mm;
+            position: relative;
+        }
+
+        /* Draw Slip */
+        .draw-slip {
+            border: 2px dashed #94a3b8;
+            border-radius: 16px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            background: #ffffff;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .draw-slip::after {
+            content: "✂️";
+            position: absolute;
+            top: -12px;
+            left: -12px;
+            font-size: 18px;
+            background: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+        }
+
+        /* Watermark */
+        .slip-watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+            opacity: 0.04;
+            z-index: -1;
+            filter: grayscale(100%);
+        }
+
+        .team-logo {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 3px solid var(--gold);
+            padding: 4px;
+            background: white;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .team-logo-placeholder {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid var(--gold);
+            background: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .team-name {
+            font-size: 26px;
+            font-weight: 900;
+            color: var(--text-main);
+            line-height: 1.2;
+            margin-bottom: 8px;
+            width: 100%;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .tournament-info {
+            width: 100%;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 8px;
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tournament-info span.dot {
+            width: 4px;
+            height: 4px;
+            background: var(--gold);
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        @media print {
+            body {
+                background: none;
+                margin: 0;
+                padding: 0;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-page {
+                margin: 0;
+                box-shadow: none;
+                padding: 5mm;
+                gap: 5mm;
+                /* Adjust height perfectly for A4 minus margins */
+                height: 297mm; 
+                width: 210mm;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Controls -->
+    <div class="no-print">
+        <button onclick="window.print()" class="btn-print">
+            <span>🖨️</span> {% trans "طباعة القصاصات" %}
+        </button>
+        <button onclick="window.close()" class="btn-print" style="background: #475569;">
+            <span>✖️</span> {% trans "إغلاق" %}
+        </button>
+    </div>
+
+    <!-- Pages -->
+    {% if not team_chunks %}
+        <div class="print-page" style="display: flex; align-items: center; justify-content: center;">
+            <h1 style="color: #94a3b8; font-size: 24px;">لا توجد فرق مؤكدة ومسددة للاشتراك في هذه الدورة</h1>
+        </div>
+    {% endif %}
+
+    {% for chunk in team_chunks %}
+    <div class="print-page">
+        {% for tt in chunk %}
+        <div class="draw-slip">
+            {% if tt.team.logo %}
+                <img src="{{ tt.team.logo.url }}" class="slip-watermark" alt="watermark">
+                <img src="{{ tt.team.logo.url }}" class="team-logo" alt="{{ tt.team.name }}">
+            {% else %}
+                <div class="team-logo-placeholder">⚽</div>
+            {% endif %}
+            
+            <h2 class="team-name">{{ tt.team.name }}</h2>
+            
+            <div class="tournament-info">
+                <span>{{ tournament.name }}</span>
+                <span class="dot"></span>
+                <span>{{ tournament.year }}</span>
+            </div>
+        </div>
+        {% endfor %}
+        
+        <!-- Fill remaining slots with empty slips if chunk is less than 8 to maintain grid structure -->
+        {% if forloop.last and chunk|length < 8 %}
+            {% for i in "12345678"|make_list %}
+                {% if forloop.counter > chunk|length %}
+                <div class="draw-slip" style="opacity: 0.3;">
+                    <div class="team-logo-placeholder" style="border-color: #cbd5e1;">❓</div>
+                    <h2 class="team-name" style="color: #cbd5e1;">---</h2>
+                    <div class="tournament-info">
+                        <span>{{ tournament.name }}</span>
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    </div>
+    {% endfor %}
+
+</body>
+</html>

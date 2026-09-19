@@ -1,0 +1,533 @@
+{% load i18n static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>أعضاء اللجنة المنظمة — {{ tournament.name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --green: #1a5c2a;
+            --green-mid: #2d7a3e;
+            --green-light: #4caf72;
+            --gold: #C5A028;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Cairo', sans-serif; background: #f0f4f0; color: #0f172a; padding-bottom: 40px; }
+
+        /* ── Controls bar ── */
+        .controls {
+            position: fixed; top: 0; right: 0; left: 0; z-index: 100;
+            background: var(--green);
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+            padding: 10px 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+        }
+        .controls a, .controls button {
+            font-family: 'Cairo', sans-serif;
+            font-size: 13px; font-weight: 700;
+            padding: 7px 14px; border-radius: 8px; border: none; cursor: pointer;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+            transition: transform 0.15s, opacity 0.15s;
+        }
+        .controls a:hover, .controls button:hover { transform: scale(1.04); }
+        .btn-back   { background: rgba(255,255,255,0.15); color: #fff; }
+        .btn-print  { background: var(--gold); color: #07170f; }
+        .btn-cards  { background: #fff; color: var(--green); }
+        .btn-sel    { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
+        .badge-count {
+            background: var(--gold); color: #07170f;
+            border-radius: 12px; font-size: 11px; font-weight: 900;
+            padding: 1px 7px; margin-right: 4px;
+        }
+
+        @media print {
+            .controls, .screen-only { display: none !important; }
+            body { padding-top: 0 !important; background: #fff; }
+            .print-section { display: block !important; }
+        }
+
+        /* ── Page ── */
+        .page { max-width: 740px; margin: 80px auto 0; padding: 0 12px; }
+
+        /* ── Header card ── */
+        .header-card {
+            background: linear-gradient(135deg, var(--green) 0%, var(--green-mid) 60%, var(--green-light) 100%);
+            border-radius: 18px; padding: 22px 24px;
+            display: flex; align-items: center; gap: 18px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 28px rgba(26,92,42,0.22);
+        }
+        .header-logo {
+            width: 80px; height: 80px; border-radius: 50%;
+            border: 3px solid var(--gold); object-fit: contain;
+            background: rgba(255,255,255,0.1); padding: 4px; flex-shrink: 0;
+        }
+        .header-logo-fallback {
+            width: 80px; height: 80px; border-radius: 50%;
+            border: 3px solid var(--gold);
+            background: rgba(255,255,255,0.15);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 36px; flex-shrink: 0;
+        }
+        .header-text h1 { font-size: 22px; font-weight: 900; color: #fff; line-height: 1.2; }
+        .header-text h2 { font-size: 17px; font-weight: 900; color: var(--gold); margin: 2px 0 2px; }
+        .header-text p  { font-size: 12px; color: rgba(255,255,255,0.7); font-weight: 600; }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+            gap: 8px; margin-bottom: 12px;
+        }
+        .toolbar-left { display: flex; gap: 8px; align-items: center; }
+        .count-info { font-size: 13px; color: #64748b; font-weight: 700; }
+        .count-info span { background: var(--green); color: #fff; border-radius: 12px; padding: 2px 10px; font-size: 13px; font-weight: 900; }
+
+        .check-all-row {
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(26,92,42,0.08); border-radius: 10px;
+            padding: 8px 14px; font-size: 13px; font-weight: 700; color: var(--green);
+            cursor: pointer; border: 1.5px solid rgba(26,92,42,0.15); transition: background 0.15s;
+        }
+        .check-all-row:hover { background: rgba(26,92,42,0.15); }
+        .check-all-row input { width: 16px; height: 16px; accent-color: var(--green); cursor: pointer; }
+
+        /* ── Members list ── */
+        .members-list { display: flex; flex-direction: column; gap: 7px; }
+
+        .member-row {
+            background: #fff; border-radius: 12px;
+            display: flex; align-items: center; gap: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            overflow: hidden;
+            transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
+            border: 2px solid transparent;
+        }
+        .member-row.selected { border-color: var(--green); box-shadow: 0 4px 16px rgba(26,92,42,0.18); }
+        .member-row:hover { transform: translateY(-1px); }
+
+        .member-check {
+            padding: 0 14px;
+            display: flex; align-items: center;
+        }
+        .member-check input {
+            width: 18px; height: 18px; accent-color: var(--green); cursor: pointer;
+        }
+        .member-num {
+            background: var(--green); color: #fff;
+            font-size: 16px; font-weight: 900;
+            min-width: 48px; height: 62px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .member-photo-wrap {
+            width: 62px; height: 62px;
+            background: #e8f5e9;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; overflow: hidden;
+        }
+        .member-photo-wrap img { width: 100%; height: 100%; object-fit: cover; }
+        .member-photo-icon {
+            width: 36px; height: 36px; background: var(--green-light);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 18px; color: #fff;
+        }
+        .member-info { flex: 1; padding: 8px 14px; }
+        .member-name { font-size: 16px; font-weight: 900; color: #0f172a; }
+        .member-role { font-size: 11px; font-weight: 700; color: var(--green-mid); margin-top: 2px; }
+        .member-phone { font-size: 11px; color: #94a3b8; font-weight: 600; dir: ltr; }
+        .member-actions {
+            padding: 0 14px;
+            display: flex; gap: 6px; align-items: center;
+        }
+        .member-actions a {
+            background: var(--green); color: #fff;
+            border-radius: 7px; padding: 5px 10px;
+            font-size: 11px; font-weight: 700;
+            text-decoration: none; display: flex; align-items: center; gap: 3px;
+            transition: background 0.15s;
+        }
+        .member-actions a:hover { background: var(--gold); color: #07170f; }
+
+        /* ── Print Section (hidden on screen) ── */
+        .print-section, .print-only { display: none; }
+
+        /* ── Print List Styles ── */
+        @media print {
+            .print-section {
+                display: block !important;
+                font-family: 'Cairo', sans-serif;
+                direction: rtl;
+            }
+            .print-header {
+                display: flex; align-items: center; gap: 20px;
+                border-bottom: 3px solid var(--green);
+                padding-bottom: 14px; margin-bottom: 20px;
+            }
+            .print-logo {
+                width: 70px; height: 70px; border-radius: 50%;
+                border: 3px solid var(--gold); object-fit: contain;
+            }
+            .print-title h1 { font-size: 18px; font-weight: 900; color: var(--green); }
+            .print-title h2 { font-size: 14px; font-weight: 900; color: #0f172a; }
+            .print-title p  { font-size: 11px; color: #64748b; }
+            .print-table {
+                width: 100%; border-collapse: collapse;
+                font-size: 12px;
+            }
+            .print-table th {
+                background: var(--green); color: #fff;
+                padding: 8px 10px; font-size: 12px; font-weight: 900;
+                text-align: center;
+                -webkit-print-color-adjust: exact; print-color-adjust: exact;
+            }
+            .print-table td {
+                padding: 7px 10px; border-bottom: 1px solid #e2e8f0;
+                text-align: center; vertical-align: middle;
+            }
+            .print-table tr:nth-child(even) td { background: #f8fafc; }
+            .print-table .member-img {
+                width: 44px; height: 52px; object-fit: cover;
+                border-radius: 6px; border: 1.5px solid var(--green);
+            }
+            .print-table .member-img-placeholder {
+                width: 44px; height: 52px;
+                background: #e8f5e9; border-radius: 6px;
+                display: flex; align-items: center; justify-content: center;
+                margin: auto; font-size: 22px;
+            }
+            .role-pill {
+                display: inline-block;
+                background: var(--green);
+                color: #fff; font-size: 10px; font-weight: 700;
+                border-radius: 12px; padding: 2px 8px;
+                -webkit-print-color-adjust: exact; print-color-adjust: exact;
+            }
+            .num-cell { font-weight: 900; font-size: 15px; color: var(--green); }
+            
+            .print-only { display: block !important; }
+            .print-signature {
+                margin-top: 40px;
+                display: flex;
+                justify-content: flex-end; /* Left side in RTL */
+                padding-left: 40px;
+            }
+            .print-signature-box {
+                text-align: center;
+            }
+            .print-signature-box h3 {
+                font-size: 14px; font-weight: 900; color: #0f172a;
+                margin-bottom: 60px; /* Space for signature */
+            }
+            .print-signature-box p {
+                font-size: 16px; font-weight: 900; color: var(--green);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Controls -->
+    <div class="controls screen-only">
+        <a href="{% url 'tournaments:admin_panel' %}" class="btn-back">🏁 رجوع</a>
+        <button onclick="window.print()" class="btn-print">
+            🖨️ طباعة القائمة
+        </button>
+        <button onclick="downloadPDF(event, false)" class="btn-print" style="background: var(--gold); color: #07170f;">
+            📥 تحميل PDF (الكل)
+        </button>
+        <button id="btn-print-selected" onclick="printSelected()" class="btn-print" style="background:#fff;color:var(--green);" disabled>
+            ✅ طباعة المحدد <span class="badge-count" id="sel-count">0</span>
+        </button>
+        <button id="btn-pdf-selected" onclick="downloadPDF(event, true)" class="btn-print" style="background:#fff;color:var(--green);" disabled>
+            📥 تحميل PDF (المحدد) <span class="badge-count" id="sel-pdf-count">0</span>
+        </button>
+        <button onclick="toggleSelectAll()" class="btn-sel" id="btn-select-all">☑️ تحديد الكل</button>
+        <a href="{% url 'tournaments:committee_cards_all' tournament.pk %}" class="btn-cards" target="_blank">🪪 كل البطاقات</a>
+    </div>
+
+    <div class="page screen-only">
+
+        <!-- Header -->
+        <div class="header-card">
+            {% if site_settings.app_logo %}
+                <img src="{{ site_settings.app_logo.url }}" class="header-logo" alt="Logo">
+            {% else %}
+                <div class="header-logo-fallback">🏆</div>
+            {% endif %}
+            <div class="header-text">
+                <p>نادي الوفاق الرياضي مسلمون</p>
+                <h1>أعضاء اللجنة المنظمة</h1>
+                <h2>{{ tournament.name }}</h2>
+                <p>الموسم {{ tournament.year }} · النسخة {{ tournament.edition }}</p>
+            </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <div class="count-info">إجمالي الأعضاء: <span>{{ members.count }}</span></div>
+            </div>
+            <label class="check-all-row">
+                <input type="checkbox" id="check-all" onchange="handleSelectAll(this)">
+                تحديد جميع الأعضاء
+            </label>
+        </div>
+
+        <!-- Members -->
+        <div class="members-list" id="members-list">
+            {% for m in members %}
+            <div class="member-row" id="row-{{ m.pk }}" data-pk="{{ m.pk }}">
+                <div class="member-check">
+                    <input type="checkbox" class="member-checkbox" value="{{ m.pk }}"
+                           data-name="{{ m.full_name }}"
+                           data-role="{{ m.get_role_display }}"
+                           data-photo="{% if m.photo %}{{ m.photo.url }}{% endif %}"
+                           data-num="{{ forloop.counter }}"
+                           onchange="onCheckChange()">
+                </div>
+                <div class="member-num">{{ forloop.counter }}</div>
+                <div class="member-photo-wrap">
+                    {% if m.photo %}
+                        <img src="{{ m.photo.url }}" alt="{{ m.full_name }}">
+                    {% else %}
+                        <div class="member-photo-icon">👤</div>
+                    {% endif %}
+                </div>
+                <div class="member-info">
+                    <div class="member-name">{{ m.full_name }}</div>
+                    <div class="member-role">{{ m.get_role_display }}</div>
+                    {% if m.phone %}<div class="member-phone" dir="ltr">📞 {{ m.phone }}</div>{% endif %}
+                </div>
+                <div class="member-actions screen-only">
+                    <a href="{% url 'tournaments:committee_card' m.pk %}" target="_blank">🪪 بطاقة</a>
+                </div>
+            </div>
+            {% empty %}
+            <div style="text-align:center;padding:40px;color:#94a3b8;font-size:15px;font-weight:700;background:#fff;border-radius:12px;">
+                لا يوجد أعضاء مسجلون بعد.
+                <br><small style="font-weight:400;">أضف أعضاء من لوحة الإدارة (/admin)</small>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Print Signature (Full List) -->
+        <div class="print-signature print-only">
+            <div class="print-signature-box">
+                <h3>إمضاء رئيس الوفاق مسلمون</h3>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ══════════ PRINT SECTION (only rendered during print) ══════════ -->
+    <div class="print-section" id="print-section">
+        <!-- Will be filled by JS before printing -->
+    </div>
+
+    <!-- PDF Generation Section (Hidden until export) -->
+    <div id="pdf-section" style="display: none; background: #fff; padding: 40px 30px; direction: rtl; font-family: 'Cairo', sans-serif; color: #0f172a; max-width: 800px; margin: 0 auto;">
+    </div>
+
+    <script>
+        // ─── Selection logic ─────────────────────────────────────────────────
+        function onCheckChange() {
+            const checked = document.querySelectorAll('.member-checkbox:checked');
+            const count = checked.length;
+            document.getElementById('sel-count').textContent = count;
+            document.getElementById('sel-pdf-count').textContent = count;
+            document.getElementById('btn-print-selected').disabled = count === 0;
+            document.getElementById('btn-pdf-selected').disabled = count === 0;
+
+            // Visual highlight
+            document.querySelectorAll('.member-row').forEach(row => row.classList.remove('selected'));
+            checked.forEach(cb => document.getElementById('row-' + cb.value).classList.add('selected'));
+
+            // Sync select-all checkbox
+            const total = document.querySelectorAll('.member-checkbox').length;
+            document.getElementById('check-all').indeterminate = count > 0 && count < total;
+            document.getElementById('check-all').checked = count === total;
+        }
+
+        function handleSelectAll(masterCb) {
+            document.querySelectorAll('.member-checkbox').forEach(cb => cb.checked = masterCb.checked);
+            onCheckChange();
+        }
+
+        let allSelected = false;
+        function toggleSelectAll() {
+            allSelected = !allSelected;
+            document.querySelectorAll('.member-checkbox').forEach(cb => cb.checked = allSelected);
+            document.getElementById('check-all').checked = allSelected;
+            document.getElementById('btn-select-all').textContent = allSelected ? '☐ إلغاء التحديد' : '☑️ تحديد الكل';
+            onCheckChange();
+        }
+
+        // ─── Print selected members ───────────────────────────────────────────
+        function printSelected() {
+            const checked = document.querySelectorAll('.member-checkbox:checked');
+            if (!checked.length) return;
+
+            // Build the print content
+            const logoHtml = `{% if site_settings.app_logo %}<img class="print-logo" src="{{ site_settings.app_logo.url }}" alt="Logo">{% else %}<span style="font-size:48px;">🏆</span>{% endif %}`;
+
+            const rows = Array.from(checked).map(cb => {
+                const photoSrc = cb.dataset.photo;
+                const photoHtml = photoSrc
+                    ? `<img class="member-img" src="${photoSrc}" alt="${cb.dataset.name}">`
+                    : `<div class="member-img-placeholder">👤</div>`;
+                return `
+                    <tr>
+                        <td class="num-cell">${cb.dataset.num}</td>
+                        <td>${photoHtml}</td>
+                        <td style="text-align:right;font-weight:900;font-size:14px;">${cb.dataset.name}</td>
+                        <td><span class="role-pill">${cb.dataset.role}</span></td>
+                    </tr>`;
+            }).join('');
+
+            document.getElementById('print-section').innerHTML = `
+                <div class="print-header">
+                    ${logoHtml}
+                    <div class="print-title">
+                        <h1>اللجنة المنظمة</h1>
+                        <h2>{{ tournament.name }}</h2>
+                        <p>الموسم {{ tournament.year }} · ${checked.length} عضو محدد</p>
+                    </div>
+                </div>
+                <table class="print-table">
+                    <thead>
+                        <tr>
+                            <th width="40">الرقم</th>
+                            <th width="60">الصورة</th>
+                            <th>الاسم واللقب</th>
+                            <th>المنصب</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+                <div class="print-signature">
+                    <div class="print-signature-box">
+                        <h3>إمضاء رئيس الوفاق مسلمون</h3>
+                    </div>
+                </div>`;
+
+            // Hide screen content and print
+            document.querySelector('.page').style.display = 'none';
+            window.print();
+            // Restore after print
+            setTimeout(() => {
+                document.querySelector('.page').style.display = '';
+                document.getElementById('print-section').innerHTML = '';
+            }, 1000);
+        }
+
+        // ─── Download PDF (All or Selected) ──────────────────────────────────
+        async function downloadPDF(event, onlySelected = false) {
+            if (event) event.preventDefault();
+            
+            const btn = event.currentTarget;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '📥 جاري التحميل...';
+            btn.style.opacity = '0.7';
+            btn.style.pointerEvents = 'none';
+
+            let checkboxes;
+            if (onlySelected) {
+                checkboxes = document.querySelectorAll('.member-checkbox:checked');
+            } else {
+                checkboxes = document.querySelectorAll('.member-checkbox');
+            }
+
+            if (!checkboxes.length) {
+                alert('لا يوجد أعضاء لتحميلهم.');
+                btn.innerHTML = originalText;
+                btn.style.opacity = '1';
+                btn.style.pointerEvents = 'auto';
+                return;
+            }
+
+            const logoHtml = `{% if site_settings.app_logo %}<img style="width: 70px; height: 70px; border-radius: 50%; border: 3px solid #C5A028; object-fit: contain;" src="{{ site_settings.app_logo.url }}" alt="Logo">{% else %}<span style="font-size:48px;">🏆</span>{% endif %}`;
+
+            const rows = Array.from(checkboxes).map(cb => {
+                const photoSrc = cb.dataset.photo;
+                const photoHtml = photoSrc
+                    ? `<img style="width: 44px; height: 52px; object-fit: cover; border-radius: 6px; border: 1.5px solid #1a5c2a;" src="${photoSrc}" alt="${cb.dataset.name}">`
+                    : `<div style="width: 44px; height: 52px; background: #e8f5e9; border-radius: 6px; display: flex; align-items: center; justify-content: center; margin: auto; font-size: 22px;">👤</div>`;
+                return `
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 10px; font-weight: 900; font-size: 15px; color: #1a5c2a; text-align: center;">${cb.dataset.num}</td>
+                        <td style="padding: 10px; text-align: center;">${photoHtml}</td>
+                        <td style="padding: 10px; text-align: right; font-weight: 900; font-size: 15px; color: #0f172a;">${cb.dataset.name}</td>
+                        <td style="padding: 10px; text-align: center;"><span style="display: inline-block; background: #1a5c2a; color: #fff; font-size: 11px; font-weight: 700; border-radius: 12px; padding: 3px 10px;">${cb.dataset.role}</span></td>
+                    </tr>`;
+            }).join('');
+
+            const pdfContainer = document.getElementById('pdf-section');
+            pdfContainer.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 20px; border-bottom: 3px solid #1a5c2a; padding-bottom: 16px; margin-bottom: 24px;">
+                    ${logoHtml}
+                    <div>
+                        <h1 style="font-size: 22px; font-weight: 900; color: #1a5c2a; margin: 0;">اللجنة المنظمة — نادي الوفاق الرياضي مسلمون</h1>
+                        <h2 style="font-size: 17px; font-weight: 900; color: #0f172a; margin: 4px 0 2px;">{{ tournament.name }}</h2>
+                        <p style="font-size: 13px; color: #64748b; margin: 0;">الموسم {{ tournament.year }} · ${checkboxes.length} عضو</p>
+                    </div>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-family: 'Cairo', sans-serif;">
+                    <thead>
+                        <tr style="background: #1a5c2a; color: #fff;">
+                            <th style="padding: 10px; font-size: 13px; font-weight: 900; text-align: center;" width="50">الرقم</th>
+                            <th style="padding: 10px; font-size: 13px; font-weight: 900; text-align: center;" width="70">الصورة</th>
+                            <th style="padding: 10px; font-size: 13px; font-weight: 900; text-align: right;">الاسم واللقب</th>
+                            <th style="padding: 10px; font-size: 13px; font-weight: 900; text-align: center;" width="150">المنصب</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+                <div style="margin-top: 50px; display: flex; justify-content: flex-end; padding-left: 40px;">
+                    <div style="text-align: center;">
+                        <h3 style="font-size: 15px; font-weight: 900; color: #0f172a; margin-bottom: 60px;">إمضاء رئيس الوفاق مسلمون</h3>
+                        <p style="font-size: 16px; font-weight: 900; color: #1a5c2a;">نادي الوفاق الرياضي مسلمون</p>
+                    </div>
+                </div>`;
+
+            // 1. Display the container in the REAL DOM and hide screen elements so html2canvas calculates correct bounding rect
+            document.querySelector('.page').style.display = 'none';
+            document.querySelector('.controls').style.display = 'none';
+            pdfContainer.style.display = 'block';
+
+            // 2. Wait 500ms to allow browser reflow and image loading in the real DOM before html2canvas capture
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            const opt = {
+                margin: 10,
+                filename: `قائمة_أعضاء_اللجنة_المنظمة_${onlySelected ? 'محدد' : 'كامل'}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { 
+                    scale: 2,
+                    useCORS: true,
+                    letterRendering: false
+                },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
+            };
+
+            try {
+                await html2pdf().set(opt).from(pdfContainer).save();
+            } catch (err) {
+                console.error('PDF Export Error:', err);
+                alert('حدث خطأ أثناء تحميل ملف PDF، يرجى المحاولة مرة أخرى.');
+            } finally {
+                // 3. Restore the real DOM back to normal
+                pdfContainer.style.display = 'none';
+                pdfContainer.innerHTML = '';
+                document.querySelector('.page').style.display = '';
+                document.querySelector('.controls').style.display = 'flex';
+                
+                btn.innerHTML = originalText;
+                btn.style.opacity = '1';
+                btn.style.pointerEvents = 'auto';
+            }
+        }
+    </script>
+</body>
+</html>

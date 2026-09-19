@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block title %}{% trans "Utilisateurs en attente" %} / طلبات العضوية{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+  <h1 class="font-bebas text-5xl tracking-widest leading-none">
+    طلبات العضوية / <span style="color:var(--primary)">UTILISATEURS EN ATTENTE</span>
+  </h1>
+  <p class="text-sm mt-1" style="color:var(--muted)">{% trans "Validez ou refusez les nouvelles inscriptions" %}</p>
+</div>
+
+<div class="grid grid-cols-1 gap-4">
+  {% for user_item in pending_users %}
+  <div class="card rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 border-l-4 border-yellow-500">
+    <div class="flex items-center gap-4 flex-1">
+      <div class="w-12 h-12 rounded-full bg-yellow-500/10 flex items-center justify-center text-xl">
+        👤
+      </div>
+      <div>
+        <h3 class="font-bold text-lg">{{ user_item.username }}</h3>
+        <p class="text-sm opacity-70">{{ user_item.email }}</p>
+        <p class="text-xs mt-1" style="color:var(--muted)">
+          {% trans "Inscrit le" %} : {{ user_item.created_at|date:"d/m/Y H:i" }} 
+          · 🏷️ {{ user_item.get_role_display }}
+        </p>
+      </div>
+    </div>
+
+    <div class="flex gap-2">
+      <!-- Approve -->
+      <form method="post" action="{% url 'accounts:approve_user' user_item.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="approve">
+        <button type="submit" class="btn btn-success">
+          ✅ {% trans "Accepter" %} / قبول
+        </button>
+      </form>
+
+      <!-- Reject -->
+      <form method="post" action="{% url 'accounts:approve_user' user_item.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="reject">
+        <button type="submit" class="btn btn-danger">
+          🗑️ {% trans "Rejeter" %} / رفض
+        </button>
+      </form>
+    </div>
+  </div>
+  {% empty %}
+  <div class="card rounded-2xl p-12 text-center">
+    <div class="text-4xl mb-4">✅</div>
+    <p class="text-lg font-bold mb-2">{% trans "Aucune demande en attente" %} / لا توجد طلبات معلقة</p>
+    <p class="text-sm opacity-60">{% trans "Tous les utilisateurs sont validés." %}</p>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

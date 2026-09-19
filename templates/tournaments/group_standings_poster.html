@@ -1,0 +1,808 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ترتيب المجموعة {{ current_group.name|slice:"-1" }} - {{ tournament.name }} - TurniQ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet" crossorigin="anonymous">
+    <!-- Image Export Engines -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+    <style>
+        :root {
+            --dark-green: #004d25;
+            --main-green: #064e29;
+            --accent-green: #008f3a;
+            --light-green: #e6f4ea;
+            --gold: #d4af37;
+            --dark-card: #0a0d14;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #0f111a;
+            color: #1a1a1a;
+            font-family: 'Cairo', 'Tajawal', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 15px;
+        }
+
+        /* ─── ACTION TOOLBAR ─── */
+        .toolbar {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            background: #161a2e;
+            border: 1px solid #282f48;
+            padding: 15px 25px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            color: #fff;
+        }
+
+        .toolbar-title {
+            font-size: 18px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toolbar-title span {
+            color: #00b84c;
+        }
+
+        .toolbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .group-select {
+            padding: 10px 18px;
+            font-size: 14px;
+            font-weight: 800;
+            border-radius: 12px;
+            background: #252b42;
+            color: #fff;
+            border: 1px solid #384263;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .btn {
+            padding: 12px 22px;
+            font-size: 14px;
+            font-weight: 800;
+            border-radius: 14px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, #00b84c, #008f3a);
+            color: #ffffff;
+        }
+        .btn-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,184,76,0.4);
+        }
+
+        .btn-print {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: #ffffff;
+        }
+        .btn-print:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(37,99,235,0.4);
+        }
+
+        .btn-back {
+            background: #252b42;
+            color: #e2e8f0;
+            border: 1px solid #384263;
+        }
+        .btn-back:hover {
+            background: #313957;
+            color: #fff;
+        }
+
+        /* ─── GROUP POSTER MAIN CONTAINER (MATCHES EXACT USER IMAGE AESTHETIC) ─── */
+        .poster-card {
+            width: 1000px;
+            background-color: #f7faf7;
+            border: 4px solid var(--dark-green);
+            border-radius: 28px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 35px 80px rgba(0,0,0,0.7);
+            padding: 40px 45px 30px 45px;
+            color: #000000;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            letter-spacing: normal !important;
+            font-feature-settings: "liga" 1, "calt" 1 !important;
+        }
+
+        .poster-card * {
+            letter-spacing: normal !important;
+        }
+
+        /* ─── TOP HEADER BRANDING ─── */
+        .poster-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            position: relative;
+            z-index: 5;
+        }
+
+        /* Left Crest Logo */
+        .crest-wrapper {
+            width: 135px;
+            min-height: 130px;
+            height: auto;
+            background: #ffffff;
+            border: 4px solid var(--dark-green);
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(0,77,37,0.25);
+            padding: 10px 8px;
+            position: relative;
+        }
+
+        .crest-logo {
+            width: 65px;
+            height: 65px;
+            object-fit: contain;
+        }
+
+        .crest-title {
+            font-size: 11px;
+            font-weight: 900;
+            color: var(--dark-green);
+            text-align: center;
+            line-height: 1.25;
+            margin-top: 4px;
+            max-width: 120px;
+            word-break: break-word;
+        }
+
+        /* Center Title */
+        .title-center-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .main-group-title {
+            font-size: 42px;
+            font-weight: 900;
+            color: #082914;
+            letter-spacing: normal !important;
+            line-height: 1.1;
+            margin-bottom: 12px;
+        }
+
+        .diamond-badge-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .line-accent {
+            height: 4px;
+            background: var(--dark-green);
+            flex: 1;
+            border-radius: 2px;
+        }
+
+        .diamond-badge {
+            width: 65px;
+            height: 65px;
+            background: var(--dark-green);
+            color: #ffffff;
+            transform: rotate(45deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,77,37,0.3);
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .diamond-badge span {
+            transform: rotate(-45deg);
+            font-size: 28px;
+            font-weight: 900;
+            font-family: 'Cairo', sans-serif;
+            line-height: 1;
+            display: block;
+            text-align: center;
+            max-width: 50px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Right Ribbon Badge */
+        .season-ribbon {
+            width: 130px;
+            height: 130px;
+            background: var(--dark-green);
+            color: #ffffff;
+            border-radius: 0 0 45px 45px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(0,77,37,0.3);
+            border: 3px solid #ffffff;
+            padding: 10px;
+        }
+
+        .season-num {
+            font-size: 48px;
+            font-weight: 900;
+            line-height: 0.9;
+        }
+
+        .season-text {
+            font-size: 13px;
+            font-weight: 800;
+            margin-top: 4px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .season-year {
+            font-size: 16px;
+            font-weight: 900;
+            color: #00b84c;
+            margin-top: 2px;
+        }
+
+        /* ─── STANDINGS TABLE ─── */
+        .standings-table-container {
+            border-radius: 20px;
+            overflow: hidden;
+            border: 3px solid var(--dark-green);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            background: #ffffff;
+            margin-bottom: 25px;
+            position: relative;
+            z-index: 5;
+        }
+
+        .standings-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 16px;
+        }
+
+        .standings-table th {
+            background: var(--dark-green);
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: 900;
+            padding: 16px 12px;
+            text-align: center;
+            border-left: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .standings-table th:last-child {
+            border-left: none;
+        }
+
+        .th-icon-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .icon-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 900;
+        }
+        .icon-won { background: #00b84c; color: #fff; }
+        .icon-drawn { background: #64748b; color: #fff; }
+        .icon-lost { background: #ef4444; color: #fff; }
+        .icon-gf { background: rgba(255,255,255,0.2); }
+        .icon-ga { background: rgba(255,255,255,0.2); }
+        .icon-diff { background: rgba(255,255,255,0.2); font-size: 14px; font-weight: 900; }
+        .icon-pts { background: var(--gold); color: #000; }
+
+        .standings-table td {
+            padding: 12px 10px;
+            text-align: center;
+            border-bottom: 2px solid #e2e8f0;
+            border-left: 1px solid #e2e8f0;
+            font-size: 17px;
+            font-weight: 800;
+            color: #0c1c11;
+        }
+
+        .standings-table td:last-child {
+            border-left: none;
+        }
+
+        .standings-table tr:nth-child(even) td {
+            background: #f8faf8;
+        }
+
+        /* Rank Laurel Badge */
+        .rank-badge {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 900;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .rank-1 {
+            background: radial-gradient(circle, #ffe066 0%, #d4af37 100%);
+            color: #3d2c00;
+            border: 2px solid #b38f1d;
+            box-shadow: 0 4px 10px rgba(212,175,55,0.4);
+        }
+        .rank-1::before, .rank-1::after {
+            content: '🌿';
+            font-size: 14px;
+            position: absolute;
+        }
+        .rank-1::before { left: -10px; transform: scaleX(-1); }
+        .rank-1::after { right: -10px; }
+
+        .rank-2 {
+            background: radial-gradient(circle, #ffffff 0%, #cbd5e1 100%);
+            color: #1e293b;
+            border: 2px solid #94a3b8;
+            box-shadow: 0 4px 10px rgba(148,163,184,0.4);
+        }
+        .rank-2::before, .rank-2::after {
+            content: '🌿';
+            font-size: 14px;
+            position: absolute;
+            filter: grayscale(100%);
+        }
+        .rank-2::before { left: -10px; transform: scaleX(-1); }
+        .rank-2::after { right: -10px; }
+
+        .rank-3 {
+            background: radial-gradient(circle, #f97316 0%, #c2410c 100%);
+            color: #ffffff;
+            border: 2px solid #9a3412;
+            box-shadow: 0 4px 10px rgba(194,65,12,0.4);
+        }
+        .rank-3::before, .rank-3::after {
+            content: '🌿';
+            font-size: 14px;
+            position: absolute;
+        }
+        .rank-3::before { left: -10px; transform: scaleX(-1); }
+        .rank-3::after { right: -10px; }
+
+        .rank-normal {
+            font-size: 18px;
+            font-weight: 900;
+            color: #475569;
+        }
+
+        /* Team Name Cell */
+        .team-name-cell {
+            text-align: right !important;
+            padding-right: 15px !important;
+            font-size: 15px !important;
+            font-weight: 800 !important;
+            color: #064e29 !important;
+            white-space: nowrap;
+        }
+
+        .diff-plus { color: #008f3a; }
+        .diff-minus { color: #dc2626; }
+        .diff-zero { color: #64748b; }
+
+        .pts-cell {
+            font-size: 20px !important;
+            font-weight: 900 !important;
+            color: #064e29 !important;
+        }
+
+        /* ─── FOOTER STADIUM SILHOUETTE ─── */
+        .poster-footer {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            padding-top: 15px;
+            position: relative;
+            z-index: 5;
+            border-top: 3px solid var(--dark-green);
+        }
+
+        .footer-ball-box {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .footer-ball-icon {
+            font-size: 55px;
+            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.3));
+        }
+
+        .footer-brand-center {
+            text-align: center;
+        }
+
+        .footer-brand-title {
+            font-size: 28px;
+            font-weight: 900;
+            color: var(--dark-green);
+            line-height: 1.1;
+        }
+
+        .footer-brand-sub {
+            font-size: 14px;
+            font-weight: 800;
+            color: #475569;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        /* ─── PRINT STYLES ─── */
+        @media print {
+            body { background: #ffffff !important; padding: 0 !important; }
+            .toolbar { display: none !important; }
+            .poster-card {
+                width: 100% !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── TOP ACTION TOOLBAR ─── -->
+    <div class="toolbar">
+        <div class="toolbar-title flex items-center gap-2">
+            <span>📊</span>
+            <a href="/tournaments/{{ tournament.pk }}/book/" class="hover:underline font-bold text-amber-300">
+                {{ tournament.name }}
+            </a>
+            <span class="text-slate-300 font-normal">| ملصق ترتيب المجموعة (Poster)</span>
+        </div>
+        <div class="toolbar-actions">
+            {% if all_groups %}
+            <select onchange="location.href=this.value;" class="group-select">
+                {% for g in all_groups %}
+                    <option value="?group_id={{ g.id }}" {% if current_group and current_group.id == g.id %}selected{% endif %}>
+                        المجموعة {{ g.name|slice:"-1" }} ({{ g.name }})
+                    </option>
+                {% endfor %}
+            </select>
+            {% endif %}
+
+            <button onclick="downloadPosterAsImage()" id="download-btn" class="btn btn-download">
+                <span>📸</span> تحميل الملصق كصورة (PNG)
+            </button>
+            <button onclick="window.print()" class="btn btn-print">
+                <span>🖨️</span> طباعة A4
+            </button>
+            <a href="{% url 'tournaments:standings_detail' tournament.pk %}" class="btn btn-back">
+                <span>⬅️</span> العودة للترتيب العام
+            </a>
+        </div>
+    </div>
+
+    <!-- ─── POSTER CONTAINER (TARGET FOR IMAGE EXPORT) ─── -->
+    <div id="group-standings-poster" class="poster-card">
+        
+        <!-- 1. HEADER SECTION -->
+        <div class="poster-header">
+            <!-- Left Tournament Crest Logo -->
+            <div class="crest-wrapper">
+                {% if tournament.logo %}
+                    <img src="{{ tournament.logo.url }}" class="crest-logo" alt="Logo">
+                {% elif site_settings and site_settings.app_logo %}
+                    <img src="{{ site_settings.app_logo.url }}" class="crest-logo" alt="Logo">
+                {% else %}
+                    <div style="font-size:45px;">🏆</div>
+                {% endif %}
+                <div class="crest-title">{{ tournament.name }}</div>
+            </div>
+
+            <!-- Center Title & Diamond Group Badge -->
+            <div class="title-center-box">
+                <h1 class="main-group-title">
+                    {% if current_group %}
+                        {% if "المجموعة" in current_group.name or "Groupe" in current_group.name %}
+                            ترتيب {{ current_group.name }}
+                        {% else %}
+                            ترتيب المجموعة {{ current_group.name }}
+                        {% endif %}
+                    {% else %}
+                        ترتيب المجموعة
+                    {% endif %}
+                </h1>
+                <div class="diamond-badge-wrapper">
+                    <div class="line-accent"></div>
+                    <div class="diamond-badge">
+                        <span>
+                            {% if current_group %}
+                                {% if "المجموعة" in current_group.name %}
+                                    {{ current_group.name|cut:"المجموعة" }}
+                                {% elif "Groupe" in current_group.name %}
+                                    {{ current_group.name|cut:"Groupe" }}
+                                {% else %}
+                                    {{ current_group.name }}
+                                {% endif %}
+                            {% else %}
+                                A
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="line-accent"></div>
+                </div>
+            </div>
+
+            <!-- Right Season Ribbon Badge -->
+            <div class="season-ribbon">
+                <div class="season-num">{% if tournament.edition and tournament.edition > 1 %}{{ tournament.edition }}{% else %}2{% endif %}</div>
+                <div class="season-text">النسخة {% if tournament.edition == 3 %}الثالثة{% elif tournament.edition == 4 %}الرابعة{% elif tournament.edition and tournament.edition > 2 %}{{ tournament.edition }}{% else %}الثانية{% endif %}</div>
+                <div class="season-year">{{ tournament.year|default:2026 }}</div>
+            </div>
+        </div>
+
+        <!-- 2. STANDINGS TABLE -->
+        <div class="standings-table-container">
+            <table class="standings-table">
+                <thead>
+                    <tr>
+                        <th style="width: 100px;">الترتيب</th>
+                        <th style="text-align: right; padding-right: 25px;">الفريق</th>
+                        <th style="width: 75px;">
+                            <div class="th-icon-box">
+                                <span>لعب</span>
+                                <span style="font-size:14px;">⚽</span>
+                            </div>
+                        </th>
+                        <th style="width: 75px;">
+                            <div class="th-icon-box">
+                                <span>فاز</span>
+                                <span class="icon-circle icon-won">✓</span>
+                            </div>
+                        </th>
+                        <th style="width: 75px;">
+                            <div class="th-icon-box">
+                                <span>تعادل</span>
+                                <span class="icon-circle icon-drawn">=</span>
+                            </div>
+                        </th>
+                        <th style="width: 75px;">
+                            <div class="th-icon-box">
+                                <span>خسر</span>
+                                <span class="icon-circle icon-lost">✕</span>
+                            </div>
+                        </th>
+                        <th style="width: 75px;">
+                            <div class="th-icon-box">
+                                <span>له</span>
+                                <span class="icon-circle icon-gf">⚽</span>
+                            </div>
+                        </th>
+                        <th style="width: 75px;">
+                            <div class="th-icon-box">
+                                <span>عليه</span>
+                                <span class="icon-circle icon-ga">🥅</span>
+                            </div>
+                        </th>
+                        <th style="width: 110px;">
+                            <div class="th-icon-box">
+                                <span>فارق الأهداف</span>
+                                <span class="icon-circle icon-diff">±</span>
+                            </div>
+                        </th>
+                        <th style="width: 95px;">
+                            <div class="th-icon-box">
+                                <span>النقاط</span>
+                                <span class="icon-circle icon-pts">🏆</span>
+                            </div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if standings %}
+                        {% for st in standings %}
+                        <tr>
+                            <td>
+                                {% if forloop.counter == 1 %}
+                                    <div class="rank-badge rank-1">1</div>
+                                {% elif forloop.counter == 2 %}
+                                    <div class="rank-badge rank-2">2</div>
+                                {% elif forloop.counter == 3 %}
+                                    <div class="rank-badge rank-3">3</div>
+                                {% else %}
+                                    <span class="rank-normal">{{ forloop.counter }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="team-name-cell">
+                                <div style="display:flex; align-items:center; gap:10px; justify-content:flex-start;">
+                                    {% if st.team.logo %}
+                                        <img src="{{ st.team.logo.url }}" style="width:30px; height:30px; object-fit:contain; border-radius:50%; border:1px solid #cbd5e1; flex-shrink:0;">
+                                    {% endif %}
+                                    <span style="font-size:15px; font-weight:800; color:#064e29; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ st.team.name }}">{{ st.team.name }}</span>
+                                </div>
+                            </td>
+                            <td>{{ st.played }}</td>
+                            <td style="color:#008f3a;">{{ st.won }}</td>
+                            <td style="color:#64748b;">{{ st.drawn }}</td>
+                            <td style="color:#dc2626;">{{ st.lost }}</td>
+                            <td>{{ st.goals_for }}</td>
+                            <td>{{ st.goals_against }}</td>
+                            <td class="{% if st.goal_difference > 0 %}diff-plus{% elif st.goal_difference < 0 %}diff-minus{% else %}diff-zero{% endif %}">
+                                {% if st.goal_difference > 0 %}+{% endif %}{{ st.goal_difference }}
+                            </td>
+                            <td class="pts-cell">{{ st.points }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="10" style="padding: 30px; color: #64748b;">لا توجد بيانات مرتبة لهذه المجموعة بعد.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 3. FOOTER BRANDING BANNER -->
+        <div class="poster-footer">
+            <div class="footer-ball-box">
+                <span class="footer-ball-icon">⚽</span>
+            </div>
+            
+            <div class="footer-brand-center">
+                <div class="footer-brand-title">{{ tournament.name|upper }}</div>
+                <div class="footer-brand-sub">{{ site_settings.app_name|default:"TURNIQ TOURNAMENT MANAGEMENT"|upper }}</div>
+            </div>
+
+            <div style="font-size:12px; font-weight:800; color:#64748b;">
+                تاريخ الإصدار: {% now "d/m/Y" %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ─── DUAL ENGINE IMAGE EXPORT SCRIPT ─── -->
+    <script>
+        async function downloadPosterAsImage() {
+            const btn = document.getElementById('download-btn');
+            const poster = document.getElementById('group-standings-poster');
+            
+            if (!poster) return;
+            
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<span>⏳</span> جاري تحويل الملصق إلى صورة...`;
+
+            if (document.fonts) {
+                try {
+                    await document.fonts.ready;
+                } catch(e) {}
+            }
+
+            const groupName = "{{ current_group.name|slugify|default:'group' }}";
+            const tourName = "{{ tournament.name|slugify|default:'tournament' }}";
+            const fileName = `poster_standings_${groupName}_${tourName}.png`;
+
+            function triggerDownload(dataUrl) {
+                const link = document.createElement('a');
+                link.download = fileName;
+                link.href = dataUrl;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+
+            // Temporarily disable cross-origin stylesheets that block html-to-image
+            const disabledSheets = [];
+            for (let i = 0; i < document.styleSheets.length; i++) {
+                try {
+                    const rules = document.styleSheets[i].cssRules;
+                } catch (e) {
+                    document.styleSheets[i].disabled = true;
+                    disabledSheets.push(document.styleSheets[i]);
+                }
+            }
+
+            // Engine 1: htmlToImage (Renders native browser font ligatures & RTL perfectly connected)
+            if (typeof htmlToImage !== 'undefined') {
+                try {
+                    const dataUrl = await htmlToImage.toPng(poster, {
+                        pixelRatio: 2.0,
+                        cacheBust: true,
+                        backgroundColor: '#f7faf7',
+                        style: {
+                            transform: 'none',
+                            margin: '0 auto'
+                        }
+                    });
+                    disabledSheets.forEach(s => s.disabled = false);
+                    triggerDownload(dataUrl);
+                    return;
+                } catch (err) {
+                    console.warn('htmlToImage failed, trying html2canvas fallback...', err);
+                }
+            }
+
+            // Engine 2: html2canvas fallback
+            if (typeof html2canvas !== 'undefined') {
+                try {
+                    const canvas = await html2canvas(poster, {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: '#f7faf7',
+                        logging: false,
+                        letterRendering: false,
+                        windowWidth: 1200
+                    });
+                    disabledSheets.forEach(s => s.disabled = false);
+                    const dataUrl = canvas.toDataURL('image/png', 1.0);
+                    triggerDownload(dataUrl);
+                    return;
+                } catch (err) {
+                    console.error('html2canvas also failed:', err);
+                }
+            }
+
+            disabledSheets.forEach(s => s.disabled = false);
+            alert('حدث خطأ أثناء تصدير الملصق كصورة.');
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    </script>
+</body>
+</html>

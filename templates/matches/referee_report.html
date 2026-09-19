@@ -1,0 +1,922 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تقرير حكم المباراة - {{ match.team1.name }} ضد {{ match.team2.name }} - TurniQ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Amiri:wght@400;700&family=Bebas+Neue&family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet" crossorigin="anonymous">
+    <!-- Image Export Engines -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+    <style>
+        :root {
+            --primary: #00b84c;
+            --primary-dark: #008f3a;
+            --gold: #D4AF37;
+            --gold-light: #F9DF7B;
+            --dark-bg: #0c0e17;
+            --card-bg: #111422;
+            --card-border: #282f48;
+            --text-muted: #94a3b8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #0f111a;
+            color: #ffffff;
+            font-family: 'Cairo', 'Tajawal', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 15px;
+        }
+
+        /* ─── ACTION TOOLBAR (NO PRINT) ─── */
+        .toolbar {
+            width: 100%;
+            max-width: 880px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            background: #161a2e;
+            border: 1px solid #282f48;
+            padding: 15px 25px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+
+        .toolbar-title {
+            font-size: 18px;
+            font-weight: 900;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toolbar-title span {
+            color: var(--primary);
+        }
+
+        .toolbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 22px;
+            font-size: 14px;
+            font-weight: 800;
+            border-radius: 14px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, #00b84c, #008f3a);
+            color: #ffffff;
+        }
+        .btn-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,184,76,0.4);
+        }
+
+        .btn-print {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: #ffffff;
+        }
+        .btn-print:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(37,99,235,0.4);
+        }
+
+        .btn-back {
+            background: #252b42;
+            color: #e2e8f0;
+            border: 1px solid #384263;
+        }
+        .btn-back:hover {
+            background: #313957;
+            color: #fff;
+        }
+
+        /* ─── REFEREE REPORT MAIN CARD ─── */
+        .report-card {
+            width: 880px;
+            background-color: #111422;
+            border: 2px solid #d4af37;
+            border-radius: 24px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 35px 80px rgba(0,0,0,0.7);
+            padding: 35px;
+            color: #ffffff;
+        }
+
+        /* Ambient Glow & Watermark */
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 160px;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.02);
+            font-family: 'Bebas Neue', sans-serif;
+            pointer-events: none;
+            user-select: none;
+            letter-spacing: 10px;
+        }
+
+        /* ─── REPORT HEADER ─── */
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #d4af37;
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-logo {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--gold-light), var(--gold));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: #0c0e17;
+            font-weight: 900;
+            box-shadow: 0 8px 20px rgba(212,175,55,0.3);
+        }
+
+        .header-title-box h1 {
+            font-size: 24px;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 0.5px;
+        }
+
+        .header-title-box h2 {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--gold-light);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 2px;
+        }
+
+        .header-badge {
+            text-align: left;
+            background: #182620;
+            border: 1px solid #00b84c;
+            padding: 8px 16px;
+            border-radius: 14px;
+        }
+
+        .header-badge .official-tag {
+            font-size: 10px;
+            font-weight: 900;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .header-badge .doc-num {
+            font-size: 12px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-top: 2px;
+        }
+
+        /* ─── MATCH METADATA STRIP ─── */
+        .match-meta-strip {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 25px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .meta-card {
+            background: #181c2e;
+            border: 1px solid #282f48;
+            border-radius: 16px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .meta-icon {
+            font-size: 22px;
+            width: 42px;
+            height: 42px;
+            background: #222842;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .meta-info .label {
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .meta-info .value {
+            font-size: 13px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-top: 2px;
+        }
+
+        /* ─── SCOREBOARD BANNER ─── */
+        .scoreboard-banner {
+            background: #161a2e;
+            border: 1px solid #2a3250;
+            border-radius: 24px;
+            padding: 25px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        }
+
+        .team-box {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+        }
+
+        .team-box.team2 {
+            flex-direction: row-reverse;
+            text-align: left;
+        }
+
+        .team-logo {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            object-fit: contain;
+            background: #222842;
+            padding: 6px;
+            border: 2px solid #384263;
+        }
+
+        .team-details .team-name {
+            font-size: 20px;
+            font-weight: 900;
+            color: #ffffff;
+        }
+
+        .team-details .team-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 700;
+        }
+
+        .score-display-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 25px;
+        }
+
+        .score-numbers {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 52px;
+            font-weight: 900;
+            color: var(--gold-light);
+            letter-spacing: 4px;
+            line-height: 1;
+            text-shadow: 0 0 20px rgba(212,175,55,0.4);
+        }
+
+        .penalties-display {
+            font-size: 12px;
+            font-weight: 800;
+            color: #38bdf8;
+            margin-top: 4px;
+            background: #142838;
+            border: 1px solid #1e4a68;
+            padding: 2px 10px;
+            border-radius: 8px;
+        }
+
+        .match-status-badge {
+            font-size: 10px;
+            font-weight: 900;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-top: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .status-finished { background: #132e1d; color: #00b84c; border: 1px solid #00b84c; }
+        .status-live { background: #381617; color: #ef4444; border: 1px solid #ef4444; }
+        .status-scheduled { background: #382b13; color: #f59e0b; border: 1px solid #f59e0b; }
+
+        /* ─── REFEREE PROFILE SECTION ─── */
+        .referee-strip {
+            background: #1e2236;
+            border: 1px solid #d4af37;
+            border-radius: 20px;
+            padding: 16px 24px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            z-index: 2;
+        }
+
+        .referee-info-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .referee-avatar {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--gold);
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+        }
+
+        .referee-text .role {
+            font-size: 10px;
+            font-weight: 900;
+            color: var(--gold-light);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .referee-text .name {
+            font-size: 17px;
+            font-weight: 900;
+            color: #ffffff;
+            margin-top: 2px;
+        }
+
+        .referee-stats {
+            display: flex;
+            gap: 15px;
+        }
+
+        .ref-stat-pill {
+            background: #141726;
+            border: 1px solid #2e3654;
+            padding: 6px 14px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 800;
+            color: #e2e8f0;
+        }
+
+        /* ─── TABLES & LOGS ─── */
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+            position: relative;
+            z-index: 2;
+            font-size: 12px;
+        }
+
+        .report-table th {
+            background: #1a2035;
+            color: var(--gold-light);
+            font-weight: 900;
+            text-align: right;
+            padding: 12px 14px;
+            border-bottom: 2px solid #2c3656;
+            text-transform: uppercase;
+            font-size: 11px;
+        }
+
+        .report-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #1f2740;
+            color: #ffffff;
+            font-weight: 700;
+            background: #141829;
+        }
+
+        .minute-badge {
+            display: inline-block;
+            background: #142e1f;
+            color: var(--primary);
+            border: 1px solid #00b84c;
+            font-weight: 900;
+            padding: 3px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-family: 'Bebas Neue', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        .card-yellow { color: #facc15; font-weight: 900; }
+        .card-red { color: #ef4444; font-weight: 900; }
+
+        /* ─── REFEREE NOTES / INCIDENTS BOX ─── */
+        .incidents-box {
+            background: #161a2e;
+            border: 1px dashed #d4af37;
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .incidents-box h4 {
+            font-size: 14px;
+            font-weight: 900;
+            color: var(--gold-light);
+            margin-bottom: 10px;
+        }
+
+        .incidents-content {
+            font-size: 13px;
+            color: #cbd5e1;
+            line-height: 1.6;
+            min-height: 50px;
+        }
+
+        /* ─── SIGNATURES BLOCK ─── */
+        .signatures-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #2a3250;
+            position: relative;
+            z-index: 2;
+        }
+
+        .sig-box {
+            border: 1px dashed #3a466c;
+            border-radius: 16px;
+            padding: 15px;
+            text-align: center;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: #161a2e;
+        }
+
+        .sig-title {
+            font-size: 11px;
+            font-weight: 900;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .sig-space {
+            font-family: 'Amiri', serif;
+            font-size: 16px;
+            color: rgba(255,255,255,0.4);
+            font-style: italic;
+            margin: 10px 0;
+        }
+
+        .report-footer {
+            margin-top: 25px;
+            text-align: center;
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-top: 1px solid #20273d;
+            padding-top: 15px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ─── PRINT STYLES ─── */
+        @media print {
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+            }
+            .toolbar { display: none !important; }
+            .report-card {
+                width: 100% !important;
+                max-width: 100% !important;
+                box-shadow: none !important;
+                border: 2px solid #000000 !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 20px !important;
+                border-radius: 0 !important;
+            }
+            .report-header, .scoreboard-banner, .referee-strip, .meta-card, .incidents-box, .sig-box, .report-table td {
+                background: #ffffff !important;
+                border-color: #cccccc !important;
+                color: #000000 !important;
+            }
+            .header-title-box h1, .team-details .team-name, .referee-text .name, .report-table td {
+                color: #000000 !important;
+            }
+            .score-numbers { color: #000000 !important; text-shadow: none !important; }
+            .minute-badge { background: #eee !important; color: #000 !important; border-color: #ccc !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── TOP ACTION TOOLBAR ─── -->
+    <div class="toolbar">
+        <div class="toolbar-title flex items-center gap-2">
+            <span>📜</span>
+            <a href="/tournaments/{{ match.tournament.pk }}/book/" class="hover:underline font-bold text-amber-300">
+                {{ match.tournament.name }}
+            </a>
+            <span class="text-slate-300 font-normal">| تقرير حكم المباراة الرسمية</span>
+        </div>
+        <div class="toolbar-actions">
+            <button onclick="downloadReportAsImage()" id="download-btn" class="btn btn-download">
+                <span>📸</span> تحميل التقرير كصورة (PNG)
+            </button>
+            <button onclick="window.print()" class="btn btn-print">
+                <span>🖨️</span> طباعة (A4 / PDF)
+            </button>
+            <a href="{% url 'matches:detail' match.pk %}" class="btn btn-back">
+                <span>⬅️</span> العودة للمباراة
+            </a>
+        </div>
+    </div>
+
+    <!-- ─── OFFICIAL REFEREE REPORT CARD (IMAGE CAPTURE TARGET) ─── -->
+    <div id="referee-report-card" class="report-card">
+        <div class="watermark">TURNIQ</div>
+
+        <!-- 1. HEADER SECTION -->
+        <div class="report-header">
+            <div class="header-brand">
+                <div class="header-logo">⚽</div>
+                <div class="header-title-box">
+                    <h1>{{ match.tournament.name|upper }}</h1>
+                    <h2>{{ match.get_stage_display|upper }} {% if match.group %} - {{ match.group.name }}{% endif %}</h2>
+                </div>
+            </div>
+            <div class="header-badge">
+                <div class="official-tag">RAPPORT D'ARBITRAGE OFFICIEL</div>
+                <div class="doc-num">MATCH N° {{ match.pk }} · Journée {{ match.match_day }}</div>
+            </div>
+        </div>
+
+        <!-- 2. METADATA STRIP -->
+        <div class="match-meta-strip">
+            <div class="meta-card">
+                <div class="meta-icon">📅</div>
+                <div class="meta-info">
+                    <div class="label">Date & Heure / التاريخ والوقت</div>
+                    <div class="value">{{ match.match_date|date:"l d/m/Y - H:i" }}</div>
+                </div>
+            </div>
+            <div class="meta-card">
+                <div class="meta-icon">📍</div>
+                <div class="meta-info">
+                    <div class="label">Lieu / Stade / الملعب</div>
+                    <div class="value">{{ match.venue|default:"Stade Communal" }}</div>
+                </div>
+            </div>
+            <div class="meta-card">
+                <div class="meta-icon">🏆</div>
+                <div class="meta-info">
+                    <div class="label">Statut / حالة المباراة</div>
+                    <div class="value">{{ match.get_status_display }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. SCOREBOARD BANNER -->
+        <div class="scoreboard-banner">
+            <!-- Team 1 -->
+            <div class="team-box team1">
+                {% if match.team1 and match.team1.logo %}
+                    <img src="{{ match.team1.logo.url }}" class="team-logo" alt="{{ match.team1.name }}">
+                {% else %}
+                    <div class="team-logo" style="display:flex; align-items:center; justify-content:center; font-size:28px;">🛡️</div>
+                {% endif %}
+                <div class="team-details">
+                    <div class="team-name">{{ match.team1.name|default:"Équipe 1" }}</div>
+                    <div class="team-sub">ÉQUIPE DOMICILE (A)</div>
+                </div>
+            </div>
+
+            <!-- Score Display -->
+            <div class="score-display-box">
+                <div class="score-numbers">{{ match.score_team1|default:0 }} - {{ match.score_team2|default:0 }}</div>
+                {% if match.has_penalties %}
+                    <div class="penalties-display">TAB: {{ match.penalties_team1 }} - {{ match.penalties_team2 }}</div>
+                {% endif %}
+                <div class="match-status-badge {% if match.status == 'finished' %}status-finished{% elif match.status == 'live' %}status-live{% else %}status-scheduled{% endif %}">
+                    {{ match.get_status_display }}
+                </div>
+            </div>
+
+            <!-- Team 2 -->
+            <div class="team-box team2">
+                {% if match.team2 and match.team2.logo %}
+                    <img src="{{ match.team2.logo.url }}" class="team-logo" alt="{{ match.team2.name }}">
+                {% else %}
+                    <div class="team-logo" style="display:flex; align-items:center; justify-content:center; font-size:28px;">🛡️</div>
+                {% endif %}
+                <div class="team-details">
+                    <div class="team-name">{{ match.team2.name|default:"Équipe 2" }}</div>
+                    <div class="team-sub">ÉQUIPE VISITEUR (B)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. OFFICIAL REFEREE STRIP -->
+        <div class="referee-strip">
+            <div class="referee-info-group">
+                {% if referee %}
+                    <img src="{{ referee.photo_url }}" class="referee-avatar" alt="Photo Referee">
+                    <div class="referee-text">
+                        <div class="role">ARBITRE PRINCIPAL DE LA RENCONTRE / الحكم الرئيسي</div>
+                        <div class="name">{{ referee.user.get_full_name|default:referee.user.username|upper }}</div>
+                    </div>
+                {% else %}
+                    <div class="referee-avatar" style="display:flex; align-items:center; justify-content:center; font-size:24px; background:#1e293b;">👤</div>
+                    <div class="referee-text">
+                        <div class="role">ARBITRE PRINCIPAL / الحكم الرئيسي</div>
+                        <div class="name" style="color:var(--text-muted);">غير محدد / NON DÉSIGNÉ</div>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="referee-stats">
+                {% if referee and referee.license_number %}
+                    <div class="ref-stat-pill">N° Licence: {{ referee.license_number }}</div>
+                {% endif %}
+                {% if referee %}
+                    <div class="ref-stat-pill">Expérience: {{ referee.experience_years }} ans</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 5. MATCH GOALS LOG -->
+        {% if all_goals.exists %}
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th style="width:70px;">الدقيقة</th>
+                        <th>مسجل الهدف (Buteur)</th>
+                        <th>الفريق (Équipe)</th>
+                        <th>صانع الهدف (Passeur)</th>
+                        <th>نوع الهدف (Type)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for goal in all_goals %}
+                    <tr>
+                        <td><span class="minute-badge">{{ goal.minute }}'</span></td>
+                        <td><strong>{{ goal.player.full_name }}</strong> (#{{ goal.player.jersey_number }})</td>
+                        <td>{{ goal.team.name }}</td>
+                        <td>{{ goal.assist_player.full_name|default:"—" }}</td>
+                        <td>
+                            {% if goal.goal_type == 'penalty' %}
+                                <span style="color:#facc15;">ركلة جزاء (Penalty)</span>
+                            {% elif goal.goal_type == 'own_goal' %}
+                                <span style="color:#ef4444;">ضد مرماه (CSC)</span>
+                            {% elif goal.goal_type == 'free_kick' %}
+                                <span>مخالفة (Coup franc)</span>
+                            {% elif goal.goal_type == 'header' %}
+                                <span>رأسية (Tête)</span>
+                            {% else %}
+                                <span>عادي (Normal)</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div style="font-size:12px; color:var(--text-muted); font-style:italic; padding:10px 0; margin-bottom:15px; background:#141829; border-radius:10px; text-align:center;">لا توجد أهداف مسجلة في هذه المباراة.</div>
+        {% endif %}
+
+        <!-- 6. DISCIPLINE & CARDS LOG -->
+        {% if all_cards.exists %}
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th style="width:70px;">الدقيقة</th>
+                        <th>اللاعب (Joueur)</th>
+                        <th>الفريق (Équipe)</th>
+                        <th>نوع البطاقة (Carton)</th>
+                        <th>السبب (Raison)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for card in all_cards %}
+                    <tr>
+                        <td><span class="minute-badge">{{ card.minute }}'</span></td>
+                        <td><strong>{{ card.player.full_name }}</strong> (#{{ card.player.jersey_number }})</td>
+                        <td>{{ card.team.name }}</td>
+                        <td>
+                            {% if card.card_type == 'yellow' %}
+                                <span class="card-yellow">🟨 بطاقة صفراء (Jaune)</span>
+                            {% elif card.card_type == 'red' %}
+                                <span class="card-red">🟥 بطاقة حمراء (Rouge)</span>
+                            {% else %}
+                                <span class="card-red">🟨🟥 بطاقتان صَفراوان (2e Jaune)</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ card.reason|default:"—" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div style="font-size:12px; color:var(--text-muted); font-style:italic; padding:10px 0; margin-bottom:15px; background:#141829; border-radius:10px; text-align:center;">لا توجد بطاقات انضباطية في هذه المباراة.</div>
+        {% endif %}
+
+        <!-- 7. REFEREE NOTES & INCIDENTS -->
+        {% if match.is_forfeit %}
+        <div class="incidents-box" style="border: 2px solid #ef4444; background: rgba(239,68,68,0.1); margin-bottom: 20px;">
+            <h4 style="color: #ef4444; font-size: 14px;">⚖️ الإجراء الإداري الانضباطي المعتمد / القرار الرسمي للغياب والاعتذار</h4>
+            <div class="incidents-content" style="color: #ffffff; font-size: 13px;">
+                <div style="font-weight: 900; font-size: 15px; color: #f87171; margin-bottom: 6px;">
+                    📌 {{ match.get_forfeit_type_display }} (النتيجة المعتمدة: {{ match.score_display }})
+                </div>
+                <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; margin-bottom: 8px; border-right: 3px solid #ef4444;">
+                    <strong>📜 السند والنص القانوني:</strong> {{ match.forfeit_legal_text }}
+                </div>
+                {% if match.forfeit_reason %}
+                <div style="margin-bottom: 6px;">
+                    <strong>📝 سبب الاعتذار/الغياب المدوّن:</strong> {{ match.forfeit_reason }}
+                </div>
+                {% endif %}
+                {% if match.official_report_notes %}
+                <div>
+                    <strong>📑 ملاحظات حكم المباراة واللجنة:</strong> {{ match.official_report_notes }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="incidents-box">
+            <h4>📝 ملاحظات حكم المباراة العامة والوقائع / Remarques et Incidents</h4>
+            <div class="incidents-content">
+                {% if match.notes %}
+                    {{ match.notes|linebreaks }}
+                {% elif match.is_forfeit %}
+                    تم تدوين حالة الغياب/الاعتذار وتوثيق القرار الإداري أعلاه وفقاً للائحة المسابقات والانضباط المعمول بها.
+                {% else %}
+                    تمت المباراة في أوقاتها القانونية وفي أجواء رياضية ممتازة بدون تسجيل حوادث تذكر.
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 8. OFFICIAL SIGNATURES -->
+        <div class="signatures-grid">
+            <div class="sig-box">
+                <div class="sig-title">توقيع قائد الفريق (أ)</div>
+                <div class="sig-space">Capitaine (A)</div>
+            </div>
+            <div class="sig-box">
+                <div class="sig-title">توقيع وقرارات الحكم الرئيسي</div>
+                <div class="sig-space">Arbitre Principal</div>
+            </div>
+            <div class="sig-box">
+                <div class="sig-title">توقيع قائد الفريق (ب)</div>
+                <div class="sig-space">Capitaine (B)</div>
+            </div>
+        </div>
+
+        <!-- FOOTER BRANDING -->
+        <div class="report-footer">
+            وثيقة رسمية صادرة عن نظام إدارة الدورات TURNIQ · OFFICIAL MATCH REFEREE REPORT GENERATED BY TURNIQ SYSTEM
+        </div>
+    </div>
+
+    <!-- ─── DUAL ENGINE IMAGE EXPORT SCRIPT ─── -->
+    <script>
+        async function downloadReportAsImage() {
+            const btn = document.getElementById('download-btn');
+            const card = document.getElementById('referee-report-card');
+            
+            if (!card) return;
+            
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<span>⏳</span> جاري تحويل التقرير إلى صورة...`;
+
+            // Wait for fonts readiness
+            if (document.fonts) {
+                try {
+                    await document.fonts.ready;
+                } catch(e) {}
+            }
+
+            const fileName = `rapport_arbitre_match_{{ match.pk }}_{{ match.team1.name|slugify|default:'team1' }}_vs_{{ match.team2.name|slugify|default:'team2' }}.png`;
+
+            function triggerDownload(dataUrl) {
+                const link = document.createElement('a');
+                link.download = fileName;
+                link.href = dataUrl;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+
+            // Engine 1: html2canvas (battle-tested for DOM to image)
+            if (typeof html2canvas !== 'undefined') {
+                try {
+                    const canvas = await html2canvas(card, {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: '#111422',
+                        logging: false,
+                        windowWidth: 1200
+                    });
+                    const dataUrl = canvas.toDataURL('image/png', 1.0);
+                    triggerDownload(dataUrl);
+                    return;
+                } catch (err) {
+                    console.warn('html2canvas failed, trying htmlToImage fallback...', err);
+                }
+            }
+
+            // Engine 2: htmlToImage with CORS stylesheet disabling fallback
+            const disabledSheets = [];
+            for (let i = 0; i < document.styleSheets.length; i++) {
+                try {
+                    const rules = document.styleSheets[i].cssRules;
+                } catch (e) {
+                    document.styleSheets[i].disabled = true;
+                    disabledSheets.push(document.styleSheets[i]);
+                }
+            }
+
+            try {
+                const dataUrl = await htmlToImage.toPng(card, {
+                    pixelRatio: 2.0,
+                    cacheBust: false,
+                    backgroundColor: '#111422',
+                    style: {
+                        transform: 'none',
+                        margin: '0 auto'
+                    }
+                });
+                disabledSheets.forEach(s => s.disabled = false);
+                triggerDownload(dataUrl);
+            } catch (err) {
+                disabledSheets.forEach(s => s.disabled = false);
+                console.error('Error generating image:', err);
+                alert('حدث خطأ أثناء تصدير التقرير كصورة.');
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+    </script>
+</body>
+</html>

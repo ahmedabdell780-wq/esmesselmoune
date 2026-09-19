@@ -1,0 +1,2655 @@
+{% load i18n static turniq_tags %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ tournament.name }} - {% trans "Livre du Tournoi" %}</title>
+    <!-- Open Graph Meta Tags for Facebook sharing -->
+    <meta property="og:title" content="{{ tournament.name }} - Livre du Tournoi">
+    <meta property="og:description" content="Découvrez le livre officiel du tournoi {{ tournament.name }} ({{ tournament.year }}) avec tous les résultats, statistiques et distinctions.">
+    {% if site_settings.app_logo %}
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ site_settings.app_logo.url }}">
+    {% endif %}
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #C5A028;
+            --green-dark: #1a5c2a;
+            --green-mid: #2d7a3e;
+        }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        .font-bebas { font-family: 'Bebas Neue', sans-serif; }
+
+        /* PAGE NUMBERING */
+        body {
+            counter-reset: page-num;
+        }
+        .page-container {
+            counter-increment: page-num;
+        }
+        .page-num::after {
+            content: counter(page-num);
+        }
+
+        /* PRINT SPECIFIC STYLES */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+            body {
+                background: white;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+            .avoid-break {
+                page-break-inside: avoid;
+            }
+            .shadow-lg, .shadow-2xl {
+                box-shadow: none !important;
+            }
+            .page-container {
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                margin: 0 !important;
+            }
+            .cover-page {
+                padding: 0 !important;
+            }
+        }
+
+        /* A4 Page Container for Screen Preview & Book Reader */
+        .page-container {
+            margin: 0 auto;
+            background: white;
+            box-sizing: border-box;
+        }
+        @media screen {
+            body {
+                background-color: #0b1320; /* Deep luxury bookshelf background */
+                padding-top: 85px;
+                padding-bottom: 60px;
+            }
+            .page-container {
+                width: 210mm;
+                height: 297mm;
+                max-height: 297mm;
+                padding: 16mm 18mm;
+                margin: 35px auto;
+                box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
+                border-radius: 4px;
+                overflow: hidden;
+                position: relative;
+            }
+            .cover-page {
+                padding: 0 !important;
+            }
+        }
+        @media print {
+            @page {
+                size: 210mm 297mm;
+                margin: 0;
+            }
+            body {
+                background: white !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .page-container {
+                width: 210mm !important;
+                height: 297mm !important;
+                max-height: 297mm !important;
+                page-break-after: always;
+                page-break-inside: avoid;
+                overflow: hidden !important;
+                margin: 0 !important;
+                padding: 15mm 18mm !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+            }
+            .cover-page {
+                padding: 0 !important;
+            }
+        }
+
+        /* COVER PAGE STYLES */
+        .cover-page {
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .cover-frame {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .cover-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: fill;
+        }
+        .cover-unified {
+            height: 100%;
+            min-height: 297mm;
+            background: #07170f url('{% static "img/cover_sports_bg.jpg" %}?v={% now "U" %}') center center / cover no-repeat;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 45px 40px;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+            color: white;
+        }
+        .cover-unified::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(7,23,15,0.45) 0%, rgba(7,23,15,0.15) 50%, rgba(7,23,15,0.75) 100%);
+            pointer-events: none;
+            z-index: 1;
+        }
+        .cover-unified > * {
+            position: relative;
+            z-index: 2;
+        }
+        .cover-watermark {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.12;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .cover-badge-container {
+            position: relative;
+            z-index: 5;
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .cover-logo {
+            width: 110px;
+            height: 110px;
+            object-fit: contain;
+            border-radius: 50%;
+            border: 3.5px solid #C5A028;
+            padding: 5px;
+            background: rgba(255,255,255,0.08);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            margin-bottom: 12px;
+        }
+        .cover-club-badge {
+            display: inline-block;
+            background: rgba(197,160,40,0.12);
+            border: 1px solid rgba(197,160,40,0.3);
+            border-radius: 20px;
+            padding: 4px 14px;
+            margin-top: 6px;
+        }
+        .cover-photo-wrapper {
+            margin: 15px auto;
+            max-width: 360px;
+            width: 100%;
+        }
+        .cover-photo-frame {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(197,160,40,0.5);
+            border-radius: 18px;
+            padding: 10px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+        .cover-photo-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #e4e7eb 0%, #c8cbd3 100%);
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+        .cover-photo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: center;
+            display: block;
+        }
+        .cover-photo-overlay {
+            display: none;
+        }
+        .cover-ribbon {
+            margin-top: -16px;
+            position: relative;
+            z-index: 6;
+            display: inline-block;
+            background: linear-gradient(135deg, #C5A028 0%, #a4801b 100%);
+            border-radius: 20px;
+            padding: 6px 24px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+            border: 1.5px solid rgba(255,255,255,0.25);
+        }
+        .cover-ribbon p {
+            color: #07170f;
+            font-size: 11px;
+            font-weight: 900;
+            margin: 0;
+            letter-spacing: 1px;
+        }
+        .cover-bottom-details {
+            position: relative;
+            z-index: 5;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .cover-main-title {
+            color: white;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 54px;
+            letter-spacing: 4px;
+            line-height: 0.95;
+            margin: 4px 0 0;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .cover-sub-title {
+            color: #C5A028;
+            font-size: 26px;
+            font-weight: 900;
+            margin: 6px 0 14px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+        .cover-gold-divider {
+            width: 80%;
+            max-width: 440px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #C5A028, #C5A028, transparent);
+            margin: 10px auto;
+        }
+        .cover-tournament-capsule {
+            background: rgba(0,0,0,0.45);
+            border: 1.5px solid rgba(197,160,40,0.25);
+            border-radius: 12px;
+            padding: 12px 24px;
+            width: 88%;
+            max-width: 480px;
+            margin: 10px auto 20px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .cover-meta-grid {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 5px;
+        }
+        .sig-box {
+            border: 1.5px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: #f8fafc;
+        }
+        .sig-line {
+            border-top: 1.5px solid #94a3b8;
+            margin-top: 16px;
+            padding-top: 6px;
+        }
+    </style>
+</head>
+<body class="bg-slate-100">
+
+    <!-- Auto-download Overlay -->
+    <div id="auto-download-overlay" class="fixed inset-0 bg-slate-900/95 z-[9999] flex flex-col items-center justify-center text-white hidden backdrop-blur-md">
+        <div class="bg-slate-800/90 border border-white/10 rounded-3xl p-8 max-w-md w-full mx-4 text-center shadow-2xl flex flex-col items-center gap-6">
+            <!-- Spinner / Animation -->
+            <div class="relative w-20 h-20 flex items-center justify-center">
+                <div class="absolute inset-0 rounded-full border-4 border-[#C5A028]/20 animate-pulse"></div>
+                <div class="absolute inset-0 rounded-full border-4 border-t-[#C5A028] animate-spin"></div>
+                <span class="text-3xl">📖</span>
+            </div>
+            
+            <div class="space-y-2">
+                <h3 class="text-xl font-bold font-bebas tracking-wide text-[#C5A028]">LIVRE DU TOURNOI</h3>
+                <h4 class="text-lg font-black">جاري تحميل كتيب البطولة تلقائياً...</h4>
+                <p class="text-sm text-slate-400">يرجى الانتظار لحين إنتاج ملف PDF عالي الجودة.</p>
+            </div>
+            
+            <div class="w-full bg-slate-700/50 rounded-full h-1.5 overflow-hidden">
+                <div class="bg-gradient-to-r from-[#C5A028] to-emerald-500 h-full w-[0%] transition-all duration-[1500ms] ease-out" id="progress-bar"></div>
+            </div>
+
+            <p class="text-xs text-slate-500 italic mb-2">Téléchargement automatique en cours, veuillez patienter...</p>
+            
+            <!-- Cancel Button -->
+            <button onclick="clearTimeout(downloadTimeout); document.getElementById('auto-download-overlay').classList.add('hidden')" class="text-xs text-slate-400 hover:text-white underline transition-colors cursor-pointer">
+                تصفح الكتيب أونلاين / Consulter en ligne
+            </button>
+        </div>
+    </div>
+
+    <!-- Top Action & Navigation Toolbar -->
+    <div class="fixed top-0 inset-x-0 z-50 no-print bg-slate-900/95 backdrop-blur-md border-b border-slate-800 text-white shadow-2xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+        <!-- Toolbar Title with custom dynamic URL for each tournament -->
+        <div class="toolbar-title flex items-center gap-3">
+            <a href="/tournaments/{{ tournament.pk }}/book/" class="flex items-center gap-2 text-[#C5A028] font-bold hover:text-amber-300 transition-colors text-base">
+                <span class="text-xl">📘</span>
+                <span class="font-black text-amber-400">كتيب البطولة الرسمي:</span>
+                <span class="text-white">{{ tournament.name }}</span>
+            </a>
+            <!-- Quick Index Drawer Dropdown for the 13 categories -->
+            <div class="relative group">
+                <button class="bg-slate-800 hover:bg-slate-700 text-xs text-amber-300 px-3 py-1.5 rounded-lg border border-amber-500/30 flex items-center gap-1.5 transition-all">
+                    <span>📊 المؤشرات الإحصائية (13)</span>
+                    <span class="text-[10px]">▼</span>
+                </button>
+                <div class="absolute right-0 top-full mt-1 w-80 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2 hidden group-hover:block z-50 max-h-[80vh] overflow-y-auto space-y-1 text-xs text-right">
+                    <div class="px-3 py-1.5 font-bold text-amber-400 border-b border-slate-800 text-center">أقسام التقرير الإحصائي (13 مؤشر)</div>
+                    <a href="#cat-1" class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-amber-300 transition-colors"><span>📊</span> 1. نتائج دور المجموعات</a>
+                    <a href="#cat-2" class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-amber-300 transition-colors"><span>🏆</span> 2. أفضل الفرق في دور المجموعات</a>
+                    <a href="#cat-3" class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-amber-300 transition-colors"><span>⚽</span> 3. أقوى خط هجوم</a>
+                    <a href="#cat-4" class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-amber-300 transition-colors"><span>🛡️</span> 4. أقوى خط دفاع</a>
+                    <a href="#cat-5" class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-amber-300 transition-colors"><span>📉</span> 5. أضعف خط دفاع</a>
+                    <a href="#cat-6" class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-amber-300 transition-colors"><span>🟨🟥</span> 6. حصيلة البطاقات</a>
+                    <a href="#cat-7" class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-amber-300 transition-colors"><span>🔥</span> 7. أكثر مباراة شهدت بطاقات</a>
+                    <a href="#cat-8" class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-amber-300 transition-colors"><span>🚨</span> 8. أكثر الفرق حصولًا على البطاقات</a>
+                    <a href="#cat-9" class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-amber-300 transition-colors"><span>📉</span> 9. أضعف حصيلة في دور المجموعات</a>
+                    <a href="#cat-10" class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-amber-300 transition-colors"><span>⭐</span> 10. الأكثر فوزًا بجائزة رجل المباراة</a>
+                    <a href="#cat-11" class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-amber-300 transition-colors"><span>⚽</span> 11. حصيلة الأهداف</a>
+                    <a href="#cat-12" class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-amber-300 transition-colors"><span>✅</span> 12. الفرق التي لم تتذوق طعم الهزيمة</a>
+                    <a href="#cat-13" class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-amber-300 transition-colors"><span>❌</span> 13. الفرق التي لم تحقق أي انتصار</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Print & Export Action Buttons -->
+        <div class="flex items-center gap-2">
+            <button id="download-pdf-btn" onclick="downloadPDF()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg shadow flex items-center gap-1.5 text-xs transition-transform hover:scale-105">
+                📖 تحميل الكتيب PDF
+            </button>
+            <button onclick="window.print()" class="bg-[#C5A028] hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg shadow flex items-center gap-1.5 text-xs transition-transform hover:scale-105">
+                🖨️ طباعة
+            </button>
+            <button onclick="shareOnFacebook()" class="bg-[#1877F2] hover:bg-[#166FE5] text-white font-bold py-2 px-4 rounded-lg shadow flex items-center gap-1.5 text-xs transition-transform hover:scale-105">
+                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                <span>نشر</span>
+            </button>
+            <a href="{% url 'tournaments:admin_panel' %}" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-lg shadow text-xs transition-transform hover:scale-105">
+                العودة
+            </a>
+        </div>
+    </div>
+
+    <div id="book-content">
+
+    <!-- PAGE 1: COVER (Professional Redesign) -->
+    <div class="page-container cover-page" style="padding:0; min-height:297mm; position:relative;">
+
+        <!-- Decorative Frame Overlay (Green/Gold) -->
+        <div class="cover-frame" style="padding: 10px;">
+            <div style="position:absolute; inset:0; border: 6px solid #C5A028; pointer-events:none; z-index:11;"></div>
+            <div style="position:absolute; inset:10px; border: 2px solid #2d7a3e; pointer-events:none; z-index:11;"></div>
+            <!-- Corner decorations -->
+            <div style="position:absolute; top:0; right:0; width:70px; height:70px; background:linear-gradient(225deg,#2d7a3e 50%,transparent 50%); z-index:12;"></div>
+            <div style="position:absolute; top:0; right:0; width:50px; height:50px; background:linear-gradient(225deg,#C5A028 50%,transparent 50%); z-index:13; opacity:0.8;"></div>
+            <div style="position:absolute; bottom:0; left:0; width:70px; height:70px; background:linear-gradient(45deg,#2d7a3e 50%,transparent 50%); z-index:12;"></div>
+            <div style="position:absolute; bottom:0; left:0; width:50px; height:50px; background:linear-gradient(45deg,#C5A028 50%,transparent 50%); z-index:13; opacity:0.8;"></div>
+        </div>
+
+        <!-- Majestic Unified Cover Layout -->
+        <div class="cover-unified">
+            
+            <!-- Header Section (Logo & Club Name) -->
+            <div class="cover-badge-container">
+                {% if site_settings.app_logo %}
+                <div>
+                    <img src="{{ site_settings.app_logo.url }}" alt="Logo" class="cover-logo">
+                </div>
+                {% else %}
+                <div style="width: 110px; height: 110px; border-radius: 50%; background: rgba(197,160,40,0.15); border: 3px solid #C5A028; display: flex; align-items: center; justify-content: center; font-size: 48px; margin-bottom: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
+                    🏆
+                </div>
+                {% endif %}
+                
+                <p style="color: rgba(255,255,255,0.6); font-size: 11px; font-weight: 700; margin-bottom: 2px;">نادي الوفاق الرياضي</p>
+                <h3 style="color: #C5A028; font-size: 32px; font-weight: 900; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">مسلمون</h3>
+                <p style="color: rgba(197,160,40,0.7); font-size: 10px; letter-spacing: 4px; text-transform: uppercase; font-weight: 700; margin-top: 2px;">CLUB SPORTIF EL-WIFAK - MESSLMOUNE</p>
+                
+                <div style="width: 120px; height: 2px; background: linear-gradient(90deg, transparent, #C5A028, transparent); margin-top: 15px;"></div>
+            </div>
+
+            <!-- Middle Section (Framed Committee Photo) -->
+            <div class="cover-photo-wrapper">
+                <div class="cover-photo-frame">
+                    <div class="cover-photo-container">
+                        <img src="{% static 'img/cover_committee.jpg' %}?v={% now 'U' %}" alt="Logo Official">
+                        <div class="cover-photo-overlay"></div>
+                    </div>
+                </div>
+                <!-- Ribbon Tag Below the Image -->
+                <div class="cover-ribbon">
+                    <p>اللجنة المنظمة للدورة / Comité d'Organisation</p>
+                </div>
+            </div>
+
+            <!-- Bottom Section (Book Title & Details) -->
+            <div class="cover-bottom-details">
+                <p style="color: rgba(255,255,255,0.5); font-size: 11px; font-weight: 700; margin-bottom: 8px;">RAPPORT OFFICIEL / الكتاب الرسمي</p>
+                <h1 class="cover-main-title">LIVRE DU TOURNOI</h1>
+                <h2 class="cover-sub-title">كتاب الدورة الرياضية</h2>
+
+                <div class="cover-gold-divider"></div>
+
+                <!-- Tournament Name Capsule -->
+                <div class="cover-tournament-capsule">
+                    <p style="color: rgba(255,255,255,0.9); font-size: 15px; font-weight: 700; line-height: 1.4; margin: 0;">{{ tournament.name }}</p>
+                </div>
+
+                <!-- Footer details (Edition, Year, Brand) -->
+                <div class="cover-meta-grid">
+                    <div style="text-align: center;">
+                        <p style="color: rgba(255,255,255,0.4); font-size: 9px; text-transform: uppercase; margin: 0;">Edition</p>
+                        <p style="color: #C5A028; font-size: 14px; font-weight: 700; margin: 0;">الطبعة {{ tournament.edition }}</p>
+                    </div>
+                    <div style="width: 1px; height: 25px; background: rgba(255,255,255,0.15);"></div>
+                    <div style="text-align: center;">
+                        <p style="color: rgba(255,255,255,0.4); font-size: 9px; margin: 0;"><span style="text-transform: uppercase; letter-spacing: 1px;">Saison</span> / <span>الموسم</span></p>
+                        <p style="color: white; font-size: 14px; font-weight: 700; margin: 0;">{{ tournament.year }}</p>
+                    </div>
+                    <div style="width: 1px; height: 25px; background: rgba(255,255,255,0.15);"></div>
+                    <div style="text-align: right;">
+                        <p style="color: rgba(255,255,255,0.35); font-size: 8px; letter-spacing: 2px; text-transform: uppercase; margin: 0;">Powered by</p>
+                        <p style="color: #C5A028; font-size: 10px; font-weight: 700; letter-spacing: 1px; margin: 0;">TURN-ESM · MESSLMOUN</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- PAGE 2: TABLE OF CONTENTS (فهرس المحتويات الرسمي) -->
+    <div class="page-container page-break flex flex-col justify-between">
+        <div>
+            <div class="border-b-4 border-[#C5A028] pb-4 mb-6 flex justify-between items-center">
+                <div>
+                    <h2 class="text-3xl font-black text-slate-900">فهرس المحتويات</h2>
+                    <p class="text-slate-500 font-bold tracking-widest uppercase">Table des Matières / Table of Contents</p>
+                </div>
+                <div class="bg-[#C5A028]/10 text-[#C5A028] border border-[#C5A028]/30 text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2">
+                    <span>📘 الكتاب الرسمي</span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#C5A028]"></span>
+                    <span>16 فصلاً</span>
+                </div>
+            </div>
+
+            <!-- Table of Contents Grid -->
+            <div class="grid grid-cols-2 gap-3.5">
+                <!-- Chapter 1 -->
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-[#C5A028]/15 text-[#C5A028] font-black text-sm flex items-center justify-center border border-[#C5A028]/30">01</div>
+                        <div>
+                            <div class="font-bold text-slate-900 text-xs">غلاف البطولة الرسمي</div>
+                            <div class="text-[9px] text-slate-400 font-semibold">Couverture Officielle du Tournoi</div>
+                        </div>
+                    </div>
+                    <span class="font-mono font-black text-slate-700 text-xs bg-white px-2 py-0.5 rounded border border-slate-200">ص 1</span>
+                </div>
+
+                <!-- Chapter 2 -->
+                <div class="bg-amber-500/10 rounded-xl p-3 border border-amber-400/40 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-[#C5A028] text-white font-black text-sm flex items-center justify-center shadow">02</div>
+                        <div>
+                            <div class="font-bold text-slate-950 text-xs">فهرس المحتويات</div>
+                            <div class="text-[9px] text-amber-700 font-semibold">Table des Matières / Contents</div>
+                        </div>
+                    </div>
+                    <span class="font-mono font-black text-amber-800 text-xs bg-white px-2 py-0.5 rounded border border-amber-300">ص 2</span>
+                </div>
+
+                <!-- Chapter 3 -->
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 font-black text-sm flex items-center justify-center">03</div>
+                        <div>
+                            <div class="font-bold text-slate-900 text-xs">مقدمة وكلمة الختام</div>
+                            <div class="text-[9px] text-slate-400 font-semibold">Introduction & Conclusion</div>
+                        </div>
+                    </div>
+                    <span class="font-mono font-black text-slate-700 text-xs bg-white px-2 py-0.5 rounded border border-slate-200">ص 3</span>
+                </div>
+
+                <!-- Chapter 4 -->
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 font-black text-sm flex items-center justify-center">04</div>
+                        <div>
+                            <div class="font-bold text-slate-900 text-xs">رتب مرحلة المجموعات</div>
+                            <div class="text-[9px] text-slate-400 font-semibold">Phase de Groupes (Classement)</div>
+                        </div>
+                    </div>
+                    <span class="font-mono font-black text-slate-700 text-xs bg-white px-2 py-0.5 rounded border border-slate-200">ص 4</span>
+                </div>
+
+                <!-- Chapter 5 -->
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 font-black text-sm flex items-center justify-center">05</div>
+                        <div>
+                            <div class="font-bold text-slate-900 text-xs">الأدوار الإقصائية والنتائج</div>
+                            <div class="text-[9px] text-slate-400 font-semibold">Phase Finale & Matchs</div>
+                        </div>
+                    </div>
+                    <span class="font-mono font-black text-slate-700 text-xs bg-white px-2 py-0.5 rounded border border-slate-200">ص 5</span>
+                </div>
+
+                <!-- Chapter 6 -->
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 font-black text-sm flex items-center justify-center">06</div>
+                        <div>
+                            <div class="font-bold text-slate-900 text-xs">المخطط التفاعلي للأدوار</div>
+                            <div class="text-[9px] text-slate-400 font-semibold">Tableau Phase Finale (Bracket)</div>
+                        </div>
+                    </div>
+                    <span class="font-mono font-black text-slate-700 text-xs bg-white px-2 py-0.5 rounded border border-slate-200">ص 6</span>
+                </div>
+
+                <!-- Chapter 7 -->
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 font-black text-sm flex items-center justify-center">07</div>
+                        <div>
+                            <div class="font-bold text-slate-900 text-xs">إحصائيات الفرق الإجمالية</div>
+                            <div class="text-[9px] text-slate-400 font-semibold">Statistiques Générales</div>
+                        </div>
+                    </div>
+                    <span class="font-mono font-black text-slate-700 text-xs bg-white px-2 py-0.5 rounded border border-slate-200">ص 7</span>
+                </div>
+
+                <!-- Chapter 8 -->
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 font-black text-sm flex items-center justify-center">08</div>
+                        <div>
+                            <div class="font-bold text-slate-900 text-xs">التقرير الإحصائي (13 فئة)</div>
+                            <div class="text-[9px] text-slate-400 font-semibold">Rapport Détaillé 13 Catégories</div>
+                        </div>
+                    </div>
+                    <span class="font-mono font-black text-slate-700 text-xs bg-white px-2 py-0.5 rounded border border-slate-200">ص 8</span>
+                </div>
+
+                <!-- Chapter 9 -->
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 font-black text-sm flex items-center justify-center">09</div>
+                        <div>
+                            <div class="font-bold text-slate-900 text-xs">الهدافون والأرقام القياسية</div>
+                            <div class="text-[9px] text-slate-400 font-semibold">Meilleurs Buteurs & Records</div>
+                        </div>
+                    </div>
+                    <span class="font-mono font-black text-slate-700 text-xs bg-white px-2 py-0.5 rounded border border-slate-200">ص 9</span>
+                </div>
+
+                <!-- Chapter 10 -->
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 font-black text-sm flex items-center justify-center">10</div>
+                        <div>
+                            <div class="font-bold text-slate-900 text-xs">الجوائز والتتويجات الرسمية</div>
+                            <div class="text-[9px] text-slate-400 font-semibold">Palmarès & Distinctions</div>
+                        </div>
+                    </div>
+                    <span class="font-mono font-black text-slate-700 text-xs bg-white px-2 py-0.5 rounded border border-slate-200">ص 10</span>
+                </div>
+
+                <!-- Chapter 11 -->
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 font-black text-sm flex items-center justify-center">11</div>
+                        <div>
+                            <div class="font-bold text-slate-900 text-xs">طاقم تحكيم البطولة</div>
+                            <div class="text-[9px] text-slate-400 font-semibold">Corps Arbitral / Referees</div>
+                        </div>
+                    </div>
+                    <span class="font-mono font-black text-slate-700 text-xs bg-white px-2 py-0.5 rounded border border-slate-200">ص 11</span>
+                </div>
+
+                <!-- Chapter 12 -->
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 font-black text-sm flex items-center justify-center">12</div>
+                        <div>
+                            <div class="font-bold text-slate-900 text-xs">سجل الأهداف الكامل</div>
+                            <div class="text-[9px] text-slate-400 font-semibold">Registre des Buts (Timeline)</div>
+                        </div>
+                    </div>
+                    <span class="font-mono font-black text-slate-700 text-xs bg-white px-2 py-0.5 rounded border border-slate-200">ص 12+</span>
+                </div>
+
+                <!-- Chapter 13 -->
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 font-black text-sm flex items-center justify-center">13</div>
+                        <div>
+                            <div class="font-bold text-slate-900 text-xs">التشكيلة المثالية للبطولة</div>
+                            <div class="text-[9px] text-slate-400 font-semibold">Équipe Type du Tournoi (Best XI)</div>
+                        </div>
+                    </div>
+                    <span class="font-mono font-black text-slate-700 text-xs bg-white px-2 py-0.5 rounded border border-slate-200">ص 13+</span>
+                </div>
+
+                <!-- Chapter 14 -->
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 font-black text-sm flex items-center justify-center">14</div>
+                        <div>
+                            <div class="font-bold text-slate-900 text-xs">ترتيب اللعب النظيف</div>
+                            <div class="text-[9px] text-slate-400 font-semibold">Classement Fair-Play & Discipline</div>
+                        </div>
+                    </div>
+                    <span class="font-mono font-black text-slate-700 text-xs bg-white px-2 py-0.5 rounded border border-slate-200">ص 14+</span>
+                </div>
+
+                <!-- Chapter 15 -->
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 font-black text-sm flex items-center justify-center">15</div>
+                        <div>
+                            <div class="font-bold text-slate-900 text-xs">لوحة الشرف التاريخية</div>
+                            <div class="text-[9px] text-slate-400 font-semibold">Palmarès Historique des Éditions</div>
+                        </div>
+                    </div>
+                    <span class="font-mono font-black text-slate-700 text-xs bg-white px-2 py-0.5 rounded border border-slate-200">ص 15+</span>
+                </div>
+
+                <!-- Chapter 16 -->
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 font-black text-sm flex items-center justify-center">16</div>
+                        <div>
+                            <div class="font-bold text-slate-900 text-xs">الإمضاءات الرسمية وختم اللجنة</div>
+                            <div class="text-[9px] text-slate-400 font-semibold">Signatures Officielles & Cachet</div>
+                        </div>
+                    </div>
+                    <span class="font-mono font-black text-slate-700 text-xs bg-white px-2 py-0.5 rounded border border-slate-200">الختام</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-6 pt-3 border-t border-slate-200 flex justify-between items-center text-xs text-slate-400 font-bold">
+            <span>{{ site_settings.app_name|upper }} · {{ tournament.year }}</span><span class="page-num"></span>
+            <span>فهرس المحتويات / Table des Matières</span>
+        </div>
+    </div>
+
+    <!-- PAGE 3: INTRODUCTION & CONCLUSION -->
+    <div class="page-container page-break flex flex-col justify-between">
+        <div>
+            <div class="border-b-4 border-[#C5A028] pb-4 mb-8 flex justify-between items-center">
+                <div>
+                    <h2 class="text-3xl font-black text-slate-900">مقدمة وكلمة الختام</h2>
+                    <p class="text-slate-500 font-bold tracking-widest uppercase">Introduction & Conclusion</p>
+                </div>
+                {% if site_settings.app_logo %}
+                    <img src="{{ site_settings.app_logo.url }}" class="h-14 w-auto object-contain" onload="removeWhiteBackground(this)">
+                {% endif %}
+            </div>
+
+            <div class="space-y-8 text-justify">
+                <!-- Introduction Section -->
+                <div class="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                    <h3 class="text-xl font-bold text-[#C5A028] mb-3 flex items-center gap-2">
+                        ⚽ كلمة الافتتاح والمقدمة
+                    </h3>
+                    <p class="text-slate-700 leading-relaxed text-sm">
+                        بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ. نرحب بجميع الفرق واللاعبين والجماهير في هذه النسخة المميزة من بطولة <strong>{{ tournament.name }}</strong> لعام {{ tournament.year }}. إن هذا الكتيب يمثل السجل الرسمي والوثائقي لكافة أحداث وإحصائيات ونتائج البطولة. تهدف هذه الدورة إلى تعزيز الروح الرياضية، والتقارب الأخوي بين شباب ورياضيي المنطقة، وترسيخ قيم اللعب النظيف والتنافس الشريف.
+                    </p>
+                    <div class="w-12 h-0.5 bg-slate-200 my-4"></div>
+                    <p class="text-slate-500 italic text-xs leading-relaxed">
+                        Au nom d'Allah, le Tout Miséricordieux, le Très Miséricordieux. Nous souhaitons la bienvenue à toutes les équipes, joueurs et supporters pour cette édition exceptionnelle du tournoi <strong>{{ tournament.name }}</strong> {{ tournament.year }}. Ce document constitue le rapport officiel et le recueil exclusif des statistiques de cette édition, promouvant le fair-play et la fraternité.
+                    </p>
+                </div>
+
+                <!-- Conclusion Section -->
+                <div class="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                    <h3 class="text-xl font-bold text-[#C5A028] mb-3 flex items-center gap-2">
+                        🏆 كلمة الختام والتقدير
+                    </h3>
+                    <p class="text-slate-700 leading-relaxed text-sm">
+                        وفي ختام هذه الدورة الرياضية الرائعة، نتقدم بخالص الشكر والتقدير لكل من ساهم في إنجاح هذا المحفل الرياضي: من لجان تنظيمية، طواقم تحكيمية، فرق مشاركة، والجمهور الكريم الذي كان اللاعب رقم واحد في بث الحماس والمثالية. نهنئ الفريق المتوج باللقب، ونتمنى حظاً أوفر لجميع الفرق في الدورات القادمة. دمتم أوفياء للرياضة والقيم النبيلة.
+                    </p>
+                    <div class="w-12 h-0.5 bg-slate-200 my-4"></div>
+                    <p class="text-slate-500 italic text-xs leading-relaxed">
+                        En conclusion de ce tournoi, nous adressons nos sincères remerciements au comité d'organisation, aux arbitres, aux équipes et au formidable public qui a animé cette compétition. Félicitations aux champions et bonne chance à tous pour les prochaines éditions. Vive le sport et les valeurs de fair-play.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer signature -->
+        <div class="mt-8 pt-4 border-t border-slate-200 flex justify-between items-center text-xs text-slate-400 font-bold">
+            <span>{{ site_settings.app_name|upper }} · {{ tournament.year }}</span><span class="page-num"></span>
+            <span>اللجنة المنظمة للدورة / Comité d'Organisation</span>
+        </div>
+    </div>
+
+    <!-- PAGE 4: STANDINGS (Paginated 2 Groups Per A4 Page) -->
+    {% if groups_pages %}
+    {% for group_chunk in groups_pages %}
+    <div class="page-container page-break flex flex-col justify-between">
+        <div>
+            <div class="border-b-4 border-[#C5A028] pb-3 mb-5 flex items-center justify-between">
+                <div>
+                    <h2 class="text-3xl font-black text-slate-900">مرحلة المجموعات</h2>
+                    <p class="text-slate-500 font-bold tracking-widest uppercase">Phase de Groupes - Classement Officiel</p>
+                </div>
+                <div class="bg-amber-500/10 text-[#C5A028] border border-[#C5A028]/30 text-xs font-bold px-3 py-1.5 rounded-xl">
+                    صفحة {{ forloop.counter }} من {{ groups_pages|length }}
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-5 w-full">
+                {% for group in group_chunk %}
+                <div class="avoid-break bg-slate-50 rounded-2xl p-4 border border-slate-200 shadow-sm w-full">
+                    <div class="flex items-center justify-between border-b-2 border-[#C5A028]/40 pb-2 mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-lg bg-[#C5A028] text-white flex items-center justify-center font-black text-sm shadow">
+                                {{ group.name|slice:"-1:" }}
+                            </span>
+                            <h3 class="text-lg font-black text-slate-900">{{ group.name }}</h3>
+                        </div>
+                        <span class="text-xs text-slate-500 font-bold bg-white border border-slate-200 px-3 py-0.5 rounded-full">
+                            عدد الفرق: {{ group.teams.count }}
+                        </span>
+                    </div>
+
+                    <table class="w-full text-xs text-right">
+                        <thead>
+                            <tr class="text-slate-600 bg-slate-200/60 border-b border-slate-300 font-bold">
+                                <th class="py-2 px-3 text-right rounded-r-lg w-[28%]">الفريق</th>
+                                <th class="py-2 px-1 text-center w-[6%]">لعب</th>
+                                <th class="py-2 px-1 text-center text-emerald-700 w-[6%]">فوز</th>
+                                <th class="py-2 px-1 text-center text-slate-600 w-[6%]">تعادل</th>
+                                <th class="py-2 px-1 text-center text-rose-600 w-[6%]">خسارة</th>
+                                <th class="py-2 px-2 text-center font-mono w-[12%]">له / عليه</th>
+                                <th class="py-2 px-2 text-center w-[8%]">+/-</th>
+                                <th class="py-2 px-2 text-center font-black text-[#C5A028] w-[10%]">النقاط</th>
+                                <th class="py-2 px-1 text-center w-[6%]">ش.ن</th>
+                                <th class="py-2 px-2 text-center rounded-l-lg w-[12%]">آخر 5</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            {% for standing in group.sorted_standings %}
+                            <tr class="{% if forloop.counter <= tournament.teams_advancing_per_group %}bg-emerald-50/70 font-semibold{% else %}hover:bg-white{% endif %} transition-colors">
+                                <td class="py-2 px-3 font-bold text-slate-900 w-[28%]">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-4 h-4 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-[9px] font-bold flex-shrink-0">
+                                            {{ forloop.counter }}
+                                        </span>
+                                        {% if standing.team.logo %}
+                                        <img src="{{ standing.team.logo.url }}" class="w-4 h-4 rounded-full object-cover border border-slate-300 flex-shrink-0">
+                                        {% endif %}
+                                        <span class="whitespace-nowrap text-xs">{{ standing.team.name }}</span>
+                                        {% if forloop.counter <= tournament.teams_advancing_per_group %}
+                                        <span class="text-[8px] bg-emerald-600 text-white font-bold px-1 py-0.2 rounded-full flex-shrink-0">تأهل</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="py-2 px-1 text-center text-slate-700 font-bold w-[6%]">{{ standing.played }}</td>
+                                <td class="py-2 px-1 text-center text-emerald-700 font-bold w-[6%]">{{ standing.won }}</td>
+                                <td class="py-2 px-1 text-center text-slate-500 w-[6%]">{{ standing.drawn }}</td>
+                                <td class="py-2 px-1 text-center text-rose-600 w-[6%]">{{ standing.lost }}</td>
+                                <td class="py-2 px-2 text-center text-slate-700 font-mono text-xs w-[12%]" dir="ltr"><span class="text-emerald-700 font-bold">{{ standing.goals_for }}</span> : <span class="text-rose-600 font-bold">{{ standing.goals_against }}</span></td>
+                                <td class="py-2 px-2 text-center font-bold w-[8%] {% if standing.goal_difference > 0 %}text-emerald-600{% elif standing.goal_difference < 0 %}text-rose-600{% else %}text-slate-500{% endif %}">
+                                    {% if standing.goal_difference > 0 %}+{% endif %}{{ standing.goal_difference }}
+                                </td>
+                                <td class="py-2 px-2 text-center font-black text-[#C5A028] text-xs w-[10%] bg-amber-500/10 rounded-lg">
+                                    {{ standing.points }}
+                                </td>
+                                <td class="py-2 px-1 text-center text-slate-600 font-mono text-xs w-[6%]">{{ standing|get_team_clean_sheets }}</td>
+                                <td class="py-2 px-2 text-center w-[12%]">
+                                    <div class="flex justify-center gap-1">
+                                        {% for f in standing|get_team_form %}
+                                            {% if f == 'W' %}
+                                                <span class="w-3.5 h-3.5 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-[7px] shadow-sm" title="فوز">W</span>
+                                            {% elif f == 'D' %}
+                                                <span class="w-3.5 h-3.5 rounded-full bg-slate-400 text-white flex items-center justify-center font-bold text-[7px] shadow-sm" title="تعادل">D</span>
+                                            {% else %}
+                                                <span class="w-3.5 h-3.5 rounded-full bg-rose-500 text-white flex items-center justify-center font-bold text-[7px] shadow-sm" title="خسارة">L</span>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="mt-6 pt-3 border-t border-slate-200 flex justify-between items-center text-xs text-slate-400 font-bold">
+            <span>{{ site_settings.app_name|upper }} · {{ tournament.year }}</span><span class="page-num"></span>
+            <span>ترتيب المجموعات / Classement des Groupes ({{ forloop.counter }}/{{ groups_pages|length }})</span>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- PAGE 5: KNOCKOUT MATCHES (Paginated 4 Matches Per A4 Page) -->
+    {% if knockout_pages %}
+    {% for ko_chunk in knockout_pages %}
+    <div class="page-container page-break flex flex-col justify-between">
+        <div>
+            <div class="border-b-4 border-[#C5A028] pb-3 mb-5 flex items-center justify-between">
+                <div>
+                    <h2 class="text-3xl font-black text-slate-900">الأدوار الإقصائية</h2>
+                    <p class="text-slate-500 font-bold tracking-widest uppercase">Phase Finale - Matchs Officiels</p>
+                </div>
+                <div class="bg-amber-500/10 text-[#C5A028] border border-[#C5A028]/30 text-xs font-bold px-3 py-1.5 rounded-xl">
+                    صفحة {{ forloop.counter }} من {{ knockout_pages|length }}
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                {% regroup ko_chunk by get_stage_display as stage_list %}
+                {% for stage in stage_list %}
+                <div class="avoid-break border border-slate-300 rounded-2xl overflow-hidden shadow-sm">
+                    <h3 class="text-base font-bold bg-slate-900 text-amber-400 px-4 py-2 flex justify-between items-center">
+                        <span>{{ stage.grouper }}</span>
+                        <span class="text-xs text-slate-400 font-normal">{{ stage.list|length }} مباراة</span>
+                    </h3>
+                    <div class="p-3 bg-white space-y-2.5">
+                        {% for match in stage.list %}
+                            <div class="py-2.5 border-b border-slate-100 last:border-0">
+                                <div class="flex justify-between items-center">
+                                    <!-- Team 1 -->
+                                    <div class="w-[40%] text-left font-bold text-sm flex items-center gap-2 {% if match.winner == match.team1 %}text-[#C5A028]{% else %}text-slate-700{% endif %}">
+                                        {% if match.team1.logo %}
+                                        <img src="{{ match.team1.logo.url }}" class="w-5 h-5 rounded-full object-cover">
+                                        {% endif %}
+                                        <span class="whitespace-nowrap">{{ match.team1.name }}</span>
+                                    </div>
+
+                                    <!-- Score -->
+                                    <div class="w-[20%] text-center">
+                                        <div class="bg-slate-50 px-2.5 py-1 rounded-lg font-bebas text-base tracking-widest text-slate-900 border border-slate-200">
+                                            {% if match.is_finished %}
+                                                {{ match.score_team1 }} - {{ match.score_team2 }}
+                                                {% if match.has_penalties %}
+                                                    <div class="text-[8px] text-slate-500 font-sans tracking-normal mt-0.5">({{ match.penalties_team1 }} - {{ match.penalties_team2 }} ر.ت)</div>
+                                                {% endif %}
+                                            {% else %}
+                                                - : -
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <!-- Team 2 -->
+                                    <div class="w-[40%] text-right font-bold text-sm flex flex-row-reverse items-center gap-2 {% if match.winner == match.team2 %}text-[#C5A028]{% else %}text-slate-700{% endif %}">
+                                        {% if match.team2.logo %}
+                                        <img src="{{ match.team2.logo.url }}" class="w-5 h-5 rounded-full object-cover">
+                                        {% endif %}
+                                        <span class="whitespace-nowrap">{{ match.team2.name }}</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Match Events Timeline -->
+                                {% if match.goals.all or match.cards.all %}
+                                <div class="w-full flex justify-between text-[10px] text-slate-500 mt-2 px-2 border-t border-slate-50 pt-1.5 pb-0.5">
+                                    <!-- Team 1 (Home) Events -->
+                                    <div class="w-[45%] text-left space-y-0.5">
+                                        {% for goal in match.goals.all %}
+                                            {% if goal.team == match.team1 %}
+                                                <div class="flex items-center gap-1 justify-start">
+                                                    <span>⚽</span>
+                                                    <span class="font-semibold text-slate-700">{{ goal.player.last_name }}</span>
+                                                    <span class="text-slate-400">({{ goal.minute }}'</span>
+                                                    {% if goal.goal_type == 'penalty' %}<span class="text-[8px] text-red-500 font-bold">(ض.ج)</span>{% endif %}
+                                                    {% if goal.assist_player %}<span class="text-[8px] text-slate-400">/ أ. {{ goal.assist_player.last_name }}</span>{% endif %}
+                                                    <span class="text-slate-400">)</span>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% for card in match.cards.all %}
+                                            {% if card.team == match.team1 %}
+                                                <div class="flex items-center gap-1 justify-start">
+                                                    <span>{% if card.card_type == 'yellow' %}🟨{% else %}🟥{% endif %}</span>
+                                                    <span class="text-slate-600">{{ card.player.last_name }}</span>
+                                                    <span class="text-slate-400">({{ card.minute }}')</span>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    
+                                    <!-- Divider -->
+                                    <div class="w-[5%] flex justify-center items-center">
+                                        <div class="h-full w-px bg-slate-200 border-dashed"></div>
+                                    </div>
+                                    
+                                    <!-- Team 2 (Away) Events -->
+                                    <div class="w-[45%] text-right space-y-0.5">
+                                        {% for goal in match.goals.all %}
+                                            {% if goal.team == match.team2 %}
+                                                <div class="flex items-center gap-1 justify-end">
+                                                    <span class="text-slate-400">(</span>
+                                                    {% if goal.assist_player %}<span class="text-[8px] text-slate-400">أ. {{ goal.assist_player.last_name }} /</span>{% endif %}
+                                                    {% if goal.goal_type == 'penalty' %}<span class="text-[8px] text-red-500 font-bold">(ض.ج)</span>{% endif %}
+                                                    <span class="text-slate-400">{{ goal.minute }}'</span>
+                                                    <span class="font-semibold text-slate-700">{{ goal.player.last_name }}</span>
+                                                    <span>⚽</span>
+                                                    <span class="text-slate-400">)</span>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% for card in match.cards.all %}
+                                            {% if card.team == match.team2 %}
+                                                <div class="flex items-center gap-1 justify-end">
+                                                    <span class="text-slate-400">({{ card.minute }}')</span>
+                                                    <span class="text-slate-600">{{ card.player.last_name }}</span>
+                                                    <span>{% if card.card_type == 'yellow' %}🟨{% else %}🟥{% endif %}</span>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="mt-6 pt-3 border-t border-slate-200 flex justify-between items-center text-xs text-slate-400 font-bold">
+            <span>{{ site_settings.app_name|upper }} · {{ tournament.year }}</span><span class="page-num"></span>
+            <span>الأدوار الإقصائية / Phase Finale ({{ forloop.counter }}/{{ knockout_pages|length }})</span>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- PAGE 4B: VISUAL KNOCKOUT BRACKET -->
+{% if bracket_sf or bracket_qf %}
+<div class="page-container page-break flex flex-col justify-between">
+    <div>
+        <div class="border-b-4 border-[#C5A028] pb-4 mb-8">
+            <h2 class="text-3xl font-black text-slate-900">مخطط الأدوار الإقصائية</h2>
+            <p class="text-slate-500 font-bold tracking-widest uppercase">Tableau Phase Finale / Bracket</p>
+        </div>
+
+        <div class="flex justify-between items-center h-[520px] px-4 relative">
+            {% if bracket_qf %}
+                <!-- Quarter-finals Column -->
+                <div class="flex flex-col justify-around h-full w-[28%] z-10">
+                    <div class="text-center font-bold text-xs text-slate-400 uppercase tracking-widest mb-1 border-b pb-1 border-slate-200">Quarts</div>
+                    {% for m in bracket_qf %}
+                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 shadow-sm text-xs space-y-1.5 hover:border-[#C5A028] transition-colors relative">
+                            <!-- Team 1 -->
+                            <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team1 %}text-[#C5A028]{% else %}text-slate-600{% endif %}">
+                                <span class="flex items-center gap-1">
+                                    {% if m.team1.logo %}<img src="{{ m.team1.logo.url }}" class="w-4 h-4 rounded-full object-cover">{% endif %}
+                                    {{ m.team1.name }}
+                                </span>
+                                <span class="font-bebas text-sm">{% if m.is_finished %}{{ m.score_team1 }}{% else %}-{% endif %}</span>
+                            </div>
+                            <!-- Team 2 -->
+                            <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team2 %}text-[#C5A028]{% else %}text-slate-600{% endif %}">
+                                <span class="flex items-center gap-1">
+                                    {% if m.team2.logo %}<img src="{{ m.team2.logo.url }}" class="w-4 h-4 rounded-full object-cover">{% endif %}
+                                    {{ m.team2.name }}
+                                </span>
+                                <span class="font-bebas text-sm">{% if m.is_finished %}{{ m.score_team2 }}{% else %}-{% endif %}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Semi-finals Column -->
+            <div class="flex flex-col justify-around h-full {% if bracket_qf %}w-[28%]{% else %}w-[42%]{% endif %} z-10">
+                <div class="text-center font-bold text-xs text-slate-400 uppercase tracking-widest mb-1 border-b pb-1 border-slate-200">Demi-finales</div>
+                {% for m in bracket_sf %}
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 shadow-sm text-xs space-y-2 hover:border-[#C5A028] transition-colors relative">
+                        <!-- Team 1 -->
+                        <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team1 %}text-[#C5A028]{% else %}text-slate-700{% endif %}">
+                            <span class="flex items-center gap-1.5">
+                                {% if m.team1.logo %}<img src="{{ m.team1.logo.url }}" class="w-5 h-5 rounded-full object-cover">{% endif %}
+                                {{ m.team1.name }}
+                            </span>
+                            <span class="font-bebas text-sm">{% if m.is_finished %}{{ m.score_team1 }}{% if m.has_penalties %} <span class="text-[9px] text-slate-400 font-sans">({{ m.penalties_team1 }})</span>{% endif %}{% else %}-{% endif %}</span>
+                        </div>
+                        <!-- Team 2 -->
+                        <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team2 %}text-[#C5A028]{% else %}text-slate-700{% endif %}">
+                            <span class="flex items-center gap-1.5">
+                                {% if m.team2.logo %}<img src="{{ m.team2.logo.url }}" class="w-5 h-5 rounded-full object-cover">{% endif %}
+                                {{ m.team2.name }}
+                            </span>
+                            <span class="font-bebas text-sm">{% if m.is_finished %}{{ m.score_team2 }}{% if m.has_penalties %} <span class="text-[9px] text-slate-400 font-sans">({{ m.penalties_team2 }})</span>{% endif %}{% else %}-{% endif %}</span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Final & Third Place Column -->
+            <div class="flex flex-col justify-center h-full {% if bracket_qf %}w-[32%]{% else %}w-[48%]{% endif %} z-10 space-y-12">
+                <!-- Final -->
+                <div>
+                    <div class="text-center font-bold text-xs text-[#C5A028] uppercase tracking-widest mb-2 border-b pb-1 border-slate-200">🏆 Finale</div>
+                    {% if bracket_final %}
+                        {% with m=bracket_final %}
+                        <div class="bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-[#C5A028] rounded-2xl p-4 shadow-md text-sm space-y-2.5 relative">
+                            {% if m.is_finished %}
+                                <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#C5A028] text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow">Champion / البطل</div>
+                            {% endif %}
+                            
+                            <!-- Team 1 -->
+                            <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team1 %}text-[#C5A028]{% else %}text-slate-800{% endif %}">
+                                <span class="flex items-center gap-2">
+                                    {% if m.team1.logo %}<img src="{{ m.team1.logo.url }}" class="w-6 h-6 rounded-full object-cover">{% endif %}
+                                    {{ m.team1.name }}
+                                </span>
+                                <span class="font-bebas text-base">{% if m.is_finished %}{{ m.score_team1 }}{% if m.has_penalties %} <span class="text-[10px] text-slate-500 font-sans">({{ m.penalties_team1 }})</span>{% endif %}{% else %}-{% endif %}</span>
+                            </div>
+                            <!-- Team 2 -->
+                            <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team2 %}text-[#C5A028]{% else %}text-slate-800{% endif %}">
+                                <span class="flex items-center gap-2">
+                                    {% if m.team2.logo %}<img src="{{ m.team2.logo.url }}" class="w-6 h-6 rounded-full object-cover">{% endif %}
+                                    {{ m.team2.name }}
+                                </span>
+                                <span class="font-bebas text-base">{% if m.is_finished %}{{ m.score_team2 }}{% if m.has_penalties %} <span class="text-[10px] text-slate-500 font-sans">({{ m.penalties_team2 }})</span>{% endif %}{% else %}-{% endif %}</span>
+                            </div>
+                        </div>
+                        {% endwith %}
+                    {% else %}
+                        <div class="text-slate-400 text-center py-6 border-2 border-dashed border-slate-300 rounded-2xl bg-slate-50/50">En attente</div>
+                    {% endif %}
+                </div>
+
+                <!-- Third Place Match -->
+                {% if bracket_third %}
+                    {% with m=bracket_third %}
+                    <div>
+                        <div class="text-center font-bold text-[10px] text-slate-400 uppercase tracking-widest mb-1 pb-1 border-b border-slate-100">🥉 3ème Place / المركز الثالث</div>
+                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 shadow-sm text-xs space-y-1.5">
+                            <!-- Team 1 -->
+                            <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team1 %}text-[#C5A028]{% else %}text-slate-600{% endif %}">
+                                <span class="flex items-center gap-1.5">
+                                    {% if m.team1.logo %}<img src="{{ m.team1.logo.url }}" class="w-4 h-4 rounded-full object-cover">{% endif %}
+                                    {{ m.team1.name }}
+                                </span>
+                                <span class="font-bebas text-xs">{% if m.is_finished %}{{ m.score_team1 }}{% if m.has_penalties %} <span class="text-[8px] text-slate-400 font-sans">({{ m.penalties_team1 }})</span>{% endif %}{% else %}-{% endif %}</span>
+                            </div>
+                            <!-- Team 2 -->
+                            <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team2 %}text-[#C5A028]{% else %}text-slate-600{% endif %}">
+                                <span class="flex items-center gap-1.5">
+                                    {% if m.team2.logo %}<img src="{{ m.team2.logo.url }}" class="w-4 h-4 rounded-full object-cover">{% endif %}
+                                    {{ m.team2.name }}
+                                </span>
+                                <span class="font-bebas text-xs">{% if m.is_finished %}{{ m.score_team2 }}{% if m.has_penalties %} <span class="text-[8px] text-slate-400 font-sans">({{ m.penalties_team2 }})</span>{% endif %}{% else %}-{% endif %}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endwith %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-8 pt-4 border-t border-slate-200 flex justify-between items-center text-xs text-slate-400 font-bold">
+        <span>{{ site_settings.app_name|upper }} · {{ tournament.year }}</span><span class="page-num"></span>
+        <span>مخطط الأدوار الإقصائية / Tableau Phase Finale</span>
+    </div>
+</div>
+{% endif %}
+
+<!-- PAGE 5: STATS & AWARDS -->
+    <div class="page-container page-break flex flex-col justify-between">
+        <div>
+            <div class="border-b-4 border-[#C5A028] pb-4 mb-8">
+                <h2 class="text-3xl font-black text-slate-900">إحصائيات الفرق والجوائز</h2>
+                <p class="text-slate-500 font-bold tracking-widest uppercase">Statistiques & Récompenses</p>
+            </div>
+
+            <!-- General Statistics Grid -->
+            <div class="grid grid-cols-4 gap-6 mb-8 avoid-break">
+                <!-- Matches Stat -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden">
+                    <div class="absolute -left-3 -top-3 text-slate-100 text-6xl font-black select-none pointer-events-none">🏟️</div>
+                    <div class="flex items-center gap-1 mb-2"><span class="text-slate-700 text-xs font-bold">المباريات </span> <span class="text-slate-400 text-[10px] font-normal uppercase tracking-wider">/ Matchs</span></div>
+                    <div class="relative z-10">
+                        <span class="font-bebas text-4xl text-slate-800 font-bold block">{{ stats.played_matches }} <span class="text-lg text-slate-400">/ {{ stats.total_matches }}</span></span>
+                    </div>
+                </div>
+
+                <!-- Goals Stat -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden">
+                    <div class="absolute -left-3 -top-3 text-slate-100 text-6xl font-black select-none pointer-events-none">⚽</div>
+                    <div class="flex items-center gap-1 mb-2"><span class="text-slate-700 text-xs font-bold">الأهداف </span> <span class="text-slate-400 text-[10px] font-normal uppercase tracking-wider">/ Buts</span></div>
+                    <div class="relative z-10">
+                        <span class="font-bebas text-4xl text-[#C5A028] font-bold block">{{ stats.total_goals }}</span>
+                    </div>
+                </div>
+
+                <!-- Cards Stat -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden">
+                    <div class="absolute -left-3 -top-3 text-slate-100 text-6xl font-black select-none pointer-events-none">🎴</div>
+                    <div class="flex items-center gap-1 mb-2"><span class="text-slate-700 text-xs font-bold">البطاقات </span> <span class="text-slate-400 text-[10px] font-normal uppercase tracking-wider">/ Cartons</span></div>
+                    <div class="relative z-10">
+                        <div class="flex items-baseline gap-4">
+                            <span class="font-bebas text-3xl text-amber-500 font-bold">🟨 {{ stats.yellow_cards }}</span>
+                            <span class="font-bebas text-3xl text-red-600 font-bold">🟥 {{ stats.red_cards }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Teams / Players Stat -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden">
+                    <div class="absolute -left-3 -top-3 text-slate-100 text-6xl font-black select-none pointer-events-none">👥</div>
+                    <div class="flex items-center gap-1 mb-2"><span class="text-slate-700 text-xs font-bold">المشاركون </span> <span class="text-slate-400 text-[10px] font-normal uppercase tracking-wider">/ Participants</span></div>
+                    <div class="relative z-10">
+                        <span class="font-bebas text-2xl text-slate-800 font-bold block">{{ stats.total_teams }} فرق / {{ stats.total_players }} لاعب</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-8">
+                <!-- Awards Box -->
+                <div class="avoid-break bg-[#0a1a10] rounded-3xl p-6 text-white relative overflow-hidden flex flex-col justify-center shadow-lg">
+                    <div class="absolute -right-10 -bottom-10 opacity-10 text-9xl">🏆</div>
+                    <h3 class="font-bebas text-3xl text-[#C5A028] tracking-widest mb-4">MESSLMOUNE AWARDS</h3>
+                    <div class="space-y-4">
+                        {% if tournament.winner %}
+                        <div>
+                            <div class="text-[10px] text-gray-400 font-bold mb-0.5"><span>الفريق البطل</span> / <span class="uppercase tracking-widest">Champion</span></div>
+                            <div class="text-xl font-black text-white">{{ tournament.winner.name }}</div>
+                        </div>
+                        {% endif %}
+                        {% if tournament.runner_up %}
+                        <div>
+                            <div class="text-[10px] text-gray-400 font-bold mb-0.5"><span>الوصيف</span> / <span class="uppercase tracking-widest">Finaliste</span></div>
+                            <div class="text-lg font-bold text-white">{{ tournament.runner_up.name }}</div>
+                        </div>
+                        {% endif %}
+                        <div class="pt-4 border-t border-white/10 mt-4 text-xs text-gray-400 leading-relaxed">
+                            هذه الوثيقة تم إنشاؤها إلكترونياً وهي تمثل السجل الرسمي لنتائج بطولة <strong>{{ tournament.name }}</strong>.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Rankings -->
+                <div class="avoid-break space-y-4">
+                    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+                        <h4 class="text-xs font-bold text-slate-700 mb-2 border-b border-slate-100 pb-1 flex justify-between">
+                            <span>🔥 أقوى هجوم (الأهداف)</span>
+                            <span class="text-[10px] text-slate-400 font-normal">Attaque (Buts)</span>
+                        </h4>
+                        <div class="space-y-1">
+                            {% for item in best_attacks|slice:":2" %}
+                            <div class="flex justify-between items-center text-xs font-bold text-slate-800">
+                                <span>{{ item.team.name }}</span>
+                                <span class="font-bebas text-emerald-600">{{ item.scored }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+                        <h4 class="text-xs font-bold text-slate-700 mb-2 border-b border-slate-100 pb-1 flex justify-between">
+                            <span>🛡️ أقوى دفاع (المستقبلة)</span>
+                            <span class="text-[10px] text-slate-400 font-normal">Défense (Buts Conc.)</span>
+                        </h4>
+                        <div class="space-y-1">
+                            {% for item in best_defenses|slice:":2" %}
+                            <div class="flex justify-between items-center text-xs font-bold text-slate-800">
+                                <span>{{ item.team.name }}</span>
+                                <span class="font-bebas text-red-600">{{ item.conceded }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 pt-4 border-t border-slate-200 flex justify-between items-center text-xs text-slate-400 font-bold">
+            <span>{{ site_settings.app_name|upper }} · {{ tournament.year }}</span><span class="page-num"></span>
+            <span>إحصائيات الفرق / Statistiques d'Équipes</span>
+        </div>
+    </div>
+
+    <!-- PAGE 5B Part 1: COMPREHENSIVE TOURNAMENT STATISTICAL REPORT (Categories 1 to 4) -->
+    <div class="page-container page-break flex flex-col justify-between" id="tournament-stats-13-p1">
+        <div>
+            <div class="border-b-4 border-[#C5A028] pb-3 mb-5 flex items-center justify-between">
+                <div>
+                    <h2 class="text-3xl font-black text-slate-900">📊 التقرير الإحصائي الشامل للبطولة</h2>
+                    <p class="text-slate-500 font-bold"><span class="tracking-widest uppercase">Rapport Statistique Détaillé</span> (الجزء الأول: 1 - 4)</p>
+                </div>
+                <div class="bg-amber-500/10 text-[#C5A028] border border-[#C5A028]/30 text-xs font-bold px-3 py-1.5 rounded-xl">
+                    صفحة 1 من 3
+                </div>
+            </div>
+
+            <div class="space-y-4 avoid-break">
+
+                <!-- GRID 1: Group Stage & Best Teams -->
+                <div class="grid grid-cols-2 gap-4">
+                    
+                    <!-- 1. 📊 نتائج دور المجموعات -->
+                    <div id="cat-1" class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 shadow-sm">
+                        <h3 class="text-xs font-black text-slate-900 mb-2 flex items-center justify-between border-b pb-1.5">
+                            <span class="flex items-center gap-1.5"><span class="text-sm">📊</span> 1. نتائج دور المجموعات</span>
+                            <span class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">ملخص الترتيب</span>
+                        </h3>
+                        <div class="space-y-1 text-xs">
+                            {% for group in groups %}
+                            <div class="bg-white p-1.5 rounded-lg border border-slate-200">
+                                <div class="font-bold text-[#C5A028] mb-0.5 text-[10px] flex justify-between">
+                                    <span>{{ group.name }}</span>
+                                    <span class="text-slate-400">عدد الفرق: {{ group.teams.count }}</span>
+                                </div>
+                                <div class="divide-y divide-slate-100">
+                                    {% for gs in group.standings.all|dictsortreversed:"points"|slice:":3" %}
+                                    <div class="flex justify-between items-center py-0.5">
+                                        <span class="font-semibold text-slate-800 text-[11px]">{{ forloop.counter }}. {{ gs.team.name }}</span>
+                                        <div class="flex gap-1.5 text-[9px] text-slate-600">
+                                            <span class="font-bold text-slate-900">{{ gs.points }} ن</span>
+                                            <span>ف:{{ gs.won }}</span>
+                                            <span>ف.أ:{{ gs.goal_difference }}</span>
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                    <div class="text-slate-400 text-[9px] italic">لا توجد بيانات</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-slate-400 text-xs italic p-1.5">لا توجد مجموعات مسجلة</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- 2. 🏆 أفضل الفرق في دور المجموعات -->
+                    <div id="cat-2" class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 shadow-sm">
+                        <h3 class="text-xs font-black text-slate-900 mb-2 flex items-center justify-between border-b pb-1.5">
+                            <span class="flex items-center gap-1.5"><span class="text-sm">🏆</span> 2. أفضل الفرق بالمجموعات</span>
+                            <span class="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">الأعلى نقاطاً</span>
+                        </h3>
+                        <div class="space-y-1.5 text-xs">
+                            {% for g in top_group_teams %}
+                            <div class="flex items-center justify-between p-1.5 bg-white rounded-lg border border-slate-200">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-[9px]">{{ forloop.counter }}</span>
+                                    <span class="font-bold text-slate-800 text-[11px]">{{ g.team.name }}</span>
+                                    <span class="text-[9px] text-slate-400">({{ g.group.name }})</span>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.5 rounded text-[10px]">{{ g.points }} نقطة</span>
+                                    <span class="text-[9px] text-slate-500">ف.أ: {{ g.goal_difference }}</span>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-slate-400 text-xs italic p-1.5">لا تتوفر بيانات</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- GRID 2: Best Attack & Best Defense -->
+                <div class="grid grid-cols-2 gap-4">
+
+                    <!-- 3. ⚽ أقوى خط هجوم -->
+                    <div id="cat-3" class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 shadow-sm">
+                        <h3 class="text-xs font-black text-slate-900 mb-2 flex items-center gap-1.5 border-b pb-1.5">
+                            <span>⚽</span> 3. أقوى خط هجوم
+                        </h3>
+                        <div class="space-y-1 text-xs">
+                            {% for t in best_attacks %}
+                            <div class="flex items-center justify-between p-1.5 bg-white rounded-lg border border-slate-200">
+                                <span class="font-bold text-slate-800 text-[11px]">{{ forloop.counter }}. {{ t.team.name }}</span>
+                                <span class="font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded text-[10px]">{{ t.scored }} أهداف</span>
+                            </div>
+                            {% empty %}
+                            <div class="text-slate-400 text-xs italic">لا توجد بيانات</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- 4. 🛡️ أقوى خط دفاع -->
+                    <div id="cat-4" class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 shadow-sm">
+                        <h3 class="text-xs font-black text-slate-900 mb-2 flex items-center gap-1.5 border-b pb-1.5">
+                            <span>🛡️</span> 4. أقوى خط دفاع
+                        </h3>
+                        <div class="space-y-1 text-xs">
+                            {% for t in best_defenses %}
+                            <div class="flex items-center justify-between p-1.5 bg-white rounded-lg border border-slate-200">
+                                <span class="font-bold text-slate-800 text-[11px]">{{ forloop.counter }}. {{ t.team.name }}</span>
+                                <span class="font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-[10px]">{{ t.conceded }} أهداف عليه</span>
+                            </div>
+                            {% empty %}
+                            <div class="text-slate-400 text-xs italic">لا توجد بيانات</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Footer Part 1 -->
+        <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center text-xs text-slate-400 font-bold">
+            <span>{{ site_settings.app_name|upper }} · {{ tournament.year }}</span><span class="page-num"></span>
+            <span>التقرير الإحصائي (1/3 - المؤشرات 1 إلى 4)</span>
+        </div>
+    </div>
+
+    <!-- PAGE 5B Part 2: CATEGORIES 5 TO 9 -->
+    <div class="page-container page-break flex flex-col justify-between" id="tournament-stats-13-p2">
+        <div>
+            <div class="border-b-4 border-[#C5A028] pb-3 mb-5 flex items-center justify-between">
+                <div>
+                    <h2 class="text-3xl font-black text-slate-900">📊 التقرير الإحصائي الشامل للبطولة</h2>
+                    <p class="text-slate-500 font-bold"><span class="tracking-widest uppercase">Rapport Statistique Détaillé</span> (الجزء الثاني: 5 - 9)</p>
+                </div>
+                <div class="bg-amber-500/10 text-[#C5A028] border border-[#C5A028]/30 text-xs font-bold px-3 py-1.5 rounded-xl">
+                    صفحة 2 من 3
+                </div>
+            </div>
+
+            <div class="space-y-4 avoid-break">
+
+                <div class="grid grid-cols-3 gap-4">
+                    <!-- 5. 📉 أضعف خط دفاع -->
+                    <div id="cat-5" class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 shadow-sm">
+                        <h3 class="text-xs font-black text-slate-900 mb-2 flex items-center gap-1.5 border-b pb-1.5">
+                            <span>📉</span> 5. أضعف خط دفاع
+                        </h3>
+                        <div class="space-y-1 text-xs">
+                            {% for t in worst_defenses %}
+                            <div class="flex items-center justify-between p-1.5 bg-white rounded-lg border border-slate-200">
+                                <span class="font-bold text-slate-800 text-[11px]">{{ forloop.counter }}. {{ t.team.name }}</span>
+                                <span class="font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded text-[10px]">{{ t.conceded }} عليه</span>
+                            </div>
+                            {% empty %}
+                            <div class="text-slate-400 text-xs italic">لا توجد بيانات</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- 6. 🟨🟥 حصيلة البطاقات -->
+                    <div id="cat-6" class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 shadow-sm flex flex-col justify-between">
+                        <h3 class="text-xs font-black text-slate-900 mb-2 flex items-center gap-1.5 border-b pb-1.5">
+                            <span>🟨🟥</span> 6. حصيلة البطاقات
+                        </h3>
+                        <div class="grid grid-cols-2 gap-2 my-auto">
+                            <div class="bg-amber-100 border border-amber-300 rounded-lg p-1.5 text-center">
+                                <span class="block text-[9px] text-amber-800 font-bold">صفراء 🟨</span>
+                                <span class="font-bebas text-xl text-amber-900 font-black">{{ cards_summary.yellow }}</span>
+                            </div>
+                            <div class="bg-rose-100 border border-rose-300 rounded-lg p-1.5 text-center">
+                                <span class="block text-[9px] text-rose-800 font-bold">حمراء 🟥</span>
+                                <span class="font-bebas text-xl text-rose-900 font-black">{{ cards_summary.red }}</span>
+                            </div>
+                        </div>
+                        <div class="text-[10px] text-slate-600 text-center font-bold mt-1.5 pt-1 border-t">
+                            الإجمالي: <span class="text-slate-900">{{ cards_summary.total }}</span> (معدل {{ cards_summary.avg_per_match }})
+                        </div>
+                    </div>
+
+                    <!-- 7. 🔥 أكثر مباراة شهدت بطاقات -->
+                    <div id="cat-7" class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 shadow-sm">
+                        <h3 class="text-xs font-black text-slate-900 mb-2 flex items-center gap-1.5 border-b pb-1.5">
+                            <span>🔥</span> 7. أكثر مباراة بطاقات
+                        </h3>
+                        {% if most_carded_match %}
+                        <div class="bg-white p-2 rounded-lg border border-slate-200 text-xs">
+                            <div class="font-bold text-slate-800 mb-0.5 text-center text-[11px]">
+                                {{ most_carded_match.team1.name }} vs {{ most_carded_match.team2.name }}
+                            </div>
+                            <div class="text-center text-[9px] text-slate-500 mb-1">
+                                {{ most_carded_match.get_stage_display }} · {{ most_carded_match.score_display }}
+                            </div>
+                            <div class="bg-rose-50 text-rose-700 border border-rose-200 font-bold rounded p-1 text-center text-[10px]">
+                                {{ most_carded_match.cards_count }} بطاقة
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="text-slate-400 text-xs italic p-1.5">لا تتوفر بطاقات بالمباريات</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- 8. 🚨 أكثر الفرق حصولًا على البطاقات -->
+                    <div id="cat-8" class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 shadow-sm">
+                        <h3 class="text-xs font-black text-slate-900 mb-2 flex items-center gap-1.5 border-b pb-1.5">
+                            <span>🚨</span> 8. الأكثر إنذارات
+                        </h3>
+                        <div class="space-y-1 text-xs">
+                            {% for tc in most_carded_teams %}
+                            <div class="flex items-center justify-between p-1.5 bg-white rounded-lg border border-slate-200">
+                                <span class="font-bold text-slate-800 text-[11px]">{{ forloop.counter }}. {{ tc.team.name }}</span>
+                                <div class="flex gap-1 text-[9px]">
+                                    <span class="bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded">{{ tc.yellow }} 🟨</span>
+                                    <span class="bg-rose-100 text-rose-800 font-bold px-1.5 py-0.5 rounded">{{ tc.red }} 🟥</span>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-slate-400 text-xs italic">لا توجد بطاقات مسجلة</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- 9. 📉 أضعف حصيلة في دور المجموعات -->
+                    <div id="cat-9" class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 shadow-sm">
+                        <h3 class="text-xs font-black text-slate-900 mb-2 flex items-center gap-1.5 border-b pb-1.5">
+                            <span>📉</span> 9. أضعف حصيلة بالمجموعات
+                        </h3>
+                        <div class="space-y-1 text-xs">
+                            {% for g in weakest_group_teams %}
+                            <div class="flex items-center justify-between p-1.5 bg-white rounded-lg border border-slate-200">
+                                <div>
+                                    <span class="font-bold text-slate-800 text-[11px]">{{ forloop.counter }}. {{ g.team.name }}</span>
+                                    <span class="text-[9px] text-slate-400 block">({{ g.group.name }})</span>
+                                </div>
+                                <span class="font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded text-[9px]">{{ g.points }} ن (ف.أ: {{ g.goal_difference }})</span>
+                            </div>
+                            {% empty %}
+                            <div class="text-slate-400 text-xs italic">لا تتوفر بيانات</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Footer Part 2 -->
+        <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center text-xs text-slate-400 font-bold">
+            <span>{{ site_settings.app_name|upper }} · {{ tournament.year }}</span><span class="page-num"></span>
+            <span>التقرير الإحصائي (2/3 - المؤشرات 5 إلى 9)</span>
+        </div>
+    </div>
+
+    <!-- PAGE 5B Part 3: CATEGORIES 10 TO 13 -->
+    <div class="page-container page-break flex flex-col justify-between" id="tournament-stats-13-p3">
+        <div>
+            <div class="border-b-4 border-[#C5A028] pb-3 mb-5 flex items-center justify-between">
+                <div>
+                    <h2 class="text-3xl font-black text-slate-900">📊 التقرير الإحصائي الشامل للبطولة</h2>
+                    <p class="text-slate-500 font-bold"><span class="tracking-widest uppercase">Rapport Statistique Détaillé</span> (الجزء الثالث: 10 - 13)</p>
+                </div>
+                <div class="bg-amber-500/10 text-[#C5A028] border border-[#C5A028]/30 text-xs font-bold px-3 py-1.5 rounded-xl">
+                    صفحة 3 من 3
+                </div>
+            </div>
+
+            <div class="space-y-4 avoid-break">
+
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- 10. ⭐ الأكثر فوزًا بجائزة رجل المباراة -->
+                    <div id="cat-10" class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 shadow-sm">
+                        <h3 class="text-xs font-black text-slate-900 mb-2 flex items-center gap-1.5 border-b pb-1.5">
+                            <span>⭐</span> 10. رجال المباريات (MOTM)
+                        </h3>
+                        <div class="space-y-1 text-xs">
+                            {% for p in top_mom_players %}
+                            <div class="flex items-center justify-between p-1.5 bg-white rounded-lg border border-slate-200">
+                                <div>
+                                    <span class="font-bold text-slate-800 text-[11px]">{{ p.player__first_name }} {{ p.player__last_name }}</span>
+                                    <span class="text-[9px] text-slate-400 block">{{ p.player__team__name }}</span>
+                                </div>
+                                <span class="bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded text-[10px]">{{ p.mom_count }} جوائز</span>
+                            </div>
+                            {% empty %}
+                            <div class="text-slate-400 text-xs italic p-1.5 text-center">سيتم التحديد لاحقاً</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- 11. ⚽ حصيلة الأهداف العامة -->
+                    <div id="cat-11" class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 shadow-sm flex flex-col justify-between">
+                        <h3 class="text-xs font-black text-slate-900 mb-2 flex items-center gap-1.5 border-b pb-1.5">
+                            <span>⚽</span> 11. حصيلة الأهداف العامة
+                        </h3>
+                        <div class="space-y-1.5 text-xs">
+                            <div class="flex justify-between items-center p-1.5 bg-white rounded-lg border">
+                                <span class="text-slate-600 font-bold">مجموع الأهداف:</span>
+                                <span class="font-bebas text-lg text-emerald-600 font-black">{{ goals_summary.total_goals }}</span>
+                            </div>
+                            <div class="flex justify-between items-center p-1.5 bg-white rounded-lg border">
+                                <span class="text-slate-600 font-bold">معدل التهديف:</span>
+                                <span class="font-bold text-slate-900">{{ goals_summary.goal_average }} هدف/مباراة</span>
+                            </div>
+                            {% if goals_summary.highest_scoring_match %}
+                            <div class="p-1.5 bg-emerald-50 text-emerald-900 rounded-lg border border-emerald-200 text-[9px]">
+                                <span class="font-bold block">أعلى مباراة تهديفاً:</span>
+                                {{ goals_summary.highest_scoring_match.team1.name }} vs {{ goals_summary.highest_scoring_match.team2.name }} ({{ goals_summary.highest_scoring_match.score_display }})
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- 12. ✅ الفرق التي لم تتذوق طعم الهزيمة -->
+                    <div id="cat-12" class="bg-emerald-50/50 border border-emerald-200 rounded-xl p-3.5 shadow-sm">
+                        <h3 class="text-xs font-black text-emerald-900 mb-2 flex items-center gap-1.5 border-b border-emerald-200 pb-1.5">
+                            <span>✅</span> 12. الفرق دون هزيمة
+                        </h3>
+                        <div class="space-y-1 text-xs">
+                            {% for t in unbeaten_teams %}
+                            <div class="bg-white p-1.5 rounded-lg border border-emerald-300 flex justify-between items-center">
+                                <span class="font-bold text-slate-800 text-[11px]">{{ t.team.name }}</span>
+                                <span class="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">
+                                    لعب: {{ t.played }} (فوز: {{ t.wins }} | تعادل: {{ t.draws }})
+                                </span>
+                            </div>
+                            {% empty %}
+                            <div class="text-slate-400 text-xs italic p-1.5 text-center">لا توجد فرق دون هزيمة</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- 13. ❌ الفرق التي لم تحقق أي انتصار -->
+                    <div id="cat-13" class="bg-rose-50/50 border border-rose-200 rounded-xl p-3.5 shadow-sm">
+                        <h3 class="text-xs font-black text-rose-900 mb-2 flex items-center gap-1.5 border-b border-rose-200 pb-1.5">
+                            <span>❌</span> 13. الفرق دون انتصار
+                        </h3>
+                        <div class="space-y-1 text-xs">
+                            {% for t in winless_teams %}
+                            <div class="bg-white p-1.5 rounded-lg border border-rose-300 flex justify-between items-center">
+                                <span class="font-bold text-slate-800 text-[11px]">{{ t.team.name }}</span>
+                                <span class="text-[9px] bg-rose-100 text-rose-800 font-bold px-1.5 py-0.5 rounded">
+                                    لعب: {{ t.played }} (تعادل: {{ t.draws }} | خسارة: {{ t.losses }})
+                                </span>
+                            </div>
+                            {% empty %}
+                            <div class="text-slate-400 text-xs italic p-1.5 text-center">جميع الفرق حققت انتصاراً</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Footer Part 3 -->
+        <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center text-xs text-slate-400 font-bold">
+            <span>{{ site_settings.app_name|upper }} · {{ tournament.year }}</span><span class="page-num"></span>
+            <span>التقرير الإحصائي (3/3 - المؤشرات 10 إلى 13)</span>
+        </div>
+    </div>
+
+    <!-- PAGE 6: PLAYERS LEADERBOARD & RECORDS -->
+    <div class="page-container page-break flex flex-col justify-between">
+        <div>
+            <div class="border-b-4 border-[#C5A028] pb-4 mb-8">
+                <h2 class="text-3xl font-black text-slate-900">إحصائيات اللاعبين والأرقام القياسية</h2>
+                <p class="text-slate-500 font-bold tracking-widest uppercase">Séries & Records individuels</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-8">
+                <!-- Left: Scorers & Playmakers -->
+                <div class="space-y-6">
+                    <div class="avoid-break">
+                        <h3 class="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">⚽ الهدافون</h3>
+                        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                            {% for scorer in top_scorers|slice:":3" %}
+                            <div class="flex items-center justify-between p-3 border-b border-slate-100 last:border-0">
+                                <div class="text-xs">
+                                    <div class="font-bold text-slate-900">{{ scorer.player__first_name }} {{ scorer.player__last_name }}</div>
+                                    <div class="text-[10px] text-slate-400">{{ scorer.team__name }}</div>
+                                </div>
+                                <span class="font-bebas text-xl text-[#C5A028] font-bold">{{ scorer.goals_count }}</span>
+                            </div>
+                            {% empty %}
+                            <div class="p-4 text-center text-xs text-slate-500">لا يوجد أهداف.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="avoid-break">
+                        <h3 class="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">👟 التمريرات الحاسمة</h3>
+                        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                            {% for playmaker in top_assists|slice:":3" %}
+                            <div class="flex items-center justify-between p-3 border-b border-slate-100 last:border-0">
+                                <div class="text-xs">
+                                    <div class="font-bold text-slate-900">{{ playmaker.assist_player__first_name }} {{ playmaker.assist_player__last_name }}</div>
+                                    <div class="text-[10px] text-slate-400">{{ playmaker.assist_player__team__name }}</div>
+                                </div>
+                                <span class="font-bebas text-xl text-[#C5A028] font-bold">{{ playmaker.assists_count }}</span>
+                            </div>
+                            {% empty %}
+                            <div class="p-4 text-center text-xs text-slate-500">لا يوجد تمريرات.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Records -->
+                <div class="space-y-6">
+                    <div class="avoid-break">
+                        <h3 class="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">⭐ أرقام قياسية</h3>
+                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+                            {% if highest_scoring_match %}
+                            <div class="border-b border-slate-200 pb-2 last:border-0">
+                                <span class="text-[10px] text-slate-500 font-bold block">المباراة الأكثر أهدافاً</span>
+                                <span class="text-xs font-bold text-slate-800">
+                                    {{ highest_scoring_match.team1.name }} {{ highest_scoring_match.score_team1 }} - {{ highest_scoring_match.score_team2 }} {{ highest_scoring_match.team2.name }}
+                                </span>
+                            </div>
+                            {% endif %}
+                            
+                            {% if biggest_win %}
+                            <div class="border-b border-slate-200 pb-2 last:border-0">
+                                <span class="text-[10px] text-slate-500 font-bold block">أكبر فوز</span>
+                                <span class="text-xs font-bold text-slate-800">
+                                    {{ biggest_win.team1.name }} {{ biggest_win.score_team1 }} - {{ biggest_win.score_team2 }} {{ biggest_win.team2.name }}
+                                </span>
+                            </div>
+                            {% endif %}
+
+                            {% if average_player_age %}
+                            <div>
+                                <span class="text-[10px] text-slate-500 font-bold block">معدل الأعمار</span>
+                                <span class="font-bebas text-2xl text-slate-800 font-bold">{{ average_player_age }} سنة / ans</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 pt-4 border-t border-slate-200 flex justify-between items-center text-xs text-slate-400 font-bold">
+            <span>{{ site_settings.app_name|upper }} · {{ tournament.year }}</span><span class="page-num"></span>
+            <span>اللاعبون والأرقام القياسية / Joueurs & Records</span>
+        </div>
+    </div>
+
+    <!-- PAGE 7: AWARDS & CORONATION -->
+    <div class="page-container page-break flex flex-col justify-between">
+        <div>
+            <div class="border-b-4 border-[#C5A028] pb-4 mb-8">
+                <h2 class="text-3xl font-black text-slate-900">جوائز الدورة والتتويجات</h2>
+                <p class="text-slate-500 font-bold tracking-widest uppercase">Palmarès & Distinctions</p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-6">
+                <!-- Golden Glove Award -->
+                <div class="avoid-break bg-slate-50 rounded-2xl border border-slate-200 p-5 flex flex-col items-center text-center shadow-sm relative overflow-hidden">
+                    <div class="absolute top-2 right-2 text-yellow-500 font-black text-lg select-none">★</div>
+                    <div class="w-full aspect-[3/4] rounded-xl overflow-hidden mb-4 border border-slate-200 bg-slate-100 flex items-center justify-center">
+                        {% if best_goalkeeper_media and best_goalkeeper_media.file %}
+                            <img src="{{ best_goalkeeper_media.file.url }}" class="w-full h-full object-contain">
+                        {% elif best_goalkeeper_media and best_goalkeeper_media.url %}
+                            <img src="{{ best_goalkeeper_media.url }}" class="w-full h-full object-contain">
+                        {% elif fallback_gk %}
+                            {% if fallback_gk.photo %}
+                                <img src="{{ fallback_gk.photo.url }}" class="w-full h-full object-contain">
+                            {% else %}
+                                <span class="text-6xl">🧤</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-6xl">🧤</span>
+                        {% endif %}
+                    </div>
+                    <h3 class="text-base font-black text-[#C5A028] mb-1">🧤 القفاز الذهبي (أفضل حارس)</h3>
+                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Gant d'Or / Best GK</span>
+                    {% if best_goalkeeper_media %}
+                        <p class="text-xs text-slate-600 leading-relaxed font-bold px-2 break-words" dir="rtl">{{ best_goalkeeper_media.cleaned_title }}</p>
+                    {% elif fallback_gk %}
+                        <p class="text-sm font-bold text-slate-800">{{ fallback_gk.full_name }}</p>
+                        <p class="text-xs text-slate-500">{{ fallback_gk.team.name }}</p>
+                    {% else %}
+                        <p class="text-xs text-slate-400">لم يحدد بعد / Non défini</p>
+                    {% endif %}
+                </div>
+
+                <!-- Best Goal Award -->
+                <div class="avoid-break bg-slate-50 rounded-2xl border border-slate-200 p-5 flex flex-col items-center text-center shadow-sm relative overflow-hidden">
+                    <div class="absolute top-2 right-2 text-yellow-500 font-black text-lg select-none">★</div>
+                    <div class="w-full aspect-[3/4] rounded-xl overflow-hidden mb-4 border border-slate-200 bg-slate-100 flex items-center justify-center">
+                        {% if best_goal_media and best_goal_media.file %}
+                            <img src="{{ best_goal_media.file.url }}" class="w-full h-full object-contain">
+                        {% elif best_goal_media and best_goal_media.url %}
+                            <img src="{{ best_goal_media.url }}" class="w-full h-full object-contain">
+                        {% else %}
+                            <span class="text-6xl">⚽</span>
+                        {% endif %}
+                    </div>
+                    <h3 class="text-base font-black text-[#C5A028] mb-1">⚽ أجمل هدف في الدورة</h3>
+                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Plus Beau But / Best Goal</span>
+                    {% if best_goal_media %}
+                        <p class="text-xs text-slate-600 leading-relaxed font-bold px-2 break-words" dir="rtl">{{ best_goal_media.cleaned_title }}</p>
+                    {% else %}
+                        <p class="text-xs text-slate-400">لم يحدد بعد / Non défini</p>
+                    {% endif %}
+                </div>
+
+                <!-- Top Scorer Award -->
+                <div class="avoid-break bg-slate-50 rounded-2xl border border-slate-200 p-5 flex flex-col items-center text-center shadow-sm relative overflow-hidden">
+                    <div class="absolute top-2 right-2 text-yellow-500 font-black text-lg select-none">★</div>
+                    <div class="w-full aspect-[3/4] rounded-xl overflow-hidden mb-4 border border-slate-200 bg-slate-100 flex items-center justify-center">
+                        {% if best_scorer_media and best_scorer_media.file %}
+                            <img src="{{ best_scorer_media.file.url }}" class="w-full h-full object-contain">
+                        {% elif best_scorer_media and best_scorer_media.url %}
+                            <img src="{{ best_scorer_media.url }}" class="w-full h-full object-contain">
+                        {% elif top_scorers %}
+                            {% with top_scorer=top_scorers.0 %}
+                                {% if top_scorer.player__photo %}
+                                    <img src="/media/{{ top_scorer.player__photo }}" class="w-full h-full object-contain">
+                                {% else %}
+                                    <span class="text-6xl">👟</span>
+                                {% endif %}
+                            {% endwith %}
+                        {% else %}
+                            <span class="text-6xl">👟</span>
+                        {% endif %}
+                    </div>
+                    <h3 class="text-base font-black text-[#C5A028] mb-1">👟 هداف الدورة (الحذاء الذهبي)</h3>
+                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Soulier d'Or / Top Scorer</span>
+                    {% if best_scorer_media %}
+                        <p class="text-xs text-slate-600 leading-relaxed font-bold px-2 break-words" dir="rtl">{{ best_scorer_media.cleaned_title }}</p>
+                    {% elif top_scorers %}
+                        {% with top_scorer=top_scorers.0 %}
+                            <p class="text-sm font-bold text-slate-800">{{ top_scorer.player__first_name }} {{ top_scorer.player__last_name }}</p>
+                            <p class="text-xs text-slate-500">{{ top_scorer.team__name }} ({{ top_scorer.goals_count }} أهداف)</p>
+                        {% endwith %}
+                    {% else %}
+                        <p class="text-xs text-slate-400">لم يحدد بعد / Non défini</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 pt-4 border-t border-slate-200 flex justify-between items-center text-xs text-slate-400 font-bold">
+            <span>{{ site_settings.app_name|upper }} · {{ tournament.year }}</span><span class="page-num"></span>
+            <span>جوائز الدورة والتتويجات / Palmarès & Distinctions</span>
+        </div>
+    </div>
+
+    <!-- PAGE 8: TOURNAMENT OFFICIALS & REFEREES (All Referees On 1 Single A4 Page) -->
+    <div class="page-container page-break flex flex-col justify-between">
+        <div>
+            <div class="border-b-4 border-[#C5A028] pb-3 mb-5 flex items-center justify-between">
+                <div>
+                    <h2 class="text-3xl font-black text-slate-900">طاقم تحكيم البطولة</h2>
+                    <p class="text-slate-500 font-bold tracking-widest uppercase">Corps Arbitral / Referees</p>
+                </div>
+                <div class="bg-amber-500/10 text-[#C5A028] border border-[#C5A028]/30 text-xs font-bold px-3.5 py-1.5 rounded-xl">
+                    {{ tournament_referees|length }} حكام معتمدين
+                </div>
+            </div>
+
+            {% if tournament_referees %}
+            <div class="grid grid-cols-2 gap-4">
+                {% for item in tournament_referees %}
+                <div class="avoid-break bg-slate-50 rounded-2xl border border-slate-200 p-3.5 flex items-center gap-3.5 shadow-sm">
+                    <div class="w-16 h-16 rounded-full overflow-hidden border-2 border-slate-200 bg-white flex-shrink-0 flex items-center justify-center shadow-inner">
+                        {% if item.referee.photo %}
+                            <img src="{{ item.referee.photo.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <img src="{{ item.photo_url }}" class="w-full h-full object-cover">
+                        {% endif %}
+                    </div>
+                    <div class="flex-grow">
+                        <h4 class="text-sm font-black text-slate-900 mb-0.5">{{ item.referee.user.get_full_name|default:item.referee.user.username }}</h4>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[8px] font-bold bg-amber-100 text-amber-800 mb-1.5">
+                            🏁 حكم الدورة / Arbitre Officiel
+                        </span>
+                        
+                        <div class="space-y-0.5 text-[11px] text-slate-600">
+                            <div class="flex justify-between border-b border-slate-200/40 pb-0.5">
+                                <span class="text-slate-400">رقم الرخصة:</span>
+                                <span class="font-mono font-bold text-slate-800">{{ item.referee.license_number|default:"غير متوفر" }}</span>
+                            </div>
+                            <div class="flex justify-between border-b border-slate-200/40 pb-0.5">
+                                <span class="text-slate-400">الخبرة:</span>
+                                <span class="font-bold text-slate-800">{{ item.referee.experience_years }} سنة / ans</span>
+                            </div>
+                            <div class="flex justify-between pt-0.5 font-bold text-[#C5A028]">
+                                <span>المباريات المدارة:</span>
+                                <span class="font-bebas text-sm">{{ item.match_count }} مباراة</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="py-12 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
+                لا يوجد حكام مسجلين لهذه البطولة.
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="mt-6 pt-3 border-t border-slate-200 flex justify-between items-center text-xs text-slate-400 font-bold">
+            <span>{{ site_settings.app_name|upper }} · {{ tournament.year }}</span><span class="page-num"></span>
+            <span>طاقم التحكيم / Corps Arbitral</span>
+        </div>
+    </div>
+
+    <!-- PAGE 9: GOALS TIMELINE (Paginated A4 Pages) -->
+    {% if goals_pages %}
+    {% for page_goals in goals_pages %}
+    <div class="page-container page-break flex flex-col justify-between">
+        <div>
+            <div class="border-b-4 border-[#C5A028] pb-4 mb-6 flex items-center justify-between">
+                <div>
+                    <h2 class="text-3xl font-black text-slate-900">سجل الأهداف الكامل</h2>
+                    <p class="text-slate-500 font-bold tracking-widest uppercase">Registre des Buts / Goals Timeline</p>
+                </div>
+                <div class="bg-amber-500/10 text-[#C5A028] border border-[#C5A028]/30 text-xs font-bold px-3 py-1.5 rounded-xl">
+                    صفحة {{ forloop.counter }} من {{ goals_pages|length }}
+                </div>
+            </div>
+
+            <div class="overflow-hidden bg-white rounded-2xl border border-slate-200 shadow-sm">
+                <table class="w-full text-xs text-right">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-600 border-b border-slate-200 font-bold">
+                            <th class="py-2.5 px-3 text-center w-14 font-bold">الدقيقة</th>
+                            <th class="py-2.5 px-3 font-bold">اللاعب الهداف</th>
+                            <th class="py-2.5 px-3 font-bold">الفريق</th>
+                            <th class="py-2.5 px-3 font-bold">المباراة</th>
+                            <th class="py-2.5 px-3 text-center font-bold">نوع الهدف</th>
+                            <th class="py-2.5 px-3 font-bold">صانع الهدف</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 font-semibold text-slate-700">
+                        {% for goal in page_goals %}
+                        <tr class="hover:bg-slate-50/50 transition-colors">
+                            <td class="py-2 px-3 text-center font-bebas text-sm font-bold text-[#C5A028] bg-slate-50/50">{{ goal.minute }}'</td>
+                            <td class="py-2 px-3 font-bold text-slate-950">
+                                {{ goal.player.full_name }}
+                                {% if goal.player.jersey_number %}
+                                    <span class="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-mono font-bold">#{{ goal.player.jersey_number }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-2 px-3 font-semibold text-slate-700">{{ goal.team.name }}</td>
+                            <td class="py-2 px-3 text-slate-500 text-[11px] leading-tight">
+                                <span class="font-bold text-slate-800">{{ goal.match.team1.name }}</span>
+                                <span class="text-slate-400 px-0.5">vs</span>
+                                <span class="font-bold text-slate-800">{{ goal.match.team2.name }}</span>
+                                <span class="text-[9px] text-slate-400 block mt-0.5">
+                                    {{ goal.match.get_stage_display }} - J{{ goal.match.match_day }}
+                                </span>
+                            </td>
+                            <td class="py-2 px-3 text-center">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold 
+                                    {% if goal.goal_type == 'normal' %}bg-emerald-50 text-emerald-800
+                                    {% elif goal.goal_type == 'penalty' %}bg-blue-50 text-blue-800
+                                    {% elif goal.goal_type == 'free_kick' %}bg-purple-50 text-purple-800
+                                    {% elif goal.goal_type == 'header' %}bg-amber-50 text-amber-800
+                                    {% elif goal.goal_type == 'own_goal' %}bg-rose-50 text-rose-800
+                                    {% else %}bg-slate-100 text-slate-800{% endif %}">
+                                    {% if goal.goal_type == 'normal' %}⚽ عادي
+                                    {% elif goal.goal_type == 'penalty' %}🎯 ضربة جزاء
+                                    {% elif goal.goal_type == 'free_kick' %}☄️ ركلة حرة
+                                    {% elif goal.goal_type == 'header' %}👤 رأسية
+                                    {% elif goal.goal_type == 'own_goal' %}⚠️ ضد مرماه
+                                    {% else %}⚽ {{ goal.get_goal_type_display }}{% endif %}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-slate-500">
+                                {% if goal.assist_player %}
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-[10px]">👟</span>
+                                        <span>{{ goal.assist_player.full_name }}</span>
+                                    </div>
+                                {% else %}
+                                    <span class="text-slate-300">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="py-12 text-center text-sm text-slate-400 bg-slate-50">
+                                لم يتم تسجيل أي أهداف بعد في هذه البطولة.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="mt-8 pt-4 border-t border-slate-200 flex justify-between items-center text-xs text-slate-400 font-bold">
+            <span>{{ site_settings.app_name|upper }} · {{ tournament.year }}</span><span class="page-num"></span>
+            <span>سجل الأهداف الكامل / Registre des Buts ({{ forloop.counter }}/{{ goals_pages|length }})</span>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="page-container page-break flex flex-col justify-between">
+        <div>
+            <div class="border-b-4 border-[#C5A028] pb-4 mb-8">
+                <h2 class="text-3xl font-black text-slate-900">سجل الأهداف الكامل</h2>
+                <p class="text-slate-500 font-bold tracking-widest uppercase">Registre des Buts / Goals Timeline</p>
+            </div>
+            <div class="py-12 text-center text-sm text-slate-400 bg-slate-50 rounded-2xl border border-slate-200">
+                لم يتم تسجيل أي أهداف بعد في هذه البطولة.
+            </div>
+        </div>
+        <div class="mt-8 pt-4 border-t border-slate-200 flex justify-between items-center text-xs text-slate-400 font-bold">
+            <span>{{ site_settings.app_name|upper }} · {{ tournament.year }}</span><span class="page-num"></span>
+            <span>سجل أهداف الدورة / Registre des Buts</span>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- PAGE 10: BEST XI (التشكيلة المثالية للبطولة) -->
+    <div class="page-container page-break flex flex-col justify-between">
+        <div>
+            <div class="border-b-4 border-[#C5A028] pb-4 mb-6">
+                <h2 class="text-3xl font-black text-slate-900">التشكيلة المثالية للبطولة</h2>
+                <p class="text-slate-500 font-bold tracking-widest uppercase">L'Équipe Type du Tournoi / Best XI</p>
+            </div>
+
+            <!-- CSS Soccer Pitch -->
+            <div class="w-full aspect-[4/3] rounded-3xl relative overflow-hidden shadow-md border-2 border-emerald-950/20 bg-emerald-800" style="background: repeating-linear-gradient(180deg, #15803d, #15803d 45px, #16a34a 45px, #16a34a 90px);">
+                <!-- Pitch Lines -->
+                <!-- Outer Boundary -->
+                <div class="absolute inset-4 border border-white/20 rounded-2xl pointer-events-none"></div>
+                <!-- Center Line -->
+                <div class="absolute top-1/2 left-4 right-4 h-px bg-white/20 pointer-events-none"></div>
+                <!-- Center Circle -->
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 border border-white/20 rounded-full pointer-events-none"></div>
+                <!-- Penalty Area Top (Forwards side) -->
+                <div class="absolute top-4 left-1/2 -translate-x-1/2 w-64 h-20 border border-white/20 border-t-0 pointer-events-none"></div>
+                <div class="absolute top-4 left-1/2 -translate-x-1/2 w-28 h-8 border border-white/20 border-t-0 pointer-events-none"></div>
+                <!-- Penalty Area Bottom (Defense side) -->
+                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 w-64 h-20 border border-white/20 border-b-0 pointer-events-none"></div>
+                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 w-28 h-8 border border-white/20 border-b-0 pointer-events-none"></div>
+
+                <!-- Players Positioned absolutely -->
+                
+                <!-- Goalkeeper (GK) -->
+                {% if best_xi.gk %}
+                {% with player=best_xi.gk %}
+                <div class="absolute flex flex-col items-center text-center -translate-x-1/2 -translate-y-1/2" style="top: 86%; left: 50%;">
+                    <div class="w-12 h-12 rounded-full border-2 border-white/80 bg-slate-950 overflow-hidden flex items-center justify-center shadow-lg relative">
+                        {% if player.photo %}
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <span class="text-[#C5A028] font-black text-sm font-bebas">{{ player.jersey_number|default:"1" }}</span>
+                        {% endif %}
+                    </div>
+                    <div dir="rtl" class="bg-slate-950/90 text-white font-bold text-[10px] px-2 py-0.5 rounded-lg border border-amber-400/40 mt-1 shadow-md w-24 text-center " style="direction:rtl; unicode-bidi:isolate;">{{ player.full_name }}</div>
+<div dir="rtl" class="text-[9px] text-amber-300 font-bold w-24 text-center drop-shadow" style="direction:rtl; unicode-bidi:isolate;">{{ player.team.name }}</div>
+                </div>
+                {% endwith %}
+                {% endif %}
+
+                <!-- Defenders -->
+                {% if best_xi.defenders.0 %}
+                {% with player=best_xi.defenders.0 %}
+                <div class="absolute flex flex-col items-center text-center -translate-x-1/2 -translate-y-1/2" style="top: 72%; left: 18%;">
+                    <div class="w-12 h-12 rounded-full border-2 border-white/80 bg-slate-950 overflow-hidden flex items-center justify-center shadow-lg relative">
+                        {% if player.photo %}
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <span class="text-[#C5A028] font-black text-sm font-bebas">{{ player.jersey_number|default:"2" }}</span>
+                        {% endif %}
+                    </div>
+                    <div dir="rtl" class="bg-slate-950/90 text-white font-bold text-[10px] px-2 py-0.5 rounded-lg border border-amber-400/40 mt-1 shadow-md w-24 text-center " style="direction:rtl; unicode-bidi:isolate;">{{ player.full_name }}</div>
+<div dir="rtl" class="text-[9px] text-amber-300 font-bold w-24 text-center drop-shadow" style="direction:rtl; unicode-bidi:isolate;">{{ player.team.name }}</div>
+                </div>
+                {% endwith %}
+                {% endif %}
+
+                {% if best_xi.defenders.1 %}
+                {% with player=best_xi.defenders.1 %}
+                <div class="absolute flex flex-col items-center text-center -translate-x-1/2 -translate-y-1/2" style="top: 70%; left: 39%;">
+                    <div class="w-12 h-12 rounded-full border-2 border-white/80 bg-slate-950 overflow-hidden flex items-center justify-center shadow-lg relative">
+                        {% if player.photo %}
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <span class="text-[#C5A028] font-black text-sm font-bebas">{{ player.jersey_number|default:"4" }}</span>
+                        {% endif %}
+                    </div>
+                    <div dir="rtl" class="bg-slate-950/90 text-white font-bold text-[10px] px-2 py-0.5 rounded-lg border border-amber-400/40 mt-1 shadow-md w-24 text-center " style="direction:rtl; unicode-bidi:isolate;">{{ player.full_name }}</div>
+<div dir="rtl" class="text-[9px] text-amber-300 font-bold w-24 text-center drop-shadow" style="direction:rtl; unicode-bidi:isolate;">{{ player.team.name }}</div>
+                </div>
+                {% endwith %}
+                {% endif %}
+
+                {% if best_xi.defenders.2 %}
+                {% with player=best_xi.defenders.2 %}
+                <div class="absolute flex flex-col items-center text-center -translate-x-1/2 -translate-y-1/2" style="top: 70%; left: 61%;">
+                    <div class="w-12 h-12 rounded-full border-2 border-white/80 bg-slate-950 overflow-hidden flex items-center justify-center shadow-lg relative">
+                        {% if player.photo %}
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <span class="text-[#C5A028] font-black text-sm font-bebas">{{ player.jersey_number|default:"5" }}</span>
+                        {% endif %}
+                    </div>
+                    <div dir="rtl" class="bg-slate-950/90 text-white font-bold text-[10px] px-2 py-0.5 rounded-lg border border-amber-400/40 mt-1 shadow-md w-24 text-center " style="direction:rtl; unicode-bidi:isolate;">{{ player.full_name }}</div>
+<div dir="rtl" class="text-[9px] text-amber-300 font-bold w-24 text-center drop-shadow" style="direction:rtl; unicode-bidi:isolate;">{{ player.team.name }}</div>
+                </div>
+                {% endwith %}
+                {% endif %}
+
+                {% if best_xi.defenders.3 %}
+                {% with player=best_xi.defenders.3 %}
+                <div class="absolute flex flex-col items-center text-center -translate-x-1/2 -translate-y-1/2" style="top: 72%; left: 82%;">
+                    <div class="w-12 h-12 rounded-full border-2 border-white/80 bg-slate-950 overflow-hidden flex items-center justify-center shadow-lg relative">
+                        {% if player.photo %}
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <span class="text-[#C5A028] font-black text-sm font-bebas">{{ player.jersey_number|default:"3" }}</span>
+                        {% endif %}
+                    </div>
+                    <div dir="rtl" class="bg-slate-950/90 text-white font-bold text-[10px] px-2 py-0.5 rounded-lg border border-amber-400/40 mt-1 shadow-md w-24 text-center " style="direction:rtl; unicode-bidi:isolate;">{{ player.full_name }}</div>
+<div dir="rtl" class="text-[9px] text-amber-300 font-bold w-24 text-center drop-shadow" style="direction:rtl; unicode-bidi:isolate;">{{ player.team.name }}</div>
+                </div>
+                {% endwith %}
+                {% endif %}
+
+                <!-- Midfielders -->
+                {% if best_xi.midfielders.0 %}
+                {% with player=best_xi.midfielders.0 %}
+                <div class="absolute flex flex-col items-center text-center -translate-x-1/2 -translate-y-1/2" style="top: 52%; left: 22%;">
+                    <div class="w-12 h-12 rounded-full border-2 border-white/80 bg-slate-950 overflow-hidden flex items-center justify-center shadow-lg relative">
+                        {% if player.photo %}
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <span class="text-[#C5A028] font-black text-sm font-bebas">{{ player.jersey_number|default:"8" }}</span>
+                        {% endif %}
+                    </div>
+                    <div dir="rtl" class="bg-slate-950/90 text-white font-bold text-[10px] px-2 py-0.5 rounded-lg border border-amber-400/40 mt-1 shadow-md w-24 text-center " style="direction:rtl; unicode-bidi:isolate;">{{ player.full_name }}</div>
+<div dir="rtl" class="text-[9px] text-amber-300 font-bold w-24 text-center drop-shadow" style="direction:rtl; unicode-bidi:isolate;">{{ player.team.name }}</div>
+                </div>
+                {% endwith %}
+                {% endif %}
+
+                {% if best_xi.midfielders.1 %}
+                {% with player=best_xi.midfielders.1 %}
+                <div class="absolute flex flex-col items-center text-center -translate-x-1/2 -translate-y-1/2" style="top: 48%; left: 50%;">
+                    <div class="w-12 h-12 rounded-full border-2 border-white/80 bg-slate-950 overflow-hidden flex items-center justify-center shadow-lg relative">
+                        {% if player.photo %}
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <span class="text-[#C5A028] font-black text-sm font-bebas">{{ player.jersey_number|default:"10" }}</span>
+                        {% endif %}
+                    </div>
+                    <div dir="rtl" class="bg-slate-950/90 text-white font-bold text-[10px] px-2 py-0.5 rounded-lg border border-amber-400/40 mt-1 shadow-md w-24 text-center " style="direction:rtl; unicode-bidi:isolate;">{{ player.full_name }}</div>
+<div dir="rtl" class="text-[9px] text-amber-300 font-bold w-24 text-center drop-shadow" style="direction:rtl; unicode-bidi:isolate;">{{ player.team.name }}</div>
+                </div>
+                {% endwith %}
+                {% endif %}
+
+                {% if best_xi.midfielders.2 %}
+                {% with player=best_xi.midfielders.2 %}
+                <div class="absolute flex flex-col items-center text-center -translate-x-1/2 -translate-y-1/2" style="top: 52%; left: 78%;">
+                    <div class="w-12 h-12 rounded-full border-2 border-white/80 bg-slate-950 overflow-hidden flex items-center justify-center shadow-lg relative">
+                        {% if player.photo %}
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <span class="text-[#C5A028] font-black text-sm font-bebas">{{ player.jersey_number|default:"6" }}</span>
+                        {% endif %}
+                    </div>
+                    <div dir="rtl" class="bg-slate-950/90 text-white font-bold text-[10px] px-2 py-0.5 rounded-lg border border-amber-400/40 mt-1 shadow-md w-24 text-center " style="direction:rtl; unicode-bidi:isolate;">{{ player.full_name }}</div>
+<div dir="rtl" class="text-[9px] text-amber-300 font-bold w-24 text-center drop-shadow" style="direction:rtl; unicode-bidi:isolate;">{{ player.team.name }}</div>
+                </div>
+                {% endwith %}
+                {% endif %}
+
+                <!-- Forwards -->
+                {% if best_xi.forwards.0 %}
+                {% with player=best_xi.forwards.0 %}
+                <div class="absolute flex flex-col items-center text-center -translate-x-1/2 -translate-y-1/2" style="top: 30%; left: 20%;">
+                    <div class="w-12 h-12 rounded-full border-2 border-white/80 bg-slate-950 overflow-hidden flex items-center justify-center shadow-lg relative">
+                        {% if player.photo %}
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <span class="text-[#C5A028] font-black text-sm font-bebas">{{ player.jersey_number|default:"7" }}</span>
+                        {% endif %}
+                    </div>
+                    <div dir="rtl" class="bg-slate-950/90 text-white font-bold text-[10px] px-2 py-0.5 rounded-lg border border-amber-400/40 mt-1 shadow-md w-24 text-center " style="direction:rtl; unicode-bidi:isolate;">{{ player.full_name }}</div>
+<div dir="rtl" class="text-[9px] text-amber-300 font-bold w-24 text-center drop-shadow" style="direction:rtl; unicode-bidi:isolate;">{{ player.team.name }}</div>
+                </div>
+                {% endwith %}
+                {% endif %}
+
+                {% if best_xi.forwards.1 %}
+                {% with player=best_xi.forwards.1 %}
+                <div class="absolute flex flex-col items-center text-center -translate-x-1/2 -translate-y-1/2" style="top: 24%; left: 50%;">
+                    <div class="w-12 h-12 rounded-full border-2 border-white/80 bg-slate-950 overflow-hidden flex items-center justify-center shadow-lg relative">
+                        {% if player.photo %}
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <span class="text-[#C5A028] font-black text-sm font-bebas">{{ player.jersey_number|default:"9" }}</span>
+                        {% endif %}
+                    </div>
+                    <div dir="rtl" class="bg-slate-950/90 text-white font-bold text-[10px] px-2 py-0.5 rounded-lg border border-amber-400/40 mt-1 shadow-md w-24 text-center " style="direction:rtl; unicode-bidi:isolate;">{{ player.full_name }}</div>
+<div dir="rtl" class="text-[9px] text-amber-300 font-bold w-24 text-center drop-shadow" style="direction:rtl; unicode-bidi:isolate;">{{ player.team.name }}</div>
+                </div>
+                {% endwith %}
+                {% endif %}
+
+                {% if best_xi.forwards.2 %}
+                {% with player=best_xi.forwards.2 %}
+                <div class="absolute flex flex-col items-center text-center -translate-x-1/2 -translate-y-1/2" style="top: 30%; left: 80%;">
+                    <div class="w-12 h-12 rounded-full border-2 border-white/80 bg-slate-950 overflow-hidden flex items-center justify-center shadow-lg relative">
+                        {% if player.photo %}
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <span class="text-[#C5A028] font-black text-sm font-bebas">{{ player.jersey_number|default:"11" }}</span>
+                        {% endif %}
+                    </div>
+                    <div dir="rtl" class="bg-slate-950/90 text-white font-bold text-[10px] px-2 py-0.5 rounded-lg border border-amber-400/40 mt-1 shadow-md w-24 text-center " style="direction:rtl; unicode-bidi:isolate;">{{ player.full_name }}</div>
+<div dir="rtl" class="text-[9px] text-amber-300 font-bold w-24 text-center drop-shadow" style="direction:rtl; unicode-bidi:isolate;">{{ player.team.name }}</div>
+                </div>
+                {% endwith %}
+                {% endif %}
+
+            </div>
+        </div>
+
+        <div class="mt-8 pt-4 border-t border-slate-200 flex justify-between items-center text-xs text-slate-400 font-bold">
+            <span>{{ site_settings.app_name|upper }} · {{ tournament.year }}</span><span class="page-num"></span>
+            <span>التشكيلة المثالية / Équipe Type de la Saison</span>
+        </div>
+    </div>
+
+    <!-- PAGE 11: FAIR PLAY STANDINGS (Paginated 10 Teams Per A4 Page) -->
+    {% if fair_play_pages %}
+    {% for fp_chunk in fair_play_pages %}
+    <div class="page-container page-break flex flex-col justify-between">
+        <div>
+            <div class="border-b-4 border-[#C5A028] pb-3 mb-5 flex items-center justify-between">
+                <div>
+                    <h2 class="text-3xl font-black text-slate-900">ترتيب اللعب النظيف</h2>
+                    <p class="text-slate-500 font-bold tracking-widest uppercase">Classement du Fair-Play / Disciplinary Standings</p>
+                </div>
+                <div class="bg-amber-500/10 text-[#C5A028] border border-[#C5A028]/30 text-xs font-bold px-3 py-1.5 rounded-xl">
+                    صفحة {{ forloop.counter }} من {{ fair_play_pages|length }}
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-5 mb-4">
+                {% if forloop.first %}
+                <!-- Fair Play Winner Card -->
+                <div class="col-span-1 avoid-break bg-slate-50 border border-slate-200 rounded-3xl p-5 flex flex-col items-center justify-center text-center relative overflow-hidden shadow-sm">
+                    <div class="absolute top-2 right-2 text-emerald-500 font-black text-lg select-none">🕊️</div>
+                    <div class="w-14 h-14 rounded-full overflow-hidden bg-white border border-slate-200 mb-2 flex items-center justify-center shadow-inner">
+                        {% if fair_play_winner.team.logo %}
+                            <img src="{{ fair_play_winner.team.logo.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <span class="text-2xl">🛡️</span>
+                        {% endif %}
+                    </div>
+                    <h3 class="text-sm font-black text-emerald-700 mb-0.5">الفريق المثالي</h3>
+                    <span class="text-[8px] text-slate-400 font-bold uppercase tracking-wider mb-2">Prix du Fair-Play</span>
+                    {% if fair_play_winner %}
+                        <p class="text-base font-black text-slate-900">{{ fair_play_winner.team.name }}</p>
+                        <p class="text-xs text-slate-500 font-bold mt-1">النقاط: {{ fair_play_winner.points }} Pts</p>
+                    {% else %}
+                        <p class="text-xs text-slate-400">لم يحدد بعد / Non défini</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Standings table -->
+                <div class="{% if forloop.first %}col-span-2{% else %}col-span-3{% endif %} overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-sm">
+                    <table class="w-full text-xs text-right">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 border-b border-slate-200 font-bold">
+                                <th class="py-2.5 px-3 text-center w-12 font-bold">الترتيب</th>
+                                <th class="py-2.5 px-3 font-bold">الفريق</th>
+                                <th class="py-2.5 px-3 text-center font-bold">🟨 صفراء</th>
+                                <th class="py-2.5 px-3 text-center font-bold">🟥 حمراء</th>
+                                <th class="py-2.5 px-3 text-center font-bold text-[#C5A028]">مجموع النقاط</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 font-semibold text-slate-700">
+                            {% for item in fp_chunk %}
+                            <tr class="hover:bg-slate-50/50 transition-colors">
+                                <td class="py-2 px-3 text-center font-bebas text-sm font-bold bg-slate-50/30">#{{ forloop.counter }}</td>
+                                <td class="py-2 px-3 font-bold text-slate-900 flex items-center gap-2">
+                                    {% if item.team.logo %}
+                                        <img src="{{ item.team.logo.url }}" class="w-4 h-4 rounded-full object-cover">
+                                    {% endif %}
+                                    {{ item.team.name }}
+                                </td>
+                                <td class="py-2 px-3 text-center text-amber-500 font-bebas text-sm">{{ item.yellow }}</td>
+                                <td class="py-2 px-3 text-center text-red-600 font-bebas text-sm">{{ item.red }}</td>
+                                <td class="py-2 px-3 text-center text-[#C5A028] font-bebas text-base font-bold bg-[#C5A028]/5">{{ item.points }}</td>
+                            </tr>
+                            {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            </div>
+        </div>
+        <div class="mt-6 pt-3 border-t border-slate-200 flex justify-between items-center text-xs text-slate-400 font-bold">
+            <span>{{ site_settings.app_name|upper }} · {{ tournament.year }}</span><span class="page-num"></span>
+            <span>ترتيب اللعب النظيف / Classement Fair-Play ({{ forloop.counter }}/{{ fair_play_pages|length }})</span>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- PAGE 12: HISTORICAL TOURNAMENTS (لوحة الشرف التاريخية) -->
+<div class="page-container page-break flex flex-col justify-between">
+    <div>
+        <div class="border-b-4 border-[#C5A028] pb-4 mb-8">
+            <h2 class="text-3xl font-black text-slate-900">لوحة الشرف التاريخية</h2>
+            <p class="text-slate-500 font-bold tracking-widest uppercase">Palmarès Historique / Historical Hall of Fame</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-6">
+            {% for hist in historical_tournaments %}
+                <div class="avoid-break bg-slate-50 border border-slate-200 rounded-3xl p-6 flex flex-col justify-between shadow-sm">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-xs bg-[#C5A028]/10 text-[#C5A028] font-bold px-3 py-1 rounded-full">النسخة {{ hist.edition }} ({{ hist.year }})</span>
+                        <span class="text-sm font-black text-slate-900">{{ hist.name }}</span>
+                    </div>
+                    <div class="space-y-1.5 text-xs text-slate-700">
+                        <div class="flex items-center justify-between border-b border-slate-200/50 pb-1">
+                            <span class="text-slate-400 flex items-center gap-1">🏆 البطل:</span>
+                            <span class="font-black text-emerald-700">{{ hist.winner.name|default:"غير محدد" }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400 flex items-center gap-1">🥈 الوصيف:</span>
+                            <span class="font-bold text-slate-800">{{ hist.runner_up.name|default:"غير محدد" }}</span>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-span-2 py-12 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
+                    لا يوجد نسخ سابقة مسجلة في الأرشيف حالياً.
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="mt-8 pt-4 border-t border-slate-200 flex justify-between items-center text-xs text-slate-400 font-bold">
+        <span>{{ site_settings.app_name|upper }} · {{ tournament.year }}</span><span class="page-num"></span>
+        <span>لوحة الشرف التاريخية / Palmarès Historique</span>
+    </div>
+</div>
+    <!-- PAGE 13: PHOTO GALLERY (معرض صور البطولة) -->
+    {% if other_awards_media %}
+    <div class="page-container page-break flex flex-col justify-between">
+        <div>
+            <div class="border-b-4 border-[#C5A028] pb-4 mb-8">
+                <h2 class="text-3xl font-black text-slate-900">معرض صور البطولة</h2>
+                <p class="text-slate-500 font-bold tracking-widest uppercase">Galerie Photos de la Compétition / Tournament Gallery</p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-6">
+                {% for mm in other_awards_media|slice:":9" %}
+                <div class="avoid-break bg-slate-50 rounded-2xl border border-slate-200 p-3 shadow-sm flex flex-col justify-between" style="aspect-ratio: 0.95;">
+                    <div class="w-full aspect-[4/3] rounded-xl overflow-hidden border border-slate-200/60 bg-slate-100 flex items-center justify-center relative">
+                        {% if mm.file %}
+                            <img src="{{ mm.file.url }}" class="max-w-full max-h-full object-contain">
+                        {% elif mm.url %}
+                            <img src="{{ mm.url }}" class="max-w-full max-h-full object-contain">
+                        {% endif %}
+                    </div>
+                    {% if mm.cleaned_title %}
+                    <p class="text-[10px] text-slate-600 font-black text-center mt-2 px-1 line-clamp-2" dir="rtl">{{ mm.cleaned_title }}</p>
+                    {% else %}
+                    <p class="text-[9px] text-slate-400 text-center mt-2 italic">لقطة من البطولة / Match Moment</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="mt-8 pt-4 border-t border-slate-200 flex justify-between items-center text-xs text-slate-400 font-bold">
+            <span>{{ site_settings.app_name|upper }} · {{ tournament.year }}</span><span class="page-num"></span>
+            <span>معرض الصور / Galerie Photos</span>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- PAGE 13: SIGNATURES (صفحة الإمضاءات الرسمية) -->
+    <div class="page-container page-break flex flex-col justify-between" style="min-height:297mm;">
+        <div>
+            <!-- Header -->
+            <div style="border-bottom:4px solid #C5A028;padding-bottom:20px;margin-bottom:32px;display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <h2 style="font-size:28px;font-weight:900;color:#0f172a;margin:0;">الإمضاءات الرسمية</h2>
+                    <p style="color:#64748b;font-weight:700;letter-spacing:3px;text-transform:uppercase;font-size:11px;margin:4px 0 0;">Signatures Officielles / Official Signatures</p>
+                </div>
+                {% if site_settings.app_logo %}
+                <img src="{{ site_settings.app_logo.url }}" style="height:52px;width:auto;object-fit:contain;">
+                {% endif %}
+            </div>
+
+            <!-- Official text -->
+            <div style="background:linear-gradient(135deg,#f8fafc,#f1f5f9);border-radius:16px;padding:28px;border:1px solid #e2e8f0;margin-bottom:36px;text-align:center;">
+                <div style="font-size:22px;margin-bottom:10px;">📜</div>
+                <p style="color:#0f172a;font-size:14px;font-weight:700;line-height:2;margin:0;">
+                    نحن الموقعون أدناه، أعضاء اللجنة المنظمة لبطولة
+                    <strong style="color:#C5A028;">{{ tournament.name }}</strong>
+                    للموسم الرياضي
+                    <strong style="color:#1a5c2a;">{{ tournament.year }}</strong>،
+                    نُشهد بأن هذا الكتاب الرسمي يتضمن جميع نتائج وإحصائيات وسجلات هذه الدورة بشكل دقيق وموثوق.
+                </p>
+                <div style="width:60px;height:2px;background:linear-gradient(90deg,transparent,#C5A028,transparent);margin:16px auto 12px;"></div>
+                <p style="color:#94a3b8;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-style:italic;">
+                    En foi de quoi, les membres du comité organisateur de la compétition <strong>{{ tournament.name }}</strong> — Édition {{ tournament.year }} —
+                    certifient l'exactitude et la conformité de ce rapport officiel.
+                </p>
+            </div>
+
+            <!-- Signature Boxes Grid -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:32px;">
+
+                <!-- Box 1: President -->
+                <div class="sig-box">
+                    <div>
+                        <div style="font-size:28px;margin-bottom:8px;">🎖️</div>
+                        <p style="color:#64748b;font-size:9px;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:4px;">Président du Club</p>
+                        <h4 style="color:#0f172a;font-size:14px;font-weight:900;margin:0 0 4px;">رئيس نادي الوفاق الرياضي</h4>
+                        <p style="color:#C5A028;font-size:13px;font-weight:700;margin:0 0 20px;">مسلمون</p>
+                    </div>
+                    <div class="sig-line">
+                        <p style="color:#94a3b8;font-size:9px;"><span>التوقيع</span> / <span style="letter-spacing:2px;text-transform:uppercase;">Signature</span></p>
+                    </div>
+                </div>
+
+                <!-- Box 2: Organizing Committee -->
+                <div class="sig-box">
+                    <div>
+                        <div style="font-size:28px;margin-bottom:8px;">🏅</div>
+                        <p style="color:#64748b;font-size:9px;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:4px;">Comité d'Organisation</p>
+                        <h4 style="color:#0f172a;font-size:14px;font-weight:900;margin:0 0 4px;">رئيس اللجنة المنظمة</h4>
+                        <p style="color:#C5A028;font-size:13px;font-weight:700;margin:0 0 20px;">للدورة الرياضية</p>
+                    </div>
+                    <div class="sig-line">
+                        <p style="color:#94a3b8;font-size:9px;"><span>التوقيع</span> / <span style="letter-spacing:2px;text-transform:uppercase;">Signature</span></p>
+                    </div>
+                </div>
+
+                <!-- Box 3: Technical Committee -->
+                <div class="sig-box">
+                    <div>
+                        <div style="font-size:28px;margin-bottom:8px;">⚖️</div>
+                        <p style="color:#64748b;font-size:9px;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:4px;">Comité Technique</p>
+                        <h4 style="color:#0f172a;font-size:14px;font-weight:900;margin:0 0 4px;">رئيس اللجنة التقنية</h4>
+                        <p style="color:#C5A028;font-size:13px;font-weight:700;margin:0 0 20px;">والتحكيمية</p>
+                    </div>
+                    <div class="sig-line">
+                        <p style="color:#94a3b8;font-size:9px;"><span>التوقيع</span> / <span style="letter-spacing:2px;text-transform:uppercase;">Signature</span></p>
+                    </div>
+                </div>
+
+                <!-- Box 4: Secretary -->
+                <div class="sig-box">
+                    <div>
+                        <div style="font-size:28px;margin-bottom:8px;">📋</div>
+                        <p style="color:#64748b;font-size:9px;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:4px;">Secrétaire Général</p>
+                        <h4 style="color:#0f172a;font-size:14px;font-weight:900;margin:0 0 4px;">الأمين العام للنادي</h4>
+                        <p style="color:#C5A028;font-size:13px;font-weight:700;margin:0 0 20px;">نادي الوفاق مسلمون</p>
+                    </div>
+                    <div class="sig-line">
+                        <p style="color:#94a3b8;font-size:9px;"><span>التوقيع</span> / <span style="letter-spacing:2px;text-transform:uppercase;">Signature</span></p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Official Stamp area -->
+            <div style="display:flex;justify-content:center;">
+                <div style="border:2px dashed #cbd5e1;border-radius:50%;width:130px;height:130px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f8fafc;">
+                    <div style="font-size:24px;margin-bottom:4px;">📌</div>
+                    <p style="color:#94a3b8;font-size:9px;text-align:center;font-weight:700;"><span>الختم الرسمي</span><br><span style="letter-spacing:2px;text-transform:uppercase;">Cachet Officiel</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Final Footer -->
+        <div style="margin-top:32px;border-top:3px solid #C5A028;padding-top:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <p style="color:#64748b;font-size:10px;font-weight:700;margin:0;">{{ site_settings.app_name|upper }} · {{ tournament.year }}</p>
+                    <p style="color:#94a3b8;font-size:8px;margin:2px 0 0;letter-spacing:1px;">TURN-ESM · MESSLMOUN · Algeria</p>
+                </div>
+                <div style="text-align:center;">
+                    <p style="color:#C5A028;font-size:10px;font-weight:900;margin:0;">نادي الوفاق الرياضي مسلمون</p>
+                    <p style="color:#94a3b8;font-size:8px;margin:2px 0 0;letter-spacing:1px;">Club Sportif El-Wifak Messlmoun</p>
+                </div>
+                <div style="text-align:left;">
+                    <p style="color:#64748b;font-size:10px;font-weight:700;margin:0;">الكتاب الرسمي للدورة</p>
+                    <p style="color:#94a3b8;font-size:8px;margin:2px 0 0;letter-spacing:1px;">Rapport Officiel · Page Finale</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+function shareOnFacebook() {
+    // Construct clean URL with ?download=1 for auto-downloading when accessed from Facebook
+    const baseUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
+    const shareUrl = encodeURIComponent(baseUrl + '?download=1');
+    const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`;
+    window.open(fbShareUrl, '_blank', 'width=600,height=400');
+}
+
+let downloadTimeout;
+const urlParams = new URLSearchParams(window.location.search);
+window.onload = function() {
+    if (urlParams.get('print') === '1') {
+        window.print();
+    } else if (urlParams.get('download') === '1') {
+        const overlay = document.getElementById('auto-download-overlay');
+        const progBar = document.getElementById('progress-bar');
+        if (overlay && progBar) {
+            overlay.classList.remove('hidden');
+            setTimeout(() => {
+                progBar.style.width = '100%';
+            }, 50);
+        }
+        
+        // Wait for styles/images/fonts and trigger download
+        downloadTimeout = setTimeout(async () => {
+            await downloadPDF();
+            if (overlay) {
+                overlay.classList.add('hidden');
+            }
+        }, 1800);
+    }
+}
+
+        async function downloadPDF() {
+            const btn = document.getElementById('download-pdf-btn');
+            const originalText = btn.innerHTML;
+            btn.style.opacity = '0.7';
+            btn.style.pointerEvents = 'none';
+
+            // ─── STEP 1: Preload Cairo Arabic font before any capture ───
+            btn.innerHTML = '⏳ تحميل الخطوط... / Chargement polices...';
+            try {
+                // Force-load Arabic weights of Cairo from Google Fonts
+                const weights = ['400', '700', '900'];
+                const fontLoads = weights.map(w =>
+                    new FontFace('Cairo',
+                        `url(https://fonts.gstatic.com/s/cairo/v28/SLXVc1nY6HkvangtZmpcWmhzfH5lWWgcQyyEEQ.woff2) format('woff2')`,
+                        { weight: w, style: 'normal', display: 'swap' }
+                    ).load().then(f => document.fonts.add(f)).catch(() => {})
+                );
+                await Promise.allSettled(fontLoads);
+                await document.fonts.ready;
+            } catch(e) {
+                console.warn('Font preload warning:', e);
+            }
+
+            // ─── STEP 2: Hide no-print elements ───
+            const noPrintEls = document.querySelectorAll('.no-print');
+            noPrintEls.forEach(el => el.style.display = 'none');
+
+            const tournamentName = "{{ tournament.name|slugify }}";
+            const pages = document.querySelectorAll('#book-content .page-container');
+            const A4_W_MM = 210;
+            const A4_H_MM = 297;
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+
+                for (let i = 0; i < pages.length; i++) {
+                    const page = pages[i];
+                    btn.innerHTML = `⏳ صفحة ${i + 1} / ${pages.length}`;
+
+                    // ─── Save original styles ───
+                    const origStyles = {
+                        width:        page.style.width,
+                        minHeight:    page.style.minHeight,
+                        maxWidth:     page.style.maxWidth,
+                        boxShadow:    page.style.boxShadow,
+                        borderRadius: page.style.borderRadius,
+                        margin:       page.style.margin,
+                        padding:      page.style.padding,
+                        boxSizing:    page.style.boxSizing,
+                        position:     page.style.position,
+                    };
+
+                    // ─── Apply print-ready dimensions ───
+                    page.style.width        = '794px';    // ≈ 210mm @96dpi
+                    page.style.minHeight    = '1123px';   // ≈ 297mm @96dpi
+                    page.style.maxWidth     = 'none';
+                    page.style.boxShadow    = 'none';
+                    page.style.borderRadius = '0';
+                    page.style.margin       = '0';
+                    page.style.boxSizing    = 'border-box';
+                    page.style.backgroundColor = '#ffffff';
+                    page.style.position     = 'relative';
+
+                    if (page.classList.contains('cover-page')) {
+                        page.style.padding = '0';
+                    } else {
+                        page.style.padding = '60px';
+                    }
+
+                    // ─── Wait for styles to reflow ───
+                    await new Promise(r => setTimeout(r, 80));
+
+                    // ─── Capture page as canvas ───
+                    const canvas = await html2canvas(page, {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: false,
+                        backgroundColor: '#ffffff',
+                        scrollX: 0,
+                        scrollY: 0,
+                        logging: false,
+                        letterRendering: false,   // Critical for preserving Arabic ligatures and connected letters
+                        foreignObjectRendering: false,
+                        onclone: (clonedDoc, clonedEl) => {
+                            // ── Force RTL & Arabic language in cloned DOM ──
+                            clonedDoc.documentElement.setAttribute('dir', 'rtl');
+                            clonedDoc.documentElement.setAttribute('lang', 'ar');
+                            if (clonedDoc.body) {
+                                clonedDoc.body.style.direction = 'rtl';
+                                clonedDoc.body.style.fontFamily = "'Cairo', 'Amiri', 'Segoe UI', sans-serif";
+                            }
+
+                            // ── Inject CSS rule to reset letter-spacing, overflow clipping & enforce ligatures ──
+                            const fixStyle = clonedDoc.createElement('style');
+                            fixStyle.innerHTML = `
+                                * {
+                                    letter-spacing: normal !important;
+                                    word-spacing: normal !important;
+                                    font-variant-ligatures: normal !important;
+                                    font-feature-settings: "liga" 1, "dlig" 1 !important;
+                                    overflow: visible !important;
+                                    text-overflow: clip !important;
+                                }
+                                [dir="rtl"], [dir="rtl"] *, .page-container * {
+                                    text-transform: none !important;
+                                    letter-spacing: 0px !important;
+                                    word-spacing: normal !important;
+                                    font-family: 'Cairo', 'Amiri', 'Segoe UI', sans-serif !important;
+                                    overflow: visible !important;
+                                }
+                            `;
+                            clonedDoc.head.appendChild(fixStyle);
+
+                            // ── Strip tracking/uppercase/truncate on any elements with Arabic text ──
+                            clonedDoc.querySelectorAll('*').forEach(el => {
+                                el.style.overflow = 'visible';
+                                el.style.textOverflow = 'clip';
+                                const txt = el.textContent || '';
+                                if (/[\u0600-\u06FF]/.test(txt)) {
+                                    el.style.letterSpacing = '0px';
+                                    el.style.wordSpacing = 'normal';
+                                    el.style.textTransform = 'none';
+                                    el.style.fontVariantLigatures = 'normal';
+                                    el.style.fontFamily = "'Cairo', 'Amiri', sans-serif";
+                                    el.classList.remove('tracking-widest', 'tracking-wider', 'tracking-wide', 'tracking-tight', 'uppercase', 'truncate');
+                                }
+                            });
+                        }
+                    });
+
+                    // ─── Restore original styles ───
+                    Object.assign(page.style, origStyles);
+
+                    // ─── Add image to PDF ───
+                    const imgData    = canvas.toDataURL('image/jpeg', 0.95);
+                    const canvasW    = canvas.width;
+                    const canvasH    = canvas.height;
+                    const imgHeightMM = (canvasH / canvasW) * A4_W_MM;
+
+                    if (i > 0) pdf.addPage();
+                    pdf.addImage(imgData, 'JPEG', 0, 0, A4_W_MM, A4_H_MM);
+                }
+
+                pdf.save(`Livre_du_Tournoi_${tournamentName || 'Tournament'}.pdf`);
+
+            } catch (err) {
+                console.error('PDF Export Error:', err);
+                alert('حدث خطأ أثناء تحميل الكتيب، يرجى المحاولة مرة أخرى.');
+            } finally {
+                noPrintEls.forEach(el => el.style.display = '');
+                btn.innerHTML = originalText;
+                btn.style.opacity = '1';
+                btn.style.pointerEvents = 'auto';
+            }
+        }
+    </script>
+</body>
+</html>

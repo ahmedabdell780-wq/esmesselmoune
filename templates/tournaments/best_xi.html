@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load i18n static %}
+{% block title %}{% trans "Onze Idéal" %} - {{ tournament.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-8 min-h-screen">
+    
+    <!-- HEADER & CONTROLS -->
+    <div class="flex flex-col md:flex-row items-center justify-between gap-6 mb-12">
+        <div class="text-center md:text-left">
+            <h1 class="font-bebas text-6xl text-white tracking-widest mb-2">
+                {% trans "التشكيلة المثالية" %}
+            </h1>
+            <p class="text-primary font-bold uppercase tracking-widest text-xs">
+                DREAM TEAM • {{ tournament.name }}
+            </p>
+        </div>
+
+        <!-- FORMATION SELECTOR -->
+        <div class="flex items-center gap-3 bg-white/5 p-2 rounded-2xl border border-white/10">
+            <span class="text-[10px] font-black text-gray-500 uppercase px-3">الخطة / Formation</span>
+            <div class="flex gap-1">
+                {% for form in available_formations %}
+                <a href="?formation={{ form }}" 
+                   class="px-4 py-2 rounded-xl text-xs font-black transition-all
+                   {% if current_formation == form %}bg-primary text-black shadow-lg shadow-primary/20{% else %}bg-white/5 text-gray-400 hover:bg-white/10{% endif %}">
+                    {{ form }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- PITCH VISUALIZATION (Top-Down Tactical View) -->
+    <div class="relative max-w-4xl mx-auto mb-20">
+        
+        <!-- Tactical Board Pitch -->
+        <div class="relative w-full aspect-[3/4] md:aspect-[4/3] bg-slate-900 rounded-[3rem] border-[8px] border-slate-800 shadow-2xl overflow-hidden p-10">
+            
+            <!-- Pitch Markings (Cleaner White Lines) -->
+            <div class="absolute inset-8 border-2 border-white/10 pointer-events-none">
+                <div class="absolute top-1/2 left-0 right-0 h-[2px] bg-white/10"></div>
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 border-2 border-white/10 rounded-full"></div>
+                
+                <!-- Penalty Areas -->
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-3/5 h-1/5 border-2 border-white/10 border-t-0"></div>
+                <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/5 h-1/5 border-2 border-white/10 border-b-0"></div>
+            </div>
+
+            <!-- PLAYERS LAYER (Vertical Flow for better clarity on mobile/web) -->
+            <div class="relative h-full flex flex-col justify-between items-stretch py-2">
+                
+                <!-- FORWARDS (FWD) -->
+                <div class="flex justify-center gap-8 md:gap-16">
+                    {% for player in best_xi.FWD %}
+                        {% include 'tournaments/includes/best_xi_player.html' with player=player %}
+                    {% endfor %}
+                </div>
+
+                <!-- MIDFIELDERS (MID) -->
+                <div class="flex justify-center gap-6 md:gap-12">
+                    {% for player in best_xi.MID %}
+                        {% include 'tournaments/includes/best_xi_player.html' with player=player %}
+                    {% endfor %}
+                </div>
+
+                <!-- DEFENDERS (DEF) -->
+                <div class="flex justify-center gap-4 md:gap-10">
+                    {% for player in best_xi.DEF %}
+                        {% include 'tournaments/includes/best_xi_player.html' with player=player %}
+                    {% endfor %}
+                </div>
+
+                <!-- GOALKEEPER (GK) -->
+                <div class="flex justify-center">
+                    {% for player in best_xi.GK %}
+                        {% include 'tournaments/includes/best_xi_player.html' with player=player %}
+                    {% endfor %}
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Decorative Labels -->
+        <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-1 bg-primary text-black font-black text-[10px] uppercase tracking-[0.3em] rounded-full shadow-xl">
+            Attack Zone
+        </div>
+        <div class="absolute -bottom-4 left-1/2 -translate-x-1/2 px-6 py-1 bg-slate-800 text-white/40 font-black text-[10px] uppercase tracking-[0.3em] rounded-full">
+            Defense Zone
+        </div>
+    </div>
+
+    <!-- PLAYER SCOREBOARD (Detailed List) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {% for player in best_xi_list %}
+        <div class="group bg-white/5 border border-white/10 rounded-3xl p-5 hover:bg-white/10 transition-all duration-300">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="w-12 h-12 rounded-2xl bg-slate-800 border border-white/10 overflow-hidden flex items-center justify-center">
+                    {% if player.photo %}<img src="{{ player.photo.url }}" class="w-full h-full object-cover">{% else %}<span class="text-white/10 font-bebas">{{ player.first_name|first }}</span>{% endif %}
+                </div>
+                <div>
+                    <div class="text-[9px] font-black text-primary uppercase tracking-widest">{{ player.get_position_display }}</div>
+                    <div class="text-white font-bold text-sm">{{ player.full_name }}</div>
+                </div>
+            </div>
+            
+            <div class="space-y-2">
+                <div class="flex justify-between items-center text-[10px]">
+                    <span class="text-gray-500 font-bold uppercase">Club</span>
+                    <span class="text-white font-bold">{{ player.team.name }}</span>
+                </div>
+                <div class="flex justify-between items-center text-[10px]">
+                    <span class="text-gray-500 font-bold uppercase">Performance Index</span>
+                    <span class="text-primary font-bebas text-lg">{{ player.dream_score|floatformat:1 }}</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<style>
+    .font-bebas { font-family: 'Bebas Neue', sans-serif; }
+</style>
+{% endblock %}

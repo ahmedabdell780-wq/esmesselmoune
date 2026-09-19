@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>طباعة بطاقات اللاعبين - الوفاق</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Changa:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0b8772;
+            --primary-dark: #054a3e;
+            --text-dark: #1a1a1a;
+            --text-light: #777;
+        }
+        
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+        
+        body {
+            margin: 0;
+            padding: 20px 0;
+            background: #cbd5e1;
+            font-family: 'Tajawal', sans-serif;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Tajawal', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .a4-page {
+            width: 210mm;
+            height: 297mm;
+            margin: 0 auto 30px auto;
+            background: #ffffff;
+            box-sizing: border-box;
+            padding: 10mm 8mm;
+            page-break-after: always;
+            page-break-inside: avoid;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            position: relative;
+        }
+        
+        @media print {
+            .print-btn { display: none !important; }
+            .no-print { display: none !important; }
+            body { background: transparent !important; padding: 0 !important; margin: 0 !important; }
+            .a4-page {
+                margin: 0 !important;
+                box-shadow: none !important;
+                width: 210mm !important;
+                height: 297mm !important;
+                padding: 10mm 8mm !important;
+                page-break-after: always !important;
+                page-break-inside: avoid !important;
+            }
+        }
+
+        .cards-grid-8 {
+            display: grid;
+            grid-template-columns: repeat(2, 85.6mm);
+            grid-template-rows: repeat(4, 54mm);
+            gap: 4mm 6mm;
+            justify-content: center;
+            align-content: center;
+            margin: auto 0;
+        }
+
+        .card {
+            width: 85.6mm;
+            height: 54mm;
+            position: relative;
+            background: white;
+            box-sizing: border-box;
+            direction: rtl; /* RTL for Arabic content inside the cards */
+            border-radius: 4mm;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border: 1px dashed #ccc; /* خط متقطع خفيف للمساعدة في القص */
+        }
+
+        /* SVG Background */
+        .bg-svg {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+        }
+
+        /* Front Content */
+        .content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            width: 100%; height: 100%;
+        }
+
+        /* In RTL, right-col is the physical right side (white area), left-col is the physical left side (green area) */
+        .right-col {
+            width: 55%;
+            padding: 4mm 2mm 4mm 4mm;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-family: 'Changa', sans-serif;
+        }
+
+        .left-col {
+            width: 45%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding-right: 0;
+            padding-left: 2mm;
+        }
+
+        /* Typography */
+        .header-row {
+            position: relative;
+            width: 100%;
+            margin-bottom: 2mm;
+        }
+
+        .name-container {
+            width: 100%;
+            text-align: center;
+            padding: 0 13mm; /* Leaves space for the logo on right and keeps symmetry */
+        }
+
+        .name-box {
+            font-size: 4.5mm;
+            font-weight: 900;
+            line-height: 1.1;
+            word-wrap: break-word;
+            text-transform: uppercase;
+        }
+        .first-name { color: var(--primary); display: block; }
+        .last-name { color: var(--text-dark); font-size: 5mm; display: block; margin-top: 1px; }
+
+        .subtitle {
+            font-size: 2.8mm;
+            font-weight: 800;
+            color: var(--text-light);
+            margin-top: 1mm;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 1mm;
+            display: inline-block;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5mm 2.5mm;
+            margin-bottom: 1.5mm;
+            width: 100%;
+        }
+
+        .info-box {
+            display: flex;
+            flex-direction: column;
+            background: rgba(11, 135, 114, 0.04);
+            border-right: 2px solid var(--primary);
+            padding: 1mm 1.5mm;
+            border-radius: 1mm;
+        }
+
+        .info-label {
+            font-size: 2mm;
+            color: #64748b;
+            font-weight: 800;
+            margin-bottom: 0.3mm;
+        }
+
+        .info-val {
+            font-size: 2.5mm;
+            color: var(--text-dark);
+            font-weight: 900;
+            line-height: 1.1;
+        }
+
+        .id-number-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f1f5f9;
+            padding: 1.2mm 2mm;
+            border-radius: 1mm;
+            border: 1px dashed #cbd5e1;
+            margin-bottom: 2mm;
+        }
+        
+        .id-number-box .info-label { 
+            margin-bottom: 0; 
+            color: #475569; 
+            font-size: 2.2mm;
+        }
+        
+        .id-number-box .info-val { 
+            font-family: 'Courier New', Courier, monospace; 
+            letter-spacing: 0.5px; 
+            color: var(--primary-dark); 
+            font-weight: 900;
+            font-size: 2.8mm;
+        }
+
+        .club-logo {
+            position: absolute;
+            top: 0; right: 0;
+            width: 11mm; height: 11mm;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #eee;
+            overflow: hidden;
+        }
+        .club-logo img { width: 100%; height: 100%; object-fit: contain; }
+        .club-logo span { font-size: 2.5mm; font-weight: 900; color: var(--primary); }
+
+        /* Photo Styles */
+        .photo-border {
+            width: 23mm;
+            height: 30mm;
+            border-radius: 2mm;
+            background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
+            padding: 1mm;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .photo-inner-border {
+            width: 100%;
+            height: 100%;
+            border-radius: 1.5mm;
+            background: white;
+            padding: 0.8mm;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .player-photo {
+            width: 100%;
+            height: 100%;
+            border-radius: 1mm;
+            overflow: hidden;
+            background: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            font-size: 15mm;
+        }
+
+        .player-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Season Badge */
+        .season-badge {
+            position: absolute;
+            top: 1.5mm;
+            left: 2mm;
+            background: rgba(255,255,255,0.25);
+            color: white;
+            font-size: 1.6mm;
+            font-weight: 800;
+            padding: 0.5mm 2mm;
+            border-radius: 2mm;
+            backdrop-filter: blur(2px);
+            border: 1px solid rgba(255,255,255,0.3);
+            z-index: 2;
+        }
+
+        /* Watermark Logo */
+        .watermark {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 55mm;
+            height: 55mm;
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .watermark img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* BACK SIDE STYLING */
+        .back-content {
+            position: relative;
+            z-index: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 2mm 3mm;
+            box-sizing: border-box;
+            color: var(--text-dark);
+            text-align: center;
+            font-family: 'Changa', sans-serif;
+        }
+
+        .club-title {
+            font-size: 3.8mm;
+            font-weight: 900;
+            margin: 0;
+            color: var(--primary-dark);
+        }
+
+        .club-tagline {
+            font-size: 2mm;
+            opacity: 0.8;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .qr-wrapper {
+            background: white;
+            padding: 1mm;
+            border-radius: 2mm;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+            border: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .qr-code {
+            width: 14mm;
+            height: 14mm;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qr-code img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .qr-hint {
+            font-size: 1.4mm;
+            color: #64748b;
+            margin-top: 0.5mm;
+            font-weight: 700;
+        }
+
+        .back-footer {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1mm;
+        }
+        .return-policy {
+            font-size: 1.8mm;
+            color: #475569;
+            font-weight: 600;
+            line-height: 1.2;
+            width: 90%;
+            border-top: 1px solid #cbd5e1;
+            padding-top: 1.5mm;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="no-print" style="text-align: center; margin-bottom: 20px; display: flex; justify-content: center; gap: 15px;">
+        <button onclick="window.print()" style="background-color: #0f766e; color: white; border: none; padding: 10px 25px; font-size: 16px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; font-family: 'Changa', sans-serif; font-weight: 700; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s;">
+            <i class="fas fa-print"></i>
+            طباعة البطاقات
+        </button>
+        <button onclick="saveAsPDF()" style="background-color: #dc2626; color: white; border: none; padding: 10px 25px; font-size: 16px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; font-family: 'Changa', sans-serif; font-weight: 700; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s;">
+            <i class="fas fa-file-pdf"></i>
+            حفظ كـ PDF
+        </button>
+    </div>
+
+    <script>
+        function saveAsPDF() {
+            alert("تنبيه هام:\n\nبسبب استخدام اللغة العربية المعقدة والتصميم عالي الدقة (SVG)، أدوات التحميل المباشر تقوم بتشويه الحروف والألوان كما رأيت.\n\nلذلك، الطريقة الوحيدة والصحيحة لحفظ البطاقات بجودة المطبعة هي:\n1. ستفتح لك الآن نافذة الطباعة.\n2. قم بتغيير خيار 'الوجهة' (Destination) أو الطابعة إلى 'حفظ بتنسيق PDF' (Save as PDF).\n3. اضغط حفظ.\n\nهذه هي الطريقة الاحترافية المعتمدة.");
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        }
+    </script>
+
+    {% for page in player_pages %}
+        <!-- الصفحة الأمامية (Front Sides - 8 cards max per page) -->
+        <div class="a4-page">
+            <div class="no-print" style="width: 100%; text-align: center; margin-bottom: 3mm; font-weight: bold; color: #475569; font-size: 14px;">
+                الورقة رقم {{ forloop.counter }} - الواجهة الأمامية (8 بطاقات A4)
+            </div>
+            <div class="cards-grid-8">
+                {% for player in page %}
+                    <!-- FRONT SIDE -->
+                    <div class="card front" style="margin: 0;">
+                        <svg class="bg-svg" viewBox="0 0 850 540" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="grad_{{ player.id }}" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="var(--primary)" />
+                                    <stop offset="100%" stop-color="var(--primary-dark)" />
+                                </linearGradient>
+                            </defs>
+                            <rect width="850" height="540" fill="#ffffff" />
+                            <path d="M 260 0 L 0 0 L 0 540 L 260 540 C 370 400, 370 140, 260 0 Z" fill="url(#grad_{{ player.id }})" />
+                            <path d="M 860 50 C 820 50, 820 200, 860 200 Z" fill="url(#grad_{{ player.id }})" />
+                        </svg>
+
+                        <div class="watermark" style="left: 65%;">
+                            {% if settings.logo %}
+                                <img src="{{ settings.logo.url }}" alt="Watermark">
+                            {% endif %}
+                        </div>
+                        
+                        <div class="content">
+                            <div class="right-col" style="padding: 2.5mm 2mm 2.5mm 3mm;">
+                                <div class="header-row" style="margin-bottom: 1mm; display: flex; align-items: center;">
+                                    <div class="club-logo" style="position: relative; top: 0; right: 0; margin-left: 2mm; width: 13mm; height: 13mm; display: flex; justify-content: center; align-items: center;">
+                                        {% if settings.logo %}
+                                            <img src="{{ settings.logo.url }}" alt="Logo">
+                                        {% else %}
+                                            <span>{{ settings.club_abbreviation|default:"WRM" }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <div style="flex: 1; min-width: 0;">
+                                        <div style="font-size: 3.1mm; font-weight: 900; color: var(--primary-dark); line-height: 1.1; white-space: nowrap; letter-spacing: -0.2px; margin-top: -1mm;">الوفاق الرياضي مسلمون</div>
+                                        <div class="subtitle" style="margin-top: 0.8mm; border-bottom: none; padding-bottom: 0; white-space: nowrap; display: flex; justify-content: space-between; align-items: center;">
+                                            <span style="font-size: 2.6mm; font-weight: 800; color: white; padding: 0.5mm 2.5mm; border-radius: 1mm; box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+                                            {% if 'U9' in player.category.name|upper %}background-color: #2563eb;
+                                            {% elif 'U11' in player.category.name|upper %}background-color: #ea580c;
+                                            {% elif 'U13' in player.category.name|upper %}background-color: #dc2626;
+                                            {% elif 'U15' in player.category.name|upper %}background-color: #9333ea;
+                                            {% elif 'U17' in player.category.name|upper %}background-color: #0d9488;
+                                            {% else %}background-color: var(--primary);{% endif %}">
+                                                فئة {{ player.category.name }}
+                                            </span>
+                                            <span dir="ltr" style="font-size: 2.2mm; font-weight: 900; color: #0f172a; background: #f1f5f9; padding: 0.2mm 1mm; border-radius: 0.5mm;">ID: {{ player.generated_card_number|upper }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="info-grid" style="margin-bottom: 1mm; gap: 1mm 1.5mm;">
+                                    <div class="info-box" style="padding: 0.8mm 1.5mm; flex-direction: column; justify-content: center; text-align: center;">
+                                        <span class="info-label" style="font-size: 2mm; margin-bottom: 0.5mm;">تاريخ الميلاد</span>
+                                        <span class="info-val" style="font-size: 2.8mm; line-height: 1; font-weight: 800;">{{ player.date_of_birth|date:'Y/m/d'|default:"-" }}</span>
+                                    </div>
+                                    <div class="info-box" style="padding: 0.8mm 1.5mm; flex-direction: column; justify-content: center; text-align: center;">
+                                        <span class="info-label" style="font-size: 2mm; margin-bottom: 0.5mm;">زمرة الدم</span>
+                                        <span class="info-val" dir="ltr" style="font-size: 4.2mm; font-weight: 900; line-height: 1;">{{ player.blood_type|default:"-" }}</span>
+                                    </div>
+                                    <div class="info-box" style="padding: 0.8mm 1.5mm; flex-direction: column; justify-content: center; text-align: center;">
+                                        <span class="info-label" style="font-size: 2mm; margin-bottom: 0.5mm;">رقم القميص</span>
+                                        <span class="info-val" style="font-size: 3.2mm; line-height: 1; font-weight: 900;">{{ player.jersey_number|default:"-" }}</span>
+                                    </div>
+                                    <div class="info-box" style="padding: 0.8mm 1.5mm; flex-direction: column; justify-content: center; text-align: center;">
+                                        <span class="info-label" style="font-size: 2mm; margin-bottom: 0.5mm;">رقم الهاتف</span>
+                                        <span class="info-val" dir="ltr" style="font-size: 2.8mm; line-height: 1; font-weight: 800; letter-spacing: -0.2px;">{{ player.player_phone|default:player.parent_phone|default:"-" }}</span>
+                                    </div>
+                                </div>
+                                
+                                <div style="width: 100%; position: relative; background: linear-gradient(to left, rgba(11,135,114,0.04), transparent); border-top: 1.5px solid var(--primary-dark); padding: 1.5mm 2mm; display: flex; align-items: flex-end; justify-content: space-between; height: 13mm; margin-top: auto; margin-bottom: 0; box-sizing: border-box; overflow: hidden; border-radius: 0 0 2mm 0;">
+                                    <i class="fas fa-stamp" style="position: absolute; left: 2mm; top: 50%; transform: translateY(-50%); font-size: 10mm; color: rgba(11,135,114,0.05);"></i>
+                                    
+                                    <div style="font-size: 2mm; color: var(--primary-dark); font-weight: 900; z-index: 1; margin-bottom: 0.5mm; text-align: center; line-height: 1.2;">
+                                        إمضاء<br>رئيس النادي
+                                    </div>
+                                    <div style="width: 55%; border-bottom: 1.5px dashed var(--primary); position: relative; height: 100%; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 1mm; z-index: 1;">
+                                        {% if settings.signature %}
+                                            <img src="{{ settings.signature.url }}" style="height: 12mm; mix-blend-mode: multiply; margin-bottom: -1mm;" alt="Signature">
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="left-col" style="flex-direction: column; width: 45%; padding-left: 1mm; padding-right: 1mm; box-sizing: border-box;">
+                                <div class="season-badge" style="position: static; margin-top: -2.5mm; margin-bottom: 2mm; display: inline-block; font-size: 2.2mm; padding: 0.6mm 2.5mm;">موسم 2026/2027</div>
+                                <div class="photo-border">
+                                    <div class="photo-inner-border">
+                                        <div class="player-photo">
+                                            {% if player.photo %}
+                                                <img src="{{ player.photo.url }}" alt="{{ player.first_name }}">
+                                            {% else %}
+                                                <i class="fas fa-user"></i>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="text-align: center; margin-top: 1.5mm; line-height: 1.1; width: 100%; word-wrap: break-word; font-family: 'Cairo', sans-serif;">
+                                    <div style="font-size: 3.8mm; font-weight: 900; color: #fbbf24; text-shadow: 0 1px 2px rgba(0,0,0,0.4);">{{ player.first_name }}</div>
+                                    <div style="font-size: 3.8mm; font-weight: 900; color: #fbbf24; text-shadow: 0 1px 2px rgba(0,0,0,0.4);">{{ player.last_name }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- الصفحة الخلفية (Back Sides - 8 cards max per page) -->
+        <div class="a4-page">
+            <div class="no-print" style="width: 100%; text-align: center; margin-bottom: 3mm; font-weight: bold; color: #475569; font-size: 14px;">
+                الورقة رقم {{ forloop.counter }} - الواجهة الخلفية (Recto Verso)
+            </div>
+            <div class="cards-grid-8" style="direction: ltr;">
+                {% for player in page %}
+                    <!-- BACK SIDE -->
+                    <div class="card back" style="margin: 0; direction: rtl; border: 1.2mm solid var(--primary-dark); border-radius: 2mm; box-sizing: border-box; background: #f8fafc; position: relative; overflow: hidden;">
+                        
+                        <!-- Top Curved Banner (SVG) -->
+                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 15mm; z-index: 1;">
+                            <svg viewBox="0 0 850 150" preserveAspectRatio="none" style="width: 100%; height: 100%;">
+                                <path d="M 0 0 L 850 0 L 850 110 Q 425 150 0 110 Z" fill="var(--primary-dark)" />
+                                <path d="M 0 110 Q 425 150 850 110" fill="none" stroke="#ca8a04" stroke-width="6" />
+                            </svg>
+                        </div>
+                        
+                        <!-- Text inside Banner -->
+                        <div style="position: absolute; top: 2mm; left: 0; width: 100%; z-index: 2;">
+                            <h1 style="color: #fbbf24; font-size: 3.5mm; font-weight: 900; text-align: center; margin: 0; font-family: 'Changa', sans-serif;">نادي الوفاق الرياضي مسلمون - ESM</h1>
+                        </div>
+
+                        <!-- Intersecting Logo -->
+                        <div style="position: absolute; top: 9mm; left: 50%; transform: translateX(-50%); width: 11mm; height: 11mm; background: white; border-radius: 50%; border: 0.4mm solid #ca8a04; display: flex; align-items: center; justify-content: center; z-index: 3; box-shadow: 0 2px 4px rgba(0,0,0,0.2); overflow: hidden;">
+                            {% if settings.logo %}
+                                <img src="{{ settings.logo.url }}" alt="Logo" style="width: 85%; height: 85%; object-fit: contain;">
+                            {% else %}
+                                <span style="font-size: 2mm; font-weight: 900; color: var(--primary);">ESM</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Watermark -->
+                        <div class="watermark" style="left: 50%; top: 55%; width: 45mm; height: 45mm; opacity: 0.08;">
+                            {% if settings.logo %}
+                                <img src="{{ settings.logo.url }}" alt="Watermark">
+                            {% endif %}
+                        </div>
+
+                        <!-- Content Area -->
+                        <div class="back-content" style="padding-top: 20mm; padding-left: 2mm; padding-right: 3mm; display: flex; flex-direction: row; justify-content: space-between; align-items: flex-start; z-index: 4; position: relative; height: 100%; box-sizing: border-box;">
+                            
+                            <!-- Instructions Side -->
+                            <div style="width: 65%; text-align: right; padding-right: 1mm;">
+                                <div style="font-size: 3mm; font-weight: 900; color: var(--primary-dark); margin-bottom: 2mm; font-family: 'Cairo', sans-serif;">
+                                    تعليمات هامة
+                                </div>
+                                <ul style="list-style-type: none; padding: 0; margin: 0; font-size: 2.1mm; font-weight: 800; color: #1e293b; line-height: 1.5;">
+                                    <li style="margin-bottom: 2mm; display: flex; align-items: flex-start;">
+                                        <div style="background: var(--primary-dark); color: white; width: 3.5mm; height: 3.5mm; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-left: 1.5mm; flex-shrink: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+                                            <i class="fas fa-user" style="font-size: 1.6mm;"></i>
+                                        </div>
+                                        <span style="padding-top: 0.2mm;">البطاقة شخصية ويمنع استخدامها من شخص آخر.</span>
+                                    </li>
+                                    <li style="margin-bottom: 2mm; display: flex; align-items: flex-start;">
+                                        <div style="background: var(--primary-dark); color: white; width: 3.5mm; height: 3.5mm; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-left: 1.5mm; flex-shrink: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+                                            <i class="fas fa-medal" style="font-size: 1.6mm;"></i>
+                                        </div>
+                                        <span style="padding-top: 0.2mm;">إحضار البطاقة إلزامي للمشاركة في النشاطات.</span>
+                                    </li>
+                                    <li style="display: flex; align-items: flex-start;">
+                                        <div style="background: var(--primary-dark); color: white; width: 3.5mm; height: 3.5mm; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-left: 1.5mm; flex-shrink: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+                                            <i class="fas fa-phone-alt" style="font-size: 1.6mm;"></i>
+                                        </div>
+                                        <span style="padding-top: 0.2mm;">في حال الضياع، يرجى إبلاغ الإدارة فوراً.</span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <!-- QR Code Side -->
+                            <div style="width: 32%; display: flex; flex-direction: column; align-items: center; padding-top: 3mm;">
+                                <div class="qr-wrapper" style="padding: 1.5mm; background: white; border-radius: 1.5mm; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+                                    <div class="qr-code" style="width: 17mm; height: 17mm;">
+                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&color=054a3e&data=MECARD%3AN%3A{{ player.last_name|urlencode }}%2C{{ player.first_name|urlencode }}%3BORG%3AWRM%3BTEL%3A{{ player.player_phone|default:player.parent_phone|default:''|urlencode }}%3BNOTE%3AID%3A{{ player.generated_card_number }}%20Blood%3A{{ player.blood_type|default:''|urlencode }}%20DOB%3A{{ player.date_of_birth|date:'Y-m-d'|urlencode }}%3B%3B" alt="QR Code" style="width: 100%; height: 100%; object-fit: contain;">
+                                    </div>
+                                </div>
+                                <span class="qr-hint" style="font-size: 2mm; font-weight: 800; color: #1e293b; margin-top: 1.5mm; font-family: 'Cairo', sans-serif;">امسح للتحقق</span>
+                            </div>
+
+                        </div>
+
+                        <!-- Website Link -->
+                        <div style="position: absolute; bottom: 2mm; width: 100%; display: flex; justify-content: center; z-index: 5;">
+                            <div dir="ltr" style="display: inline-flex; align-items: center; font-size: 2.2mm; font-weight: 800; color: var(--primary-dark); font-family: 'Cairo', sans-serif;">
+                                www.esmesselmoune.com <i class="fas fa-globe" style="margin-left: 1mm;"></i>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+</body>
+</html>

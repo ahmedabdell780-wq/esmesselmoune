@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load i18n turniq_tags %}
+{% block title %}{% trans "Inscription" %} / إنشاء حساب{% endblock %}
+
+{% block content %}
+<div class="min-h-[70vh] flex items-center justify-center py-8">
+  <div class="w-full max-w-lg">
+    <div class="text-center mb-8">
+      <div class="font-bebas text-5xl tracking-widest">TURN<span style="color:var(--primary)">IQ</span></div>
+      <p class="text-sm mt-1" style="color:var(--muted)">إنشاء حساب جديد / Créer un compte</p>
+    </div>
+    <div class="card rounded-2xl p-8">
+      <h2 class="text-xl font-bold mb-6">{% trans "Inscription" %} / تسجيل</h2>
+      <form method="post">
+        {% csrf_token %}
+        {% if form.errors %}
+        <div class="mb-4 p-3 rounded-xl text-sm" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#f87171">
+          {% for f, errs in form.errors.items %}{% for e in errs %}<p>❌ {{ e }}</p>{% endfor %}{% endfor %}
+        </div>
+        {% endif %}
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="form-label">{% trans "Prénom" %} / الاسم</label>
+            <input type="text" name="first_name" required class="form-input"/>
+          </div>
+          <div>
+            <label class="form-label">{% trans "Nom" %} / اللقب</label>
+            <input type="text" name="last_name" required class="form-input"/>
+          </div>
+        </div>
+        <div class="space-y-4">
+          <div><label class="form-label">{% trans "Nom d'utilisateur" %} / اسم المستخدم</label><input type="text" name="username" required class="form-input"/></div>
+          <div><label class="form-label">Email</label><input type="email" name="email" required class="form-input"/></div>
+          
+          <!-- Role Selection -->
+          <div>
+            <label class="form-label">🎭 {% trans "Rôle souhaité" %} / الدور المطلوب (النوع)</label>
+            <select name="role" required class="form-input appearance-none bg-no-repeat cursor-pointer" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 fill=%22gray%22><path d=%22M5 8l5 5 5-5H5z%22/></svg>'); background-position: right 1rem center; padding-right: 2.5rem;">
+              <option value="manager">🛡️ مسؤول فريق / Responsable d'équipe</option>
+              <option value="organizer">📋 منظم / Organisateur</option>
+              <option value="viewer" selected>👁️ متفرج / Spectateur</option>
+            </select>
+            <p class="text-[10px] mt-1.5 opacity-60">سيقوم الإدارة بمراجعة حسابك وتفعيله بناءً على الدور المختار.</p>
+          </div>
+
+          <div><label class="form-label">📍 {% trans "Quartier" %} / الحي</label><input type="text" name="neighborhood" class="form-input" placeholder="Hay El Wiam"/></div>
+          
+          <div class="grid grid-cols-2 gap-4 pt-2 border-t border-white/5">
+            <div><label class="form-label">🔒 {% trans "Mot de passe" %} / كلمة المرور</label><input type="password" name="password1" required class="form-input"/></div>
+            <div><label class="form-label">🔒 {% trans "Confirmer" %} / تأكيد</label><input type="password" name="password2" required class="form-input"/></div>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary w-full justify-center mt-6 py-3">
+          إنشاء الحساب / {% trans "Créer mon compte" %} →
+        </button>
+      </form>
+      <div class="mt-4 text-center text-sm" style="color:var(--muted)">
+        لديك حساب؟ / <a href="{% url 'accounts:login' %}" class="font-bold hover:underline" style="color:var(--primary)">{% trans "Se connecter" %}</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,583 @@
+{% extends 'base.html' %}
+{% load i18n turniq_tags %}
+{% block title %}المالية - {{ tournament.name }} / Finance{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+  <div class="flex items-center gap-2 text-xs opacity-60 mb-2">
+    <a href="{% url 'tournaments:admin_panel' %}" class="hover:underline">لوحة التحكم / Admin</a>
+    <span>&gt;</span>
+    <span class="text-primary font-bold">المالية / Finance</span>
+  </div>
+  
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="font-bebas text-5xl tracking-widest leading-none">
+        إدارة المالية / <span class="text-emerald-500">GESTION FINANCIÈRE</span>
+      </h1>
+      <div class="flex items-center gap-3 mt-2 flex-wrap">
+        <p class="text-sm opacity-60">{{ tournament.name }} ({{ tournament.year }}) · {{ finance_summary.num_teams }} {% trans "équipes confirmées" %}</p>
+        <div class="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-3 py-1 rounded-full text-xs font-bold shadow-lg shadow-emerald-900/20">
+          <span>✅</span>
+          <span>الفرق التي سددت: {{ finance_summary.num_paid_teams }} / {{ finance_summary.num_teams }}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <a href="{% url 'tournaments:finance_report' tournament.pk %}" target="_blank" class="btn btn-ghost border border-emerald-500/20 bg-emerald-950/20 text-emerald-400 hover:bg-emerald-900/30 gap-2">
+        🖨️ {% trans "Bilan Final" %} / التقرير المالي النهائي
+      </a>
+      <a href="{% url 'tournaments:admin_panel' %}" class="btn btn-ghost border border-white/10 hover:bg-white/5 gap-2">
+        ⬅️ {% trans "Retour" %} / العودة
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- FINANCIAL KPI SUMMARY GRID -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+  
+  <!-- Expected Revenue -->
+  <div class="relative overflow-hidden rounded-2xl bg-black/40 border border-white/5 p-6 shadow-xl flex flex-col justify-between min-h-[140px]">
+    <div class="absolute -top-4 -right-4 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl"></div>
+    <div class="flex items-center justify-between">
+      <span class="text-xs uppercase font-black tracking-wider text-blue-400">Attendu / المتوقع</span>
+      <span class="text-2xl">📊</span>
+    </div>
+    <div>
+      <span class="block text-3xl font-black font-mono tracking-tight text-white mt-4">{{ finance_summary.expected_revenue }} <span class="text-sm font-normal text-gray-400">DZD</span></span>
+      <span class="text-[10px] text-gray-500 block mt-1">{% trans "Frais d'inscription totaux" %}</span>
+    </div>
+  </div>
+
+  <!-- Actual Revenue (Paid) -->
+  <div class="relative overflow-hidden rounded-2xl bg-black/40 border border-white/5 p-6 shadow-xl flex flex-col justify-between min-h-[140px]">
+    <div class="absolute -top-4 -right-4 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl"></div>
+    <div class="flex items-center justify-between">
+      <span class="text-xs uppercase font-black tracking-wider text-emerald-400">Revenu perçu / المقبوضات</span>
+      <span class="text-2xl">💵</span>
+    </div>
+    <div>
+      <span class="block text-3xl font-black font-mono tracking-tight text-emerald-400 mt-4">{{ finance_summary.total_perceived }} <span class="text-sm font-normal text-gray-400">DZD</span></span>
+      <span class="text-[10px] text-gray-500 block mt-1">{% trans "Abonnements" %}: {{ finance_summary.total_paid }} DZD · {% trans "Sponsors" %}: {{ finance_summary.total_revenues }} DZD</span>
+    </div>
+  </div>
+
+  <!-- Expenses -->
+  <div class="relative overflow-hidden rounded-2xl bg-black/40 border border-white/5 p-6 shadow-xl flex flex-col justify-between min-h-[140px]">
+    <div class="absolute -top-4 -right-4 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl"></div>
+    <div class="flex items-center justify-between">
+      <span class="text-xs uppercase font-black tracking-wider text-amber-500">Dépenses / المصاريف</span>
+      <span class="text-2xl">💸</span>
+    </div>
+    <div>
+      <span class="block text-3xl font-black font-mono tracking-tight text-amber-400 mt-4">{{ finance_summary.total_expenses }} <span class="text-sm font-normal text-gray-400">DZD</span></span>
+      <span class="text-[10px] text-gray-500 block mt-1">{% trans "Total des dépenses payées" %}</span>
+    </div>
+  </div>
+
+  <!-- Net Balance -->
+  <div class="relative overflow-hidden rounded-2xl border p-6 shadow-xl flex flex-col justify-between min-h-[140px]
+       {% if finance_summary.net_balance >= 0 %}
+       bg-emerald-950/20 border-emerald-500/30 shadow-emerald-950/20
+       {% else %}
+       bg-rose-950/20 border-rose-500/30 shadow-rose-950/20
+       {% endif %}">
+    <div class="flex items-center justify-between">
+      <span class="text-xs uppercase font-black tracking-wider {% if finance_summary.net_balance >= 0 %}text-emerald-400{% else %}text-rose-400{% endif %}">
+        Solde Net / الرصيد الصافي
+      </span>
+      <span class="text-2xl">{% if finance_summary.net_balance >= 0 %}🏆{% else %}⚠️{% endif %}</span>
+    </div>
+    <div>
+      <span class="block text-3xl font-black font-mono tracking-tight mt-4 {% if finance_summary.net_balance >= 0 %}text-emerald-400{% else %}text-rose-400{% endif %}">
+        {{ finance_summary.net_balance }} <span class="text-sm font-normal text-gray-400">DZD</span>
+      </span>
+      <span class="text-[10px] text-gray-500 block mt-1">
+        {% if finance_summary.net_balance >= 0 %}
+        {% trans "Excédent budgétaire / فائض مالي" %}
+        {% else %}
+        {% trans "Déficit budgétaire / عجز مالي" %}
+        {% endif %}
+      </span>
+    </div>
+  </div>
+
+</div>
+
+<!-- CONTENT LAYOUT -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+  
+  <!-- LEFT COLUMN: CONFIG & EXPENSES -->
+  <div class="lg:col-span-5 space-y-8">
+    
+    <!-- SUBSCRIPTION FEE CONFIG -->
+    <div class="card p-6 rounded-2xl bg-black/30 border border-white/5">
+      <h3 class="font-bold text-lg mb-1">🏷️ {% trans "Tarif d'inscription" %} / سعر الاشتراك</h3>
+      <p class="text-xs opacity-60 mb-4">حدد قيمة الاشتراك المطلوب دفعه من كل فريق مشارك في الدورة.</p>
+      
+      <form method="post" class="flex gap-2">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_price">
+        <div class="relative flex-1">
+          <input type="number" name="subscription_price" step="0.01" value="{{ tournament.subscription_price }}" class="form-input py-2.5 px-4 font-mono font-bold w-full" placeholder="Ex: 5000" required>
+          <span class="absolute inset-y-0 right-4 flex items-center text-xs opacity-40 font-bold pointer-events-none">DZD</span>
+        </div>
+        <button type="submit" class="btn btn-primary px-6">{% trans "Mettre à jour" %}</button>
+      </form>
+    </div>
+
+    <!-- ADD EXPENSE FORM -->
+    <div class="card p-6 rounded-2xl bg-black/30 border border-white/5">
+      <h3 id="expense_form_title" class="font-bold text-lg mb-1">➕ {% trans "Ajouter une dépense" %} / تسجيل مصاريف</h3>
+      <p class="text-xs opacity-60 mb-4">سجل أي نفقات مثل كراء الملعب، مستحقات الحكام، الجوائز أو المياه.</p>
+      
+      <form id="expense_form" method="post" class="space-y-4">
+        {% csrf_token %}
+        <input type="hidden" id="expense_action" name="action" value="add_expense">
+        <input type="hidden" id="expense_id" name="expense_id" value="">
+        
+        <div class="space-y-1">
+          <label class="text-[10px] uppercase tracking-wider font-bold opacity-60">Libellé / نوع المصاريف</label>
+          <input type="text" id="expense_title_input" name="title" class="form-input py-2 px-3 text-sm w-full" placeholder="Ex: Frais d'arbitrage (Hauts-gradés)" required>
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-[10px] uppercase tracking-wider font-bold opacity-60">Montant / المبلغ</label>
+          <div class="relative">
+            <input type="number" id="expense_amount_input" name="amount" step="0.01" class="form-input py-2 px-3 text-sm font-mono w-full" placeholder="Ex: 15000" required>
+            <span class="absolute inset-y-0 right-4 flex items-center text-xs opacity-40 font-bold pointer-events-none">DZD</span>
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-[10px] uppercase tracking-wider font-bold opacity-60">Notes / ملاحظات (Optionnel)</label>
+          <textarea id="expense_notes_input" name="notes" rows="2" class="form-input py-2 px-3 text-sm w-full" placeholder="Détails supplémentaires..."></textarea>
+        </div>
+
+        <div class="flex gap-2">
+          <button type="submit" id="expense_submit_btn" class="btn btn-ghost flex-1 border border-white/10 hover:bg-white/5 py-3">
+            ➕ {% trans "Enregistrer la dépense" %} / إضافة المصاريف
+          </button>
+          <button type="button" id="expense_cancel_btn" onclick="cancelExpenseEdit()" class="btn btn-ghost border border-rose-500/20 text-rose-400 hover:bg-rose-900/20 py-3 hidden">
+            {% trans "Annuler" %} / إلغاء
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- EXPENSES JOURNAL -->
+    <div class="card p-6 rounded-2xl bg-black/30 border border-white/5">
+      <h3 class="font-bold text-lg mb-1">📓 {% trans "Journal des Dépenses" %} / سجل المصاريف</h3>
+      <p class="text-xs opacity-60 mb-4">قائمة بكافة المبالغ المصروفة للدورة الحالية.</p>
+      
+      {% if expenses %}
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="border-b border-white/5 opacity-50">
+              <th class="py-2">{% trans "Dépense" %} / البيان</th>
+              <th class="py-2 text-right">{% trans "Montant" %} / المبلغ</th>
+              <th class="py-2 text-center">🗑️</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            {% for exp in expenses %}
+            <tr>
+              <td class="py-3">
+                <span class="font-bold block text-white">{{ exp.title }}</span>
+                <span class="text-[10px] opacity-40 block">{{ exp.date|date:"d M Y" }} {% if exp.notes %}· {{ exp.notes }}{% endif %}</span>
+              </td>
+              <td class="py-3 text-right font-mono font-bold text-amber-400">
+                {{ exp.amount }}
+              </td>
+              <td class="py-3 text-center">
+                <div class="flex items-center justify-center gap-2">
+                  <button type="button" onclick="editExpense('{{ exp.pk }}', '{{ exp.title|escapejs }}', '{{ exp.amount }}', '{{ exp.notes|default_if_none:""|escapejs }}')" class="text-emerald-400 hover:text-emerald-300 transition-colors text-xs" title="✏️ {% trans "Modifier" %} / تعديل">✏️</button>
+                  <form method="post" onsubmit="return confirm('⚠️ هل تريد حذف هذه المصاريف؟');" class="inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_expense">
+                    <input type="hidden" name="expense_id" value="{{ exp.pk }}">
+                    <button type="submit" class="text-rose-500 hover:text-rose-400 transition-colors text-lg" title="🗑️ {% trans "Supprimer" %} / حذف">×</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="py-8 text-center opacity-40 text-xs">
+        {% trans "Aucune dépense enregistrée pour le moment." %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- ADD REVENUE FORM -->
+    <div class="card p-6 rounded-2xl bg-black/30 border border-white/5">
+      <h3 id="revenue_form_title" class="font-bold text-lg mb-1">➕ {% trans "Ajouter une recette / إيراد جديد" %}</h3>
+      <p class="text-xs opacity-60 mb-4">سجل أي مداخيل إضافية مثل مبالغ الممولين (Sponsors)، التبرعات، أو الإعلانات.</p>
+      
+      <form id="revenue_form" method="post" class="space-y-4">
+        {% csrf_token %}
+        <input type="hidden" id="revenue_action" name="action" value="add_revenue">
+        <input type="hidden" id="revenue_id" name="revenue_id" value="">
+        
+        <div class="space-y-1">
+          <label class="text-[10px] uppercase tracking-wider font-bold opacity-60">Source / الجهة أو السبب</label>
+          <input type="text" id="revenue_title_input" name="title" class="form-input py-2 px-3 text-sm w-full" placeholder="Ex: Sponsor officiel (Établissement X)" required>
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-[10px] uppercase tracking-wider font-bold opacity-60">Montant / المبلغ</label>
+          <div class="relative">
+            <input type="number" id="revenue_amount_input" name="amount" step="0.01" class="form-input py-2 px-3 text-sm font-mono w-full" placeholder="Ex: 50000" required>
+            <span class="absolute inset-y-0 right-4 flex items-center text-xs opacity-40 font-bold pointer-events-none">DZD</span>
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-[10px] uppercase tracking-wider font-bold opacity-60">Notes / ملاحظات (Optionnel)</label>
+          <textarea id="revenue_notes_input" name="notes" rows="2" class="form-input py-2 px-3 text-sm w-full" placeholder="تفاصيل إضافية..."></textarea>
+        </div>
+
+        <div class="flex gap-2">
+          <button type="submit" id="revenue_submit_btn" class="btn btn-ghost flex-1 border border-emerald-500/20 bg-emerald-950/20 text-emerald-400 hover:bg-emerald-900/30 py-3">
+            ➕ {% trans "Enregistrer la recette" %} / تسجيل الإيراد
+          </button>
+          <button type="button" id="revenue_cancel_btn" onclick="cancelRevenueEdit()" class="btn btn-ghost border border-rose-500/20 text-rose-400 hover:bg-rose-900/20 py-3 hidden">
+            {% trans "Annuler" %} / إلغاء
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- REVENUES JOURNAL -->
+    <div class="card p-6 rounded-2xl bg-black/30 border border-white/5">
+      <h3 class="font-bold text-lg mb-1">📓 {% trans "Journal des Recettes" %} / سجل الإيرادات</h3>
+      <p class="text-xs opacity-60 mb-4">قائمة بكافة المداخيل الإضافية المسجلة للدورة.</p>
+      
+      {% if revenues %}
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="border-b border-white/5 opacity-50">
+              <th class="py-2">{% trans "Source" %} / الإيراد</th>
+              <th class="py-2 text-right">{% trans "Montant" %} / المبلغ</th>
+              <th class="py-2 text-center">🗑️</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            {% for rev in revenues %}
+            <tr>
+              <td class="py-3">
+                <span class="font-bold block text-white">{{ rev.title }}</span>
+                <span class="text-[10px] opacity-40 block">{{ rev.date|date:"d M Y" }} {% if rev.notes %}· {{ rev.notes }}{% endif %}</span>
+              </td>
+              <td class="py-3 text-right font-mono font-bold text-emerald-400">
+                +{{ rev.amount }}
+              </td>
+              <td class="py-3 text-center">
+                <div class="flex items-center justify-center gap-2">
+                  <button type="button" onclick="editRevenue('{{ rev.pk }}', '{{ rev.title|escapejs }}', '{{ rev.amount }}', '{{ rev.notes|default_if_none:""|escapejs }}')" class="text-emerald-400 hover:text-emerald-300 transition-colors text-xs" title="✏️ {% trans "Modifier" %} / تعديل">✏️</button>
+                  <form method="post" onsubmit="return confirm('⚠️ هل تريد حذف هذا الإيراد؟');" class="inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_revenue">
+                    <input type="hidden" name="revenue_id" value="{{ rev.pk }}">
+                    <button type="submit" class="text-rose-500 hover:text-rose-400 transition-colors text-lg" title="🗑️ {% trans "Supprimer" %} / حذف">×</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="py-8 text-center opacity-40 text-xs">
+        {% trans "Aucune recette enregistrée pour le moment." %}
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- RIGHT COLUMN: TEAM SUBSCRIPTIONS -->
+  <div class="lg:col-span-7">
+    <div class="card p-6 rounded-2xl bg-black/30 border border-white/5">
+      <div class="flex items-center justify-between mb-2">
+        <div>
+          <h3 class="font-bold text-lg">💳 {% trans "Frais d'inscription des équipes" %} / اشتراكات الفرق</h3>
+          <p class="text-xs opacity-60">تتبع تسديد مستحقات كل فريق مشارك وتأكيد الدفع.</p>
+        </div>
+        <span class="badge badge-gold font-mono font-bold">{{ tournament.subscription_price }} DZD / Team</span>
+      </div>
+
+      {% if tournament_teams %}
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_payments">
+        
+        <div class="overflow-x-auto mt-6">
+          <table class="w-full text-left text-sm align-middle">
+            <thead>
+              <tr class="border-b border-white/5 opacity-50 text-xs">
+                <th class="py-3">{% trans "Équipe" %} / الفريق</th>
+                <th class="py-3">{% trans "Montant payé" %} / المبلغ المدفوع</th>
+                <th class="py-3 text-center">{% trans "Statut" %} / الحالة</th>
+                <th class="py-3 text-center">{% trans "Facture" %} / الفاتورة</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              {% for tt in tournament_teams %}
+              <tr>
+                <!-- Team Logo & Name -->
+                <td class="py-4">
+                  <div class="flex flex-col gap-2">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 rounded-lg overflow-hidden border bg-white/5 flex-shrink-0 flex items-center justify-center" style="border-color:var(--border)">
+                        {% if tt.team.logo %}
+                        <img src="{{ tt.team.logo.url }}" class="w-full h-full object-cover"/>
+                        {% else %}
+                        <span class="text-lg">⚽</span>
+                        {% endif %}
+                      </div>
+                      <div>
+                        <span class="font-bold block text-white text-sm">{{ tt.team.name }}</span>
+                        <span class="text-[10px] opacity-40 block">📍 {{ tt.team.neighborhood }}</span>
+                      </div>
+                    </div>
+                    
+                    <!-- Installments History (Collapsible details) -->
+                    {% if tt.payment_history %}
+                    <details class="text-[11px] bg-white/5 rounded-lg border border-white/5 max-w-xs overflow-hidden">
+                      <summary class="py-1.5 px-3 font-semibold opacity-70 hover:opacity-100 cursor-pointer select-none bg-white/5">
+                        📜 سجل الدفعات / Historique ({{ tt.payment_history|length }})
+                      </summary>
+                      <div class="p-2 space-y-1.5 max-h-[120px] overflow-y-auto divide-y divide-white/5">
+                        {% for tx in tt.payment_history %}
+                        <div class="flex justify-between items-center pt-1.5 first:pt-0">
+                          <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="deleteTransaction('{{ tx.pk }}')" class="text-rose-500 hover:text-rose-400 font-bold transition-colors pr-1" title="🗑️ {% trans "Supprimer" %} / حذف">×</button>
+                            <span class="opacity-60">{{ tx.date|date:"d/m H:i" }}</span>
+                          </div>
+                          <span class="font-mono font-bold {% if tx.amount > 0 %}text-emerald-400{% else %}text-rose-400{% endif %}">
+                            {% if tx.amount > 0 %}+{% endif %}{{ tx.amount }} DZD
+                          </span>
+                        </div>
+                        {% endfor %}
+                      </div>
+                    </details>
+                    {% endif %}
+                  </div>
+                </td>
+                
+                <!-- Amount Paid Input & Installment Button -->
+                <td class="py-4">
+                  <div class="flex flex-col gap-1.5 w-44">
+                    <div class="relative">
+                      <input type="number" name="amount_paid_{{ tt.team.pk }}" step="0.01" value="{{ tt.amount_paid }}" class="form-input py-1.5 px-3 text-xs font-mono font-bold w-full bg-black/40 border border-white/10 rounded-lg text-emerald-400 transition-all duration-300" placeholder="0.00" title="{% trans "Modifier le total directement" %} / تعديل الإجمالي مباشرة">
+                      <span class="absolute inset-y-0 right-3 flex items-center text-[9px] opacity-40 font-bold pointer-events-none">DZD</span>
+                    </div>
+                    <div class="flex gap-1">
+                      <button type="button" onclick="quickPayFull('{{ tt.team.pk }}', {{ tournament.subscription_price }})" class="flex-1 text-[10px] py-1 px-1 rounded border border-amber-500/30 bg-amber-950/20 text-amber-400 hover:bg-amber-600 hover:border-amber-500 hover:text-white transition-all text-center font-bold truncate" title="تعبئة المبلغ كاملاً وتأكيد الدفع">
+                        💰 تسديد كلي
+                      </button>
+                      <button type="button" onclick="openInstallmentModal('{{ tt.pk }}', '{{ tt.team.name|escapejs }}')" class="flex-1 text-[10px] py-1 px-1 rounded border border-emerald-500/30 bg-emerald-950/20 text-emerald-400 hover:bg-emerald-600 hover:border-emerald-500 hover:text-white transition-all text-center font-bold truncate" title="إضافة دفعة">
+                        ➕ دفعة
+                      </button>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Payment Confirmed Checkbox / Badge -->
+                <td class="py-4 text-center">
+                  <label class="relative inline-flex items-center justify-center cursor-pointer group">
+                    <input type="checkbox" name="payment_confirmed_{{ tt.team.pk }}" {% if tt.payment_confirmed %}checked{% endif %} class="sr-only peer">
+                    <!-- Custom Toggle Style -->
+                    <div class="w-11 h-6 bg-white/10 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-gray-400 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 peer-checked:after:bg-white"></div>
+                    <span class="ml-2 text-xs font-black opacity-0 group-hover:opacity-100 transition-opacity absolute -top-8 bg-black/90 py-1 px-2 rounded border border-white/10 z-30 whitespace-nowrap text-white">
+                      {% if tt.payment_confirmed %}{% trans "Payé / مؤكد" %}{% else %}{% trans "Non validé / غير مؤكد" %}{% endif %}
+                    </span>
+                  </label>
+                </td>
+
+                <!-- Print Receipt Action & WhatsApp Share -->
+                <td class="py-4 text-center">
+                  <div class="flex flex-col sm:flex-row items-center justify-center gap-1.5">
+                    <a href="{% url 'tournaments:payment_receipt' tt.pk %}" target="_blank" class="text-xs py-1.5 px-2.5 rounded-lg border border-white/10 bg-white/5 hover:bg-emerald-600 hover:border-emerald-500 hover:text-white transition-all inline-flex items-center gap-1 w-full sm:w-auto justify-center" title="{% trans "Imprimer le reçu" %} / طباعة الوصل">
+                      🖨️ <span class="hidden md:inline">{% trans "Reçu" %}</span>
+                    </a>
+                    <a href="{{ tt.whatsapp_link }}" target="_blank" class="text-xs py-1.5 px-2.5 rounded-lg border border-emerald-500/20 bg-emerald-950/20 text-emerald-400 hover:bg-emerald-600 hover:border-emerald-500 hover:text-white transition-all inline-flex items-center gap-1 w-full sm:w-auto justify-center" title="{% trans "Partager via WhatsApp" %} / مشاركة عبر واتساب">
+                      💬 <span class="hidden md:inline">واتساب</span>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <button type="submit" class="w-full mt-6 relative group h-14 overflow-hidden rounded-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] shadow-2xl shadow-emerald-600/20">
+          <div class="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600"></div>
+          <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div class="relative z-10 flex items-center justify-center gap-3">
+              <span class="text-white font-black text-sm tracking-wide drop-shadow-md">💾 {% trans "Sauvegarder les paiements" %} / حفظ وتحديث دفع الاشتراكات</span>
+          </div>
+        </button>
+
+      </form>
+      {% else %}
+      <div class="py-12 text-center opacity-40 text-sm">
+        لا يوجد أي فرق مؤكدة حالياً في الدورة.
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function editExpense(id, title, amount, notes) {
+    document.getElementById('expense_form_title').innerText = "📝 {% trans "Modifier la dépense" %} / تعديل النفقات";
+    document.getElementById('expense_action').value = "edit_expense";
+    document.getElementById('expense_id').value = id;
+    document.getElementById('expense_title_input').value = title;
+    document.getElementById('expense_amount_input').value = amount;
+    document.getElementById('expense_notes_input').value = notes;
+    document.getElementById('expense_submit_btn').innerHTML = "💾 {% trans "Sauvegarder les modifications" %} / حفظ التعديلات";
+    document.getElementById('expense_cancel_btn').classList.remove('hidden');
+    document.getElementById('expense_form').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function quickPayFull(teamPk, price) {
+    const input = document.querySelector(`input[name="amount_paid_${teamPk}"]`);
+    const checkbox = document.querySelector(`input[name="payment_confirmed_${teamPk}"]`);
+    
+    if (input) {
+      input.value = price;
+      // Visual feedback
+      input.classList.add('ring-2', 'ring-emerald-500', 'bg-emerald-950');
+      setTimeout(() => input.classList.remove('ring-2', 'ring-emerald-500', 'bg-emerald-950'), 800);
+    }
+    
+    if (checkbox) {
+      checkbox.checked = true;
+    }
+  }
+
+  function cancelExpenseEdit() {
+    document.getElementById('expense_form_title').innerText = "➕ {% trans "Ajouter une dépense" %} / تسجيل مصاريف";
+    document.getElementById('expense_action').value = "add_expense";
+    document.getElementById('expense_id').value = "";
+    document.getElementById('expense_form').reset();
+    document.getElementById('expense_submit_btn').innerHTML = "➕ {% trans "Enregistrer la dépense" %} / إضافة المصاريف";
+    document.getElementById('expense_cancel_btn').classList.add('hidden');
+  }
+
+  function editRevenue(id, title, amount, notes) {
+    document.getElementById('revenue_form_title').innerText = "📝 {% trans "Modifier la recette" %} / تعديل الإيراد";
+    document.getElementById('revenue_action').value = "edit_revenue";
+    document.getElementById('revenue_id').value = id;
+    document.getElementById('revenue_title_input').value = title;
+    document.getElementById('revenue_amount_input').value = amount;
+    document.getElementById('revenue_notes_input').value = notes;
+    document.getElementById('revenue_submit_btn').innerHTML = "💾 {% trans "Sauvegarder les modifications" %} / حفظ التعديلات";
+    document.getElementById('revenue_cancel_btn').classList.remove('hidden');
+    document.getElementById('revenue_form').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function cancelRevenueEdit() {
+    document.getElementById('revenue_form_title').innerText = "➕ {% trans "Ajouter une recette / إيراد جديد" %}";
+    document.getElementById('revenue_action').value = "add_revenue";
+    document.getElementById('revenue_id').value = "";
+    document.getElementById('revenue_form').reset();
+    document.getElementById('revenue_submit_btn').innerHTML = "➕ {% trans "Enregistrer la recette" %} / تسجيل الإيراد";
+    document.getElementById('revenue_cancel_btn').classList.add('hidden');
+  }
+
+  function openInstallmentModal(ttId, teamName) {
+    document.getElementById('modal_tt_id').value = ttId;
+    document.getElementById('modal_team_name').value = teamName;
+    
+    const modal = document.getElementById('installment_modal');
+    const content = document.getElementById('installment_modal_content');
+    
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+      content.classList.remove('scale-95', 'opacity-0');
+      content.classList.add('scale-100', 'opacity-100');
+    }, 50);
+  }
+
+  function closeInstallmentModal() {
+    const modal = document.getElementById('installment_modal');
+    const content = document.getElementById('installment_modal_content');
+    
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    
+    setTimeout(() => {
+      modal.classList.add('hidden');
+    }, 300);
+  }
+
+  function deleteTransaction(txId) {
+    if (confirm('⚠️ هل تريد حذف هذه الدفعة وتعديل رصيد الفريق تلقائياً؟')) {
+      document.getElementById('delete_tx_id_input').value = txId;
+      document.getElementById('delete_transaction_form').submit();
+    }
+  }
+</script>
+
+<!-- Team Installment Modal -->
+<div id="installment_modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+  <!-- Backdrop -->
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeInstallmentModal()"></div>
+  
+  <!-- Modal Content -->
+  <div class="relative bg-zinc-900 border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl transform transition-all duration-300 scale-95 opacity-0" id="installment_modal_content">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold text-lg text-white" id="installment_modal_title">➕ {% trans "Ajouter un versement" %} / إضافة دفعة</h3>
+      <button onclick="closeInstallmentModal()" class="text-gray-400 hover:text-white text-xl font-bold">&times;</button>
+    </div>
+    
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add_team_installment">
+      <input type="hidden" id="modal_tt_id" name="tournament_team_id" value="">
+      
+      <div>
+        <label class="block text-xs font-bold opacity-60 mb-1">{% trans "Équipe" %} / الفريق</label>
+        <input type="text" id="modal_team_name" class="form-input py-2 px-3 text-sm w-full bg-white/5 border-white/10 text-white" readonly>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold opacity-60 mb-1">{% trans "Montant" %} / المبلغ (DZD)</label>
+        <input type="number" name="amount" step="0.01" class="form-input py-2 px-3 text-sm font-mono w-full bg-black/40 border-white/10 text-emerald-400" placeholder="Ex: 2000" required>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold opacity-60 mb-1">{% trans "Notes" %} / ملاحظات</label>
+        <textarea name="notes" rows="2" class="form-input py-2 px-3 text-sm w-full bg-black/40 border-white/10 text-white" placeholder="Ex: Deuxième tranche / الدفعة الثانية"></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-xl shadow-lg hover:from-emerald-500 hover:to-teal-500 transition-all">
+        💾 {% trans "Confirmer le paiement" %} / تأكيد وتسميع الدفعة
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Hidden form for deleting transactions -->
+<form id="delete_transaction_form" method="post" class="hidden">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="delete_transaction">
+  <input type="hidden" name="transaction_id" id="delete_tx_id_input" value="">
+</form>
+
+{% endblock %}

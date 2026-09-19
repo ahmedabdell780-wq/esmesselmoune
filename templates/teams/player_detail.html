@@ -1,0 +1,290 @@
+{% extends 'base.html' %}
+{% load i18n turniq_tags %}
+{% block title %}{{ player.full_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-6">
+  
+  <!-- BREADCRUMB -->
+  <div class="flex items-center gap-2 text-sm mb-6 opacity-60">
+    <a href="{% url 'teams:list' %}" class="hover:text-primary transition-colors">⚽ {% trans "Équipes" %}</a>
+    <span>›</span>
+    <a href="{% url 'teams:detail' player.team.pk %}" class="hover:text-primary transition-colors">{{ player.team.name }}</a>
+    <span>›</span>
+    <span class="text-white">{{ player.full_name }}</span>
+  </div>
+
+  <!-- HERO SECTION -->
+  <div class="relative rounded-[2rem] overflow-hidden shadow-2xl mb-8 border border-white/10 group">
+    <!-- Stadium Background Overlay -->
+    <div class="absolute inset-0 bg-slate-900 z-0">
+        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-black via-transparent to-black z-10"></div>
+        <div class="absolute inset-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80')] bg-cover bg-center group-hover:scale-105 transition-transform duration-1000"></div>
+    </div>
+
+    <div class="relative z-20 px-8 pt-20 pb-10">
+      <div class="flex flex-col md:flex-row items-center md:items-end gap-8">
+        
+        <!-- Player Photo/Avatar -->
+        <div class="relative">
+            <div class="w-40 h-40 md:w-48 md:h-48 rounded-[2rem] border-4 border-white/10 overflow-hidden shadow-2xl bg-slate-800 flex items-center justify-center">
+                {% if player.photo %}
+                    <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                {% else %}
+                    <span class="font-bebas text-7xl text-white/20">{{ player.first_name|first }}{{ player.last_name|first }}</span>
+                {% endif %}
+            </div>
+            <!-- Jersey Number Badge -->
+            <div class="absolute -bottom-4 -right-4 w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-xl transform -rotate-12 border-4 border-slate-900">
+                <span class="font-bebas text-3xl text-black">{{ player.jersey_number }}</span>
+            </div>
+        </div>
+
+        <!-- Basic Info -->
+        <div class="flex-1 text-center md:text-left">
+            <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-4">
+                <span class="px-4 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] font-black uppercase tracking-widest text-white">
+                    {% if player.position == 'GK' %}🧤{% elif player.position == 'DEF' %}🛡{% elif player.position == 'MID' %}⚙{% else %}⚡{% endif %}
+                    {{ player.get_position_display }}
+                </span>
+                {% if player.is_suspended %}
+                    <span class="px-4 py-1 rounded-full bg-red-500/20 backdrop-blur-md border border-red-500/30 text-[10px] font-black uppercase tracking-widest text-red-400">🚫 {% trans "Suspendu" %}</span>
+                {% endif %}
+                <a href="{% url 'teams:detail' player.team.pk %}" class="px-4 py-1 rounded-full bg-primary/20 backdrop-blur-md border border-primary/30 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/30 transition-colors">
+                    🛡️ {{ player.team.name }}
+                </a>
+            </div>
+            
+            <h1 class="font-bebas text-6xl md:text-7xl text-white tracking-widest drop-shadow-2xl mb-2">{{ player.full_name }}</h1>
+            
+            <div class="flex items-center justify-center md:justify-start gap-4 text-gray-400 font-bold uppercase text-[11px] tracking-widest">
+                <span>📍 {{ player.team.neighborhood }}</span>
+                {% if player.age %}
+                <span class="w-1 h-1 bg-white/20 rounded-full"></span>
+                <span>🎂 {{ player.age }} {% trans "Ans" %}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="flex gap-4">
+            {% if trophies_won.count > 0 %}
+            <div class="flex flex-col items-center">
+                <div class="w-14 h-14 rounded-full bg-yellow-500/20 border-2 border-yellow-500/50 flex items-center justify-center text-2xl animate-bounce shadow-[0_0_15px_rgba(234,179,8,0.3)]">🏆</div>
+                <span class="text-[10px] font-black text-yellow-500 mt-2 tracking-widest">×{{ trophies_won.count }} ألقاب</span>
+            </div>
+            {% endif %}
+            {% if can_manage %}
+            <div class="flex flex-col gap-2">
+                <a href="{% url 'teams:player_edit' player.pk %}" class="p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors" title="{% trans "Modifier" %}">✏️</a>
+            </div>
+            {% endif %}
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENT GRID -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <!-- LEFT COLUMN: STATS & INFO -->
+    <div class="space-y-8">
+        <!-- PRO STATS BOARD -->
+        <div class="relative bg-gradient-to-br from-[#0f172a] to-[#0a0f1c] backdrop-blur-2xl border border-white/10 rounded-3xl p-8 overflow-hidden shadow-2xl group">
+            <!-- Glowing orbs behind -->
+            <div class="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-[50px] group-hover:bg-primary/30 transition-colors pointer-events-none"></div>
+            <div class="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/20 rounded-full blur-[50px] group-hover:bg-blue-500/30 transition-colors pointer-events-none"></div>
+            
+            <h3 class="relative z-10 font-bebas text-2xl text-white tracking-widest mb-8 flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-primary">📊</div>
+                إحصائيات احترافية / <span class="text-primary">PRO STATS</span>
+            </h3>
+
+            <div class="relative z-10 grid grid-cols-2 gap-4">
+                <!-- Goal Stat -->
+                <div class="bg-gradient-to-br from-white/5 to-white/0 border border-white/10 rounded-2xl p-5 flex flex-col items-center justify-center hover:border-primary/50 transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_-10px_rgba(202,138,4,0.3)]">
+                    <div class="text-4xl mb-2 opacity-80">⚽</div>
+                    <span class="font-bebas text-5xl text-white drop-shadow-lg">{{ goals_count }}</span>
+                    <span class="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mt-2">الأهداف / Goals</span>
+                </div>
+                <!-- Assists Stat -->
+                <div class="bg-gradient-to-br from-white/5 to-white/0 border border-white/10 rounded-2xl p-5 flex flex-col items-center justify-center hover:border-blue-400/50 transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_-10px_rgba(96,165,250,0.3)]">
+                    <div class="text-4xl mb-2 opacity-80">🎯</div>
+                    <span class="font-bebas text-5xl text-white drop-shadow-lg">{{ assists_count }}</span>
+                    <span class="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mt-2">تمريرات / Assists</span>
+                </div>
+                <!-- Yellow Cards -->
+                <div class="bg-gradient-to-br from-white/5 to-white/0 border border-yellow-500/20 rounded-2xl p-5 flex flex-col items-center justify-center hover:border-yellow-500/50 transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_-10px_rgba(234,179,8,0.3)]">
+                    <div class="w-6 h-8 bg-yellow-500 rounded-sm mb-3 shadow-lg transform rotate-12 opacity-90 border border-yellow-400"></div>
+                    <span class="font-bebas text-4xl text-yellow-500 drop-shadow-lg">{{ yellow_cards }}</span>
+                    <span class="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mt-2">صفراء / Yellow</span>
+                </div>
+                <!-- Red Cards -->
+                <div class="bg-gradient-to-br from-white/5 to-white/0 border border-red-500/20 rounded-2xl p-5 flex flex-col items-center justify-center hover:border-red-500/50 transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_-10px_rgba(239,68,68,0.3)]">
+                    <div class="w-6 h-8 bg-red-500 rounded-sm mb-3 shadow-lg transform -rotate-12 opacity-90 border border-red-400"></div>
+                    <span class="font-bebas text-4xl text-red-500 drop-shadow-lg">{{ red_cards }}</span>
+                    <span class="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mt-2">حمراء / Red</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- PROFILE DETAILS -->
+        <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+            <h3 class="font-bebas text-xl text-white tracking-widest mb-6 border-b border-white/10 pb-2 flex items-center gap-2">
+                <span>👤</span> الملف الشخصي / <span class="text-primary">PROFILE</span>
+            </h3>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-gray-500 font-bold uppercase tracking-widest text-[10px]">🎂 تاريخ الميلاد / DOB</span>
+                    <span class="text-white font-bold">
+                        {{ player.date_of_birth|date:"d F Y"|default:"--" }} 
+                        {% if player.age %}<span class="text-primary ml-1">({{ player.age }} ans)</span>{% endif %}
+                    </span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-gray-500 font-bold uppercase tracking-widest text-[10px]">🦶 القدم المفضلة</span>
+                    <span class="text-white font-bold">
+                        {% if player.preferred_foot == 'R' %}اليمنى / Droite
+                        {% elif player.preferred_foot == 'L' %}اليسرى / Gauche
+                        {% else %}كلتاهما / Ambidextre{% endif %}
+                    </span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-gray-500 font-bold uppercase tracking-widest text-[10px]">📏 الطول</span>
+                    <span class="text-white font-bebas text-lg">{{ player.height_cm|default:"--" }} CM</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-gray-500 font-bold uppercase tracking-widest text-[10px]">⚖️ الوزن</span>
+                    <span class="text-white font-bebas text-lg">{{ player.weight_kg|default:"--" }} KG</span>
+                </div>
+                <div class="stat-card p-3 rounded-xl flex items-center justify-between" style="background:var(--card);">
+                    <span class="text-xs font-bold text-white/60">رقم التعريف</span>
+                    <span class="text-white font-mono text-xs opacity-60">{{ player.display_national_id }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT COLUMN: CAREER PATH & HISTORY -->
+    <div class="lg:col-span-2 space-y-8">
+        
+        <!-- CAREER PATH (TIMELINE) -->
+        <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-8 opacity-10">
+                <span class="font-bebas text-9xl">PATH</span>
+            </div>
+
+            <h3 class="font-bebas text-3xl text-white tracking-widest mb-10 flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-lg">📈</div>
+                مسار اللاعب / <span class="text-primary">CAREER PATH</span>
+            </h3>
+
+            {% if tournament_history %}
+            <div class="relative pl-8 space-y-12 before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gradient-to-b before:from-primary before:via-white/20 before:to-transparent">
+                {% for tt in tournament_history %}
+                <div class="relative">
+                    <!-- Dot -->
+                    <div class="absolute -left-[30px] top-1 w-6 h-6 rounded-full bg-slate-900 border-4 border-primary shadow-[0_0_10px_rgba(197,160,40,0.5)] z-10"></div>
+                    
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <div class="text-primary font-bebas text-xl mb-1">{{ tt.tournament.name }}</div>
+                            <div class="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                                📅 {{ tt.tournament.year }} · Édition {{ tt.tournament.edition }}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            {% if tt.tournament.winner == player.team %}
+                                <span class="px-3 py-1 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-yellow-500 text-[10px] font-black tracking-widest uppercase flex items-center gap-1">
+                                    🏆 CHAMPION
+                                </span>
+                            {% elif tt.tournament.runner_up == player.team %}
+                                <span class="px-3 py-1 rounded-lg bg-gray-400/10 border border-gray-400/30 text-gray-400 text-[10px] font-black tracking-widest uppercase flex items-center gap-1">
+                                    🥈 FINALISTE
+                                </span>
+                            {% endif %}
+                            
+                            {% if tt.eliminated_at_stage %}
+                                <span class="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-white/60 text-[10px] font-black tracking-widest uppercase">
+                                    {{ tt.get_eliminated_at_stage_display }}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-20 bg-white/5 rounded-2xl border border-dashed border-white/10">
+                <div class="text-4xl mb-4">🏟️</div>
+                <div class="text-gray-500 font-bold uppercase tracking-widest text-xs">لا توجد مشاركات مسجلة في البطولات حتى الآن</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- RECENT GOALS & INJURIES -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- RECENT GOALS -->
+            <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+                <h3 class="font-bebas text-xl text-white tracking-widest mb-6 flex items-center gap-2">
+                    <span>⚽</span> آخر الأهداف / <span class="text-primary">GOALS</span>
+                </h3>
+                {% if recent_goals %}
+                <div class="space-y-3">
+                    {% for goal in recent_goals %}
+                    <a href="{% url 'matches:detail' goal.match.pk %}" class="flex items-center gap-4 p-3 rounded-xl hover:bg-white/5 transition-colors group">
+                        <div class="font-bebas text-2xl text-primary group-hover:scale-110 transition-transform">{{ goal.minute }}'</div>
+                        <div class="flex-1">
+                            <div class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">{{ goal.match.tournament.name }}</div>
+                            <div class="text-xs text-white font-bold">{{ goal.match.team1.name }} vs {{ goal.match.team2.name }}</div>
+                        </div>
+                        <div class="text-xl">{% if goal.goal_type == 'penalty' %}🎯{% else %}⚽{% endif %}</div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-10 opacity-30 text-xs font-bold uppercase tracking-widest">لا أهداف حتى الآن</div>
+                {% endif %}
+            </div>
+
+            <!-- INJURY HISTORY -->
+            <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+                <h3 class="font-bebas text-xl text-white tracking-widest mb-6 flex items-center gap-2">
+                    <span>🩹</span> السجل الطبي / <span class="text-red-500">MEDICAL</span>
+                </h3>
+                {% if injuries %}
+                <div class="space-y-3">
+                    {% for inj in injuries %}
+                    <div class="p-3 rounded-xl bg-white/5 border border-white/10">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-xs font-bold text-white">{{ inj.get_injury_type_display }}</span>
+                            <span class="px-2 py-0.5 rounded text-[8px] font-black tracking-widest uppercase 
+                                {% if inj.severity == 'severe' %}bg-red-500/20 text-red-500 border border-red-500/30
+                                {% elif inj.severity == 'moderate' %}bg-yellow-500/20 text-yellow-500 border border-yellow-500/30
+                                {% else %}bg-blue-500/20 text-blue-500 border border-blue-500/30{% endif %}">
+                                {{ inj.get_severity_display }}
+                            </span>
+                        </div>
+                        <div class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                            {{ inj.injury_date|date:"d M Y" }} {% if inj.is_recovered %}· ✅ تعافى{% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-10 opacity-30 text-xs font-bold uppercase tracking-widest">لا توجد إصابات مسجلة</div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+  </div>
+
+</div>
+
+<style>
+    .font-bebas { font-family: 'Bebas Neue', sans-serif; }
+</style>
+{% endblock %}

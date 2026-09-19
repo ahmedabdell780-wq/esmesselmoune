@@ -1,0 +1,1932 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شهادة تقديرية - TurniQ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Amiri:wght@400;700&family=Reem+Kufi:wght@400;700;900&family=Tajawal:wght@400;500;700;900&family=Aref+Ruqaa:wght@400;700&display=swap" rel="stylesheet" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+    <style>
+        :root {
+            --gold:       #D4AF37;
+            --gold-light: #F9DF7B;
+            --gold-dark:  #A67C1E;
+            --charcoal:   #2E2E2E;
+            --navy:       #00382d;
+            --border-gold:#D4AF37;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #d1d5db;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+            font-family: 'Cairo', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* ─── CERTIFICATE CONTAINER ─── */
+        .certificate {
+            width: 297mm;
+            height: 210mm;
+            background: #ffffff;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.25);
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .certificate-bg {
+            position: absolute;
+            inset: 0;
+            background: url('/media/backgrounds/best_goalkeeper_border.png') no-repeat center center;
+            background-size: cover;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .certificate-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        /* Absolute background SVG containing waves, borders, and frames */
+        .bg-overlay {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .watermark-wrapper {
+            transition: border 0.2s;
+        }
+        .watermark-wrapper:hover .logo-overlay {
+            opacity: 1;
+        }
+        .cert-watermark-img-element {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* ─── LEFT COLUMN: TEXT CONTENT ─── */
+        .left-col {
+            position: absolute;
+            left: 8%;
+            top: 20px;
+            bottom: 95px;
+            width: 84%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            z-index: 5;
+            text-align: center;
+            padding: 10px 0;
+        }
+        .state-header {
+            font-family: 'Amiri', serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--navy);
+            letter-spacing: 1px;
+            margin-top: 5px;
+            margin-bottom: 5px;
+            text-align: center;
+            width: 100%;
+            text-decoration: underline;
+            text-underline-offset: 6px;
+        }
+
+        /* ─── TITLE & HEADERS ─── */
+        .app-logo-wrapper {
+            position: absolute;
+            right: 40px;
+            top: 40px;
+            width: 90px;
+            height: 90px;
+            z-index: 20;
+            cursor: move;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: none;
+        }
+        .app-logo-wrapper::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(232, 200, 74, 0.25) 0%, rgba(232, 200, 74, 0) 70%);
+            z-index: -1;
+            filter: blur(4px);
+        }
+        .cert-app-logo {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            mix-blend-mode: multiply;
+        }
+        .logo-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.85);
+            color: #0A1C3A;
+            font-size: 11px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+            border-radius: 8px;
+            border: 1px solid var(--gold);
+            text-align: center;
+        }
+        .app-logo-wrapper:hover .logo-overlay,
+        .official-stamp-container:hover .logo-overlay {
+            opacity: 1;
+        }
+        .logo-resizer-handle {
+            position: absolute;
+            bottom: -5px;
+            left: -5px;
+            width: 15px;
+            height: 15px;
+            background: var(--gold);
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: nesw-resize;
+            z-index: 25;
+        }
+
+        .cert-header-title {
+            font-family: 'Reem Kufi', sans-serif;
+            font-size: 56px;
+            font-weight: 900;
+            color: #997514;
+            margin-top: 5px;
+            margin-bottom: 2px;
+            text-shadow: 1px 2px 3px rgba(0,0,0,0.08);
+            letter-spacing: 0px;
+            line-height: 1.1;
+        }
+
+        .cert-intro {
+            font-family: 'Amiri', serif;
+            font-size: 25px;
+            color: #2b2b2b;
+            font-weight: 700;
+            margin-top: 0px;
+            margin-bottom: 5px;
+        }
+
+        /* ─── PLAYER NAME ─── */
+        .player-name-wrapper {
+            margin: 0px 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .player-name {
+            font-family: 'Reem Kufi', sans-serif;
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--navy);
+            outline: none;
+            cursor: text;
+            line-height: 1.2;
+        }
+        .player-name:focus {
+            background: rgba(212, 175, 55, 0.1);
+            border-radius: 4px;
+        }
+        .name-divider {
+            margin-top: 10px;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0.95;
+        }
+
+        /* ─── DESCRIPTION ─── */
+        .cert-description {
+            font-family: 'Tajawal', sans-serif;
+            font-size: 21px;
+            color: #2b2b2b;
+            line-height: 1.8;
+            max-width: 850px;
+            font-weight: 500;
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+        .highlight-team {
+            color: var(--gold-dark);
+            font-weight: 800;
+        }
+
+        /* ─── MATCH INFO CONTAINER (Completely Redesigned, Centered, Premium Badge Style) ─── */
+        .match-card {
+            background: transparent;
+            backdrop-filter: none;
+            border: 1.5px solid rgba(212, 175, 55, 0.35);
+            border-radius: 40px;
+            padding: 8px 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            gap: 24px;
+            margin: 12px auto;
+            box-shadow: none;
+            position: relative;
+        }
+        .match-team {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .team-logo {
+            width: 85px;
+            height: 85px;
+            object-fit: contain;
+            border-radius: 50%;
+            border: 2px solid var(--border-gold);
+            background: white;
+            padding: 4px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.06);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 20px;
+            color: var(--charcoal);
+        }
+        .team-name {
+            font-size: 20px;
+            font-weight: 900;
+            color: var(--navy);
+            letter-spacing: 0.5px;
+        }
+        .vs-badge {
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold-light), var(--gold-dark));
+            color: white;
+            font-family: 'Reem Kufi', sans-serif;
+            font-size: 16px;
+            font-weight: 900;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+            box-shadow: 0 4px 12px rgba(197, 160, 40, 0.45);
+            z-index: 2;
+        }
+        .match-meta {
+            font-size: 11px;
+            font-weight: 700;
+            border-right: 2px solid var(--border-gold);
+            padding-right: 16px;
+            margin-right: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            text-align: center;
+            max-width: 210px;
+        }
+        .meta-label {
+            color: #777;
+            font-weight: 600;
+            font-size: 10px;
+            margin-left: 4px;
+        }
+        .meta-value {
+            color: var(--navy);
+            font-weight: 800;
+            line-height: 1.2;
+            word-break: break-word;
+        }
+
+        /* ─── SIGNATURES ROW ─── */
+        .footer-row {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 120px 0 80px;
+            margin-top: auto;
+            margin-bottom: 45px;
+        }
+
+        .sig-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 180px;
+        }
+        .sig-line {
+            width: 100%;
+            border-bottom: 2px dashed var(--gold-dark);
+            margin-bottom: 2px;
+            padding-bottom: 0;
+            line-height: 1.2;
+            font-family: 'Aref Ruqaa', serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--navy);
+            text-align: center;
+            outline: none;
+            cursor: text;
+            white-space: nowrap;
+        }
+        .sig-line:focus {
+            background: rgba(212, 175, 55, 0.08);
+            border-radius: 4px;
+        }
+        .sig-title {
+            font-size: 15px;
+            color: var(--navy);
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        /* ─── MEDAL SEAL POSITIONED ON THE WAVE BOUNDARY ─── */
+        .medal-seal {
+            position: absolute;
+            left: 86%;
+            top: 22%;
+            transform: translate(-50%, -50%);
+            width: 140px;
+            height: 190px;
+            z-index: 10;
+            cursor: move;
+            user-select: none;
+        }
+        .medal-seal:hover .stamp-resizer {
+            opacity: 1;
+        }
+
+        /* ─── WATERMARK IMAGE ─── */
+        .cert-watermark-img {
+            position: absolute;
+            left: 36%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 580px;
+            height: auto;
+            opacity: 0.18;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+
+        /* ─── STAMP ─── */
+        .official-stamp-container {
+            position: absolute;
+            bottom: 25px;
+            left: 200px;
+            transform: rotate(-8deg);
+            width: 95px;
+            height: 95px;
+            z-index: 99;
+            cursor: move;
+            user-select: none;
+            mix-blend-mode: multiply;
+        }
+        .official-stamp-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: contrast(250%) brightness(1.1);
+            pointer-events: none;
+        }
+        .stamp-resizer {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: var(--border-gold);
+            border: 2px solid white;
+            border-radius: 50%;
+            bottom: -5px;
+            left: -5px;
+            cursor: nesw-resize;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 100;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        .official-stamp-container:hover .stamp-resizer {
+            opacity: 1;
+        }
+        @media print {
+            .stamp-resizer {
+                display: none !important;
+            }
+        }
+
+        /* ─── PLAYER PHOTO BADGE ─── */
+        .player-photo-container {
+            display: none !important;
+        }
+        .player-photo-container:hover {
+            border-color: var(--gold-light);
+            box-shadow: 0 14px 30px rgba(197, 160, 40, 0.4);
+        }
+        .player-photo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            transition: filter 0.25s ease;
+        }
+        .player-photo-container:hover img {
+            filter: brightness(0.65);
+        }
+        .photo-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.4);
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+            pointer-events: none;
+            text-align: center;
+        }
+        .player-photo-container:hover .photo-overlay {
+            opacity: 1;
+        }
+        @media print {
+            .player-photo-container {
+                box-shadow: none !important;
+                border-color: var(--border-gold) !important;
+            }
+            .photo-overlay {
+                display: none !important;
+            }
+        }
+
+        /* ─── PRINT BAR (NO PRINT) ─── */
+        .print-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        .btn-print {
+            background: linear-gradient(135deg, var(--navy), #253966);
+            color: var(--gold-light);
+            border: 2px solid var(--border-gold);
+            padding: 10px 28px;
+            border-radius: 50px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            transition: all 0.3s;
+            letter-spacing: 1px;
+        }
+        .btn-print:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+            background: linear-gradient(135deg, #253966, var(--navy));
+        }
+        .btn-pdf {
+            background: linear-gradient(135deg, #0a3e29, #0d5c3a);
+            color: white;
+            border: 2px solid #2e7d5c;
+            padding: 10px 28px;
+            border-radius: 50px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            transition: all 0.3s;
+            letter-spacing: 1px;
+        }
+        .btn-pdf:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+            background: linear-gradient(135deg, #0d5c3a, #053b24);
+        }
+        .btn-bg-change {
+            background: linear-gradient(135deg, #4f46e5, #3730a3);
+            color: white;
+            border: 2px solid #6366f1;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-bg-change:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+            background: linear-gradient(135deg, #3730a3, #221c7a);
+        }
+        .btn-watermark-mode {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            color: white;
+            border: 2px solid #f59e0b;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-watermark-mode:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+            background: linear-gradient(135deg, #b45309, #78350f);
+        }
+        .btn-watermark-mode.active {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            border-color: #ef4444;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+        }
+        .btn-watermark-change {
+            background: linear-gradient(135deg, #059669, #047857);
+            color: white;
+            border: 2px solid #10b981;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-watermark-change:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+            background: linear-gradient(135deg, #047857, #065f46);
+        }
+        .bg-control-slider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: 50px;
+            color: white;
+            font-family: 'Cairo', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .bg-control-slider input[type="range"] {
+            cursor: pointer;
+            accent-color: var(--gold);
+        }
+        .btn-back {
+            background: #1e293b;
+            color: white;
+            border: 2px solid #334155;
+            padding: 10px 28px;
+            border-radius: 50px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+            background: #0f172a;
+        }
+
+        /* ─── PLAYER CUTOUT PHOTO ─── */
+        .player-cutout-img {
+            position: absolute;
+            left: 20px;
+            bottom: 25px;
+            height: 520px;
+            width: auto;
+            object-fit: contain;
+            pointer-events: none;
+            z-index: 2; /* Under left-col text but above background waves */
+            filter: drop-shadow(5px 5px 15px rgba(0,0,0,0.25));
+        }
+
+        /* ─── PLAYER STATS SECTION ─── */
+        .player-stats-section {
+            width: 80%;
+            margin: 15px auto;
+            text-align: center;
+            z-index: 6;
+        }
+        .stats-header {
+            background: #0f1e18; /* Dark green/navy header */
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 15px;
+            border-radius: 15px;
+            display: inline-block;
+            margin-bottom: 8px;
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            letter-spacing: 0.5px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(8px);
+            border: 1.5px solid rgba(212, 175, 55, 0.35);
+            border-radius: 12px;
+            padding: 8px 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        }
+        .stat-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .stat-icon-wrapper {
+            width: 32px;
+            height: 32px;
+            background: #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 4px;
+            border: 1px solid rgba(212, 175, 55, 0.25);
+        }
+        .stat-icon {
+            width: 16px;
+            height: 16px;
+            color: #b88a1e;
+        }
+        .stat-value {
+            font-size: 16px;
+            font-weight: 900;
+            color: #0f1e18;
+            line-height: 1.1;
+        }
+        .stat-label {
+            font-size: 10px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        /* ─── PRINT MEDIA QUERIES ─── */
+        @page {
+            size: A4 landscape;
+            margin: 0;
+        }
+
+        @media print {
+            html, body {
+                background: #ffffff !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                min-height: 0 !important;
+                display: block !important;
+                overflow: hidden !important;
+                position: relative !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .no-print, .print-bar {
+                display: none !important;
+            }
+
+            .certificate {
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                float: none !important;
+                transform: none !important;
+                overflow: hidden !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .bg-overlay {
+                background-size: 100% 100% !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+
+        @media print and (orientation: landscape) {
+            @page {
+                size: A4 landscape;
+                margin: 0;
+            }
+            html, body, .certificate {
+                width: 297mm !important;
+                height: 210mm !important;
+            }
+        }
+
+        @media print and (orientation: portrait) {
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+            html, body, .certificate {
+                width: 210mm !important;
+                height: 297mm !important;
+            }
+            .certificate .certificate-inner {
+                padding: 160px 45px 50px 45px !important;
+            }
+            .certificate .cert-description {
+                max-width: 100% !important;
+            }
+            .certificate .app-logo-wrapper:not([data-dragged="true"]) {
+                top: 45px !important;
+                right: 45px !important;
+                left: auto !important;
+            }
+            .certificate .medal-seal:not([data-dragged="true"]) {
+                top: 45px !important;
+                left: 45px !important;
+                right: auto !important;
+            }
+            .certificate .official-stamp-container:not([data-dragged="true"]) {
+                bottom: 50px !important;
+                right: 45px !important;
+                left: auto !important;
+            }
+            .certificate .bottom-row:not([data-dragged="true"]) {
+                bottom: 50px !important;
+                left: 45px !important;
+                right: 45px !important;
+                width: auto !important;
+            }
+            .certificate .watermark-wrapper {
+                max-width: 90% !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PRINT CONTROLS -->
+    <div class="no-print print-bar" style="flex-wrap: wrap;">
+        <a href="{% url 'matches:detail' match.pk %}" class="btn-back">🏁 {% trans "Retour au match" %}</a>
+        <button class="btn-print" onclick="window.print()">🧤 {% trans "Imprimer le certificat d'appréciation" %}</button>
+        <button class="btn-pdf" onclick="downloadPDF()">📄 {% trans "Télécharger le certificat PDF" %}</button>
+        <button class="btn-bg-change" onclick="document.getElementById('bg-file-input').click()">🖼️ {% trans "Changer l'arrière-plan" %} / تغيير الخلفية</button>
+        <input type="file" id="bg-file-input" accept="image/*" style="display: none;" onchange="loadCustomBackground(this)">
+        
+        <div class="bg-control-slider">
+            <label for="bg-opacity">💡 {% trans "Opacité" %} / البروز:</label>
+            <input type="range" id="bg-opacity" min="0.1" max="1" step="0.05" value="1" oninput="adjustBgOpacity(this.value)">
+        </div>
+        <div class="bg-control-slider">
+            <label for="bg-zoom">🔍 {% trans "Zoom" %} / التكبير والتصغير:</label>
+            <input type="range" id="bg-zoom" min="50" max="250" step="5" value="100" oninput="adjustBgZoom(this.value)">
+        </div>
+        
+        <button class="btn-watermark-mode" id="btn-watermark-mode" onclick="toggleWatermarkEditMode()">⚙️ {% trans "Ajuster le filigrane" %} / ضبط العلامة المائية</button>
+        <button class="btn-watermark-change" onclick="document.getElementById('watermark-file-input').click()">📷 {% trans "Changer le filigrane" %} / تغيير العلامة المائية</button>
+        
+        <div class="bg-control-slider">
+            <label for="watermark-opacity">💡 {% trans "Opacité filigrane" %} / شفافية العلامة:</label>
+            <input type="range" id="watermark-opacity" min="0.05" max="0.8" step="0.05" value="0.15" oninput="adjustWatermarkOpacity(this.value)">
+        </div>
+        <div class="bg-control-slider">
+            <label for="watermark-zoom">🔍 {% trans "Zoom filigrane" %} / تكبير وتصغير العلامة:</label>
+            <input type="range" id="watermark-zoom" min="100" max="800" step="5" value="600" oninput="adjustWatermarkZoom(this.value)">
+        </div>
+        <div class="bg-control-slider">
+            <label for="description-font">🔤 {% trans "Police des textes" %} / خط النصوص:</label>
+            <select id="description-font" onchange="changeDescriptionFont(this.value)" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 4px; font-family: 'Cairo', sans-serif; font-size: 13px; outline: none; cursor: pointer;">
+                <option value="'Tajawal', sans-serif" style="color: black;">Tajawal (حديث)</option>
+                <option value="'Amiri', serif" style="color: black;" selected>Amiri (كلاسيكي)</option>
+                <option value="'Cairo', sans-serif" style="color: black;">Cairo (دائري)</option>
+                <option value="'Aref Ruqaa', serif" style="color: black;">Aref Ruqaa (رقعة)</option>
+                <option value="'Reem Kufi', sans-serif" style="color: black;">Reem Kufi (كوفي)</option>
+            </select>
+        </div>
+        <div class="bg-control-slider">
+            <label for="player-name-font-size">📏 {% trans "Taille Nom" %} / حجم خط الحارس:</label>
+            <input type="range" id="player-name-font-size" min="24" max="72" step="1" value="56" oninput="changePlayerNameFontSize(this.value)">
+        </div>
+        <div class="bg-control-slider">
+            <label for="intro-font-size">📏 {% trans "Taille Intro" %} / حجم خط المقدمة:</label>
+            <input type="range" id="intro-font-size" min="14" max="36" step="1" value="22" oninput="changeIntroFontSize(this.value)">
+        </div>
+        <div class="bg-control-slider">
+            <label for="description-font-size">📏 {% trans "Taille description" %} / حجم خط الوصف:</label>
+            <input type="range" id="description-font-size" min="14" max="36" step="1" value="21" oninput="changeDescriptionFontSize(this.value)">
+        </div>
+        <div class="bg-control-slider">
+            <label for="signature-font-size">📏 {% trans "Taille Signatures" %} / حجم خط التوقيعات والفيصل:</label>
+            <input type="range" id="signature-font-size" min="12" max="32" step="1" value="18" oninput="changeSignatureFontSize(this.value)">
+        </div>
+        <div class="bg-control-slider">
+            <label for="orientation-select">📐 {% trans "Orientation" %} / اتجاه الشهادة:</label>
+            <select id="orientation-select" onchange="changeOrientation(this.value)" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 4px; font-family: 'Cairo', sans-serif; font-size: 13px; outline: none; cursor: pointer;">
+                <option value="landscape" style="color: black;" selected>أفقي (Landscape A4)</option>
+                <option value="portrait" style="color: black;">عمودي (Portrait A4)</option>
+            </select>
+        </div>
+        <button class="btn-watermark-change" onclick="document.getElementById('player-photo-input').click()">👤 {% trans "Changer photo حارس" %} / تغيير صورة الحارس</button>
+        <button class="btn-bg-change" onclick="document.getElementById('logo-file-input').click()">🛡️ {% trans "Changer Logo" %} / تغيير الشعار</button>
+    </div>
+
+    <!-- CERTIFICATE -->
+    <div class="certificate">
+        <div class="certificate-inner">
+            <div class="certificate-bg"></div>
+
+             <!-- App Logo -->
+             <div class="app-logo-wrapper" id="draggable-logo" title="اسحب باليسار لتحريك الشعار، واستخدم عجلة الماوس لتكبيره/تصغيره أو مقبض التحكم، واضغط لتغيير الصورة">
+                 <img src="{% if site_settings.app_logo %}{{ site_settings.app_logo.url }}{% else %}{% static 'img/app_logo.png' %}{% endif %}" onload="removeWhiteBackground(this)"
+                      class="cert-app-logo"
+                      id="app-logo-img"
+                      alt="Logo"
+                      onerror="this.src='/static/img/app_logo.png'; this.onerror=function(){this.style.display='none'};">
+                 <div class="logo-overlay">
+                     <span>تغيير الشعار</span>
+                 </div>
+                 <div class="logo-resizer-handle" id="logo-resizer-handle"></div>
+             </div>
+             <input type="file" id="logo-file-input" accept="image/*" style="display: none;" onchange="loadCustomLogo(this)">
+
+            <!-- Goalkeeper diving watermark -->
+            <div class="watermark-wrapper" id="draggable-watermark" style="position: absolute; left: 50%; top: 50%; transform: translate(-60%, -40%); width: 600px; opacity: 0.15; z-index: 1; pointer-events: none;" title="العلامة المائية / Filigrane">
+                <img src="/media/backgrounds/soccer_player_ink.jpg"
+                     class="cert-watermark-img-element"
+                     id="cert-watermark-img"
+                     alt="Watermark">
+                <div class="logo-overlay" id="watermark-overlay" style="display: none;">
+                    <span>🔄 تغيير العلامة المائية</span>
+                </div>
+                <div class="stamp-resizer" id="watermark-resizer-handle" style="display: none;"></div>
+                <input type="file" id="watermark-file-input" accept="image/*" style="display: none;" onchange="loadCustomWatermark(this)">
+            </div>
+
+            <!-- LEFT COLUMN: MAIN CERTIFICATE CONTENT -->
+            <div class="left-col">
+
+                <!-- State Header -->
+                <div class="state-header" contenteditable="true" spellcheck="false">الجمهورية الجزائرية الديمقراطية الشعبية</div>
+
+                 <!-- Match Meta (Left in its place at the top-left) -->
+                 <div style="width: 100%; display: flex; justify-content: flex-start; padding-right: 20px; margin-top: 10px; margin-bottom: 5px;">
+                     <div class="match-meta">
+                         <div>
+                             <span class="meta-label" contenteditable="true" spellcheck="false">البطولة:</span>
+                             <span class="meta-value" contenteditable="true" spellcheck="false">{{ match.tournament.name }}</span>
+                         </div>
+                         <div>
+                             <span class="meta-label" contenteditable="true" spellcheck="false">التاريخ:</span>
+                             <span class="meta-value" contenteditable="true" spellcheck="false" style="color:var(--gold-dark);">{{ match.match_date|date:"Y/m/d" }}</span>
+                         </div>
+                     </div>
+                 </div>
+
+                <!-- Calligraphy Heading: شكر وتقدير (Main Certificate Title) -->
+                <div class="shukr-calligraphy" style="width: 100%; display: flex; justify-content: center; margin-top: -20px; margin-bottom: 5px;">
+                    <img src="{% static 'img/shukr_wa_taqdeer.png' %}" style="height: 150px; object-fit: contain;" alt="شكر وتقدير">
+                </div>
+
+                <!-- Intro -->
+                <p class="cert-intro" contenteditable="true" spellcheck="false">تُقدَّم هذه الشهادة تقديراً للتميز وتتويجاً للحارس المتألق في الدورة:</p>
+
+                <!-- Player Name -->
+                <div class="player-name-wrapper">
+                    <div class="player-name" contenteditable="true" spellcheck="false">
+                        {{ player.full_name|default:"نجم المباراة المتألق" }}
+                    </div>
+                    <div class="name-divider">
+                        <svg width="320" height="24" viewBox="0 0 320 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="divGold" x1="0" y1="0" x2="320" y2="0" gradientUnits="userSpaceOnUse">
+                                    <stop offset="0%" stop-color="#9A7A1A" />
+                                    <stop offset="50%" stop-color="#E8C84A" />
+                                    <stop offset="100%" stop-color="#9A7A1A" />
+                                </linearGradient>
+                            </defs>
+                            <!-- Center diamond -->
+                            <path d="M 160 2 L 166 12 L 160 22 L 154 12 Z" fill="url(#divGold)" />
+                            <circle cx="160" cy="12" r="8" stroke="url(#divGold)" stroke-width="1.5" />
+                            <!-- Left wing -->
+                            <path d="M 142 12 C 110 12, 90 2, 70 12 C 50 22, 30 12, 10 12" stroke="url(#divGold)" stroke-width="1.5" stroke-linecap="round" />
+                            <circle cx="146" cy="12" r="2" fill="#E8C84A" />
+                            <circle cx="70" cy="12" r="3.5" fill="#9A7A1A" />
+                            <!-- Right wing -->
+                            <path d="M 178 12 C 210 12, 230 2, 250 12 C 270 22, 290 12, 310 12" stroke="url(#divGold)" stroke-width="1.5" stroke-linecap="round" />
+                            <circle cx="174" cy="12" r="2" fill="#E8C84A" />
+                            <circle cx="250" cy="12" r="3.5" fill="#9A7A1A" />
+                        </svg>
+                    </div>
+                </div>
+
+
+
+                <!-- DESCRIPTION (New font style and larger size) -->
+                <p class="cert-description" contenteditable="true" spellcheck="false">
+                    تقديراً لأدائه الاستثنائي وبراعته الفائقة في الذود عن مرماه في مباراة <span class="highlight-team" contenteditable="true" spellcheck="false">{{ match.team1.name|default:"الفريق الأول" }}</span> ضد <span class="highlight-team" contenteditable="true" spellcheck="false">{{ match.team2.name|default:"الفريق الثاني" }}</span>، ومساهمته الكبيرة في الحفاظ على نظافة شباكه وتألقه اللامع في التصدي للهجمات، مما جعله جديراً بلقب أفضل حارس في الدورة.
+                </p>
+
+                <!-- Footer Signatures -->
+                <div class="footer-row">
+                    <!-- Right: Date (first in RTL) -->
+                    <div class="sig-block">
+                        <div class="sig-title" contenteditable="true" spellcheck="false">التاريخ</div>
+                        <div class="sig-line" contenteditable="true" spellcheck="false">
+                            {{ match.match_date|date:"Y / m / d" }}
+                        </div>
+                    </div>
+
+                    <!-- Left: Signature (second in RTL) -->
+                    <div class="sig-block">
+                        <div class="sig-title" contenteditable="true" spellcheck="false">الإمضاء</div>
+                        <div class="sig-line" contenteditable="true" spellcheck="false">
+                            رئيس اللجنة
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Player Photo Badge (Left drag: move frame; Right drag: pan image; Scroll: zoom image; Left click: change image) -->
+            <div class="player-photo-container" id="draggable-player-photo" title="اسحب باليسار لتحريك الإطار، واسحب باليمين لتحريك الصورة بالداخل، واستخدم عجلة الماوس للتكبير/التصغير، واضغط باليسار لتغيير الصورة">
+                <img id="player-cert-photo" src="{% if player.photo %}{{ player.photo.url }}{% else %}{% static 'img/default_referee.jpg' %}{% endif %}" alt="{{ player.full_name|default:'اللاعب' }}" draggable="false" style="transform: translate(0px, 0px) scale(1);">
+                <div class="photo-overlay">
+                    <span>تغيير الصورة</span>
+                </div>
+            </div>
+            <input type="file" id="player-photo-input" accept="image/*" style="display: none;" onchange="loadPlayerPhoto(this)">
+
+            <!-- MEDAL SEAL -->
+            <div class="medal-seal" id="draggable-medal" style="display: none !important;" title="اسحب باليسار لتحريك الوسام، واستخدم عجلة الماوس لتكبيره/تصغيره أو مقبض التحكم">
+                <svg width="100%" height="100%" viewBox="0 0 200 270" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 8px 24px rgba(0,0,0,0.3));">
+                    <defs>
+                        <!-- Gold Gradients for Medal -->
+                        <linearGradient id="medalGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#FFF5C3" />
+                            <stop offset="30%" stop-color="#E8C35E" />
+                            <stop offset="70%" stop-color="#B88A1E" />
+                            <stop offset="100%" stop-color="#543C04" />
+                        </linearGradient>
+                        <linearGradient id="medalGoldLight" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#FFFBD4" />
+                            <stop offset="50%" stop-color="#E2B743" />
+                            <stop offset="100%" stop-color="#9E7618" />
+                        </linearGradient>
+                        <!-- Glassmorphism Shading -->
+                        <linearGradient id="glassShine" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.4" />
+                            <stop offset="40%" stop-color="#ffffff" stop-opacity="0.1" />
+                            <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0" />
+                        </linearGradient>
+                    </defs>
+                    
+                    <g transform="translate(100, 100)">
+                        <!-- Ribbon Tails (Draped below the Rosette in V-shape with swallow-tail cuts) -->
+                        <!-- Left Ribbon -->
+                        <path d="M -25,40 L -60,145 L -37.5,133 L -15,142 L -8,60 Z" fill="#004d40" stroke="url(#medalGold)" stroke-width="1.2" />
+                        <line x1="-23" y1="48" x2="-53" y2="137" stroke="url(#medalGold)" stroke-width="3" stroke-linecap="round" />
+                        
+                        <!-- Right Ribbon -->
+                        <path d="M 25,40 L 60,145 L 37.5,133 L 15,142 L 8,60 Z" fill="#004d40" stroke="url(#medalGold)" stroke-width="1.2" />
+                        <line x1="23" y1="48" x2="53" y2="137" stroke="url(#medalGold)" stroke-width="3" stroke-linecap="round" />
+
+                        <!-- Outer Shadow Rosette (Dark Navy/Black) for 3D depth -->
+                        <path d="M 83,0 L 75.7,6.6 L 81.7,14.4 L 73.4,19.6 L 78,28.4 L 68.8,32.1 L 71.8,41.5 L 62.2,43.6 L 63.5,53.3 L 53.7,53.7 L 53.3,63.5 L 43.5,62.2 L 41.5,71.8 L 32.1,68.8 L 28.4,78 L 19.6,73.4 L 14.4,81.7 L 6.6,75.7 L 0,83 L -6.6,75.7 L -14.4,81.7 L -19.6,73.4 L -28.4,78 L -32.1,68.8 L -41.5,71.8 L -43.5,62.2 L -53.3,63.5 L -53.7,53.7 L -63.5,53.3 L -62.2,43.6 L -71.8,41.5 L -68.8,32.1 L -78,28.4 L -73.4,19.6 L -81.7,14.4 L -75.7,6.6 L -83,0 L -75.7,-6.6 L -81.7,-14.4 L -73.4,-19.6 L -78,-28.4 L -68.8,-32.1 L -71.8,-41.5 L -62.2,-43.6 L -63.5,-53.3 L -53.7,-53.7 L -53.3,-63.5 L -43.5,-62.2 L -41.5,-71.8 L -32.1,-68.8 L -28.4,-78 L -19.6,-73.4 L -14.4,-81.7 L -6.6,-75.7 L 0,-83 L 6.6,-75.7 L 14.4,-81.7 L 19.6,-73.4 L 28.4,-78 L 32.1,-68.8 L 41.5,-71.8 L 43.5,-62.2 L 53.3,-63.5 L 53.7,-53.7 L 63.5,-53.3 L 62.2,-43.6 L 71.8,-41.5 L 68.8,-32.1 L 78,-28.4 L 73.4,-19.6 L 81.7,-14.4 L 75.7,-6.6 Z" fill="#050a12" opacity="0.6" />
+
+                        <!-- Outer Blue Rosette (Royal Navy Blue) -->
+                        <path d="M 80,0 L 73.7,6.4 L 78.8,13.9 L 71.5,19.1 L 75.2,27.4 L 67,31.3 L 69.3,40 L 60.6,42.4 L 61.3,51.4 L 52.3,52.3 L 51.4,61.3 L 42.4,60.6 L 40,69.3 L 31.3,67 L 27.4,75.2 L 19.1,71.5 L 13.9,78.8 L 6.4,73.7 L 0,80 L -6.4,73.7 L -13.9,78.8 L -19.1,71.5 L -27.4,75.2 L -31.3,67 L -40,69.3 L -42.4,60.6 L -51.4,61.3 L -52.3,52.3 L -61.3,51.4 L -60.6,42.4 L -69.3,40 L -67,31.3 L -75.2,27.4 L -71.5,19.1 L -78.8,13.9 L -73.7,6.4 L -80,0 L -73.7,-6.4 L -78.8,-13.9 L -71.5,-19.1 L -75.2,-27.4 L -67,-31.3 L -69.3,-40 L -60.6,-42.4 L -61.3,-51.4 L -52.3,-52.3 L -51.4,-61.3 L -42.4,-60.6 L -40,-69.3 L -31.3,-67 L -27.4,-75.2 L -19.1,-71.5 L -13.9,-78.8 L -6.4,-73.7 L 0,-80 L 6.4,-73.7 L 13.9,-78.8 L 19.1,-71.5 L 27.4,-75.2 L 31.3,-67 L 40,-69.3 L 42.4,-60.6 L 51.4,-61.3 L 52.3,-52.3 L 61.3,-51.4 L 60.6,-42.4 L 69.3,-40 L 67,-31.3 L 75.2,-27.4 L 71.5,-19.1 L 78.8,-13.9 L 73.7,-6.4 Z" fill="#004d40" stroke="url(#medalGold)" stroke-width="0.8" />
+
+                        <!-- Inner Rosette (Nested and slightly rotated - Green Accent) -->
+                        <path d="M 68,0 L 61.8,5.4 L 67,11.8 L 59.9,16 L 63.9,23.3 L 56.2,26.2 L 58.9,34 L 50.8,35.6 L 52.1,43.7 L 43.8,43.8 L 43.7,52.1 L 35.6,50.8 L 34,58.9 L 26.2,56.2 L 23.3,63.9 L 16,59.9 L 11.8,67 L 5.4,61.8 L 0,68 L -5.4,61.8 L -11.8,67 L -16,59.9 L -23.3,63.9 L -26.2,56.2 L -34,58.9 L -35.6,50.8 L -43.7,52.1 L -43.8,43.8 L -52.1,43.7 L -50.8,35.6 L -58.9,34 L -56.2,26.2 L -63.9,23.3 L -59.9,16 L -67,11.8 L -61.8,5.4 L -68,0 L -61.8,-5.4 L -67,-11.8 L -59.9,-16 L -63.9,-23.3 L -56.2,-26.2 L -58.9,-34 L -50.8,-35.6 L -52.1,-43.7 L -43.8,-43.8 L -43.7,-52.1 L -35.6,-50.8 L -34,-58.9 L -26.2,-56.2 L -23.3,-63.9 L -16,-59.9 L -11.8,-67 L -5.4,-61.8 L 0,-68 L 5.4,-61.8 L 11.8,-67 L 16,-59.9 L 23.3,-63.9 L 26.2,-56.2 L 34,-58.9 L 35.6,-50.8 L 43.7,-52.1 L 43.8,-43.8 L 52.1,-43.7 L 50.8,-35.6 L 58.9,-34 L 56.2,-26.2 L 63.9,-23.3 L 59.9,-16 L 67,-11.8 L 61.8,-5.4 Z" fill="#00695c" transform="rotate(5)" opacity="0.9" />
+
+                        <!-- 3D Beveled Gold Outer Ring -->
+                        <circle cx="0" cy="0" r="54" fill="url(#medalGold)" stroke="#3d2c02" stroke-width="1" />
+                        
+                        <!-- Dark Navy Matte Inner Base to give depth under glass -->
+                        <circle cx="0" cy="0" r="49" fill="#002b21" />
+
+                        <!-- Frosted Glass Circle (Glassmorphism Core) -->
+                        <circle cx="0" cy="0" r="49" fill="url(#glassShine)" stroke="url(#medalGold)" stroke-width="2" />
+                        <circle cx="0" cy="0" r="45" fill="rgba(255, 255, 255, 0.08)" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1" />
+                        <circle cx="0" cy="0" r="43" fill="none" stroke="url(#medalGold)" stroke-width="0.8" stroke-dasharray="2 2" opacity="0.7" />
+
+                        <!-- Majestic Crown at the Top -->
+                        <path d="M -12,-22 L -15,-30 L -7,-26 L 0,-33 L 7,-26 L 15,-30 L 12,-22 Z" fill="url(#medalGoldLight)" stroke="url(#medalGold)" stroke-width="0.5" />
+                        <rect x="-10" y="-22" width="20" height="1.5" fill="url(#medalGold)" rx="0.5" />
+                        <circle cx="-15" cy="-30" r="1" fill="#ffffff" />
+                        <circle cx="0" cy="-33" r="1" fill="#ffffff" />
+                        <circle cx="15" cy="-30" r="1" fill="#ffffff" />
+
+                        <!-- Laurel Leaves (Embossed Gold) -->
+                        <g stroke="url(#medalGoldLight)" fill="none" stroke-width="1.2" opacity="0.95">
+                            <!-- Left Branch -->
+                            <path d="M -30,12 C -34,4 -28,-10 -14,-17" />
+                            <path d="M -31,8 Q -36,6 -31,3 Q -27,6 -31,8" fill="url(#medalGold)" stroke="none" />
+                            <path d="M -32,0 Q -37,-2 -32,-5 Q -28,-2 -32,0" fill="url(#medalGold)" stroke="none" />
+                            <path d="M -29,-8 Q -34,-10 -29,-13 Q -25,-10 -29,-8" fill="url(#medalGold)" stroke="none" />
+                            <path d="M -21,-14 Q -26,-18 -22,-20 Q -17,-17 -21,-14" fill="url(#medalGold)" stroke="none" />
+                            
+                            <!-- Right Branch -->
+                            <path d="M 30,12 C 34,4 28,-10 14,-17" />
+                            <path d="M 31,8 Q 36,6 31,3 Q 27,6 31,8" fill="url(#medalGold)" stroke="none" />
+                            <path d="M 32,0 Q 37,-2 32,-5 Q 28,-2 32,0" fill="url(#medalGold)" stroke="none" />
+                            <path d="M 29,-8 Q 34,-10 29,-13 Q 25,-10 29,-8" fill="url(#medalGold)" stroke="none" />
+                            <path d="M 21,-14 Q 26,-18 22,-20 Q 17,-17 21,-14" fill="url(#medalGold)" stroke="none" />
+                        </g>
+
+                        <!-- Bold Majestic Arabic Typography "أفضل حارس" (Navy Blue, Reem Kufi font) -->
+                        <text x="0.5" y="-1.5" font-family="'Reem Kufi', sans-serif" font-weight="900" font-size="20" fill="#040a12" text-anchor="middle" letter-spacing="0.5" opacity="0.8">أفضل</text>
+                        <text x="0" y="-2" font-family="'Reem Kufi', sans-serif" font-weight="900" font-size="20" fill="url(#medalGoldLight)" text-anchor="middle" letter-spacing="0.5">أفضل</text>
+                        
+                        <text x="0.5" y="22.5" font-family="'Reem Kufi', sans-serif" font-weight="900" font-size="20" fill="#040a12" text-anchor="middle" letter-spacing="0.5" opacity="0.8">حارس</text>
+                        <text x="0" y="22" font-family="'Reem Kufi', sans-serif" font-weight="900" font-size="20" fill="url(#medalGoldLight)" text-anchor="middle" letter-spacing="0.5">حارس</text>
+
+                        <!-- Champion Star at the bottom center -->
+                        <g transform="translate(0, 32) scale(0.9)">
+                            <polygon points="0,-8 2.5,-2.5 8,-2.5 4,1.5 5.5,7 0,4 -5.5,7 -4,1.5 -8,-2.5 -2.5,-2.5" fill="url(#medalGoldLight)" stroke="url(#medalGold)" stroke-width="0.5" />
+                        </g>
+
+                        <!-- Glossy highlight glass reflection arc -->
+                        <path d="M -41,-18 C -25,-39 25,-39 41,-18 C 30,-28 17,-32 0,-32 C -17,-32 -30,-28 -41,-18 Z" fill="url(#glassShine)" opacity="0.9" />
+                    </g>
+                </svg>
+                <div class="stamp-resizer" id="medal-resizer-handle"></div>
+            </div>
+
+        </div>
+
+        <!-- Draggable Official Stamp -->
+        <div class="official-stamp-container" id="draggable-stamp" title="اسحب باليسار لتحريك الختم، واستخدم عجلة الماوس لتكبيره/تصغيره، واضغط لتغيير الصورة">
+            <img src="/media/logos/stamp_esm_v2.png"
+                 class="official-stamp-img"
+                 id="official-stamp-img"
+                 alt="الختم الرسمي"
+                 onerror="this.src='/media/logos/stamp_esm.png'"
+                 draggable="false">
+            <div class="logo-overlay">
+                <span>🔄 تغيير الختم</span>
+            </div>
+            <div class="stamp-resizer" id="stamp-resizer-handle"></div>
+            <input type="file" id="stamp-file-input" accept="image/*" style="display: none;" onchange="loadCustomStamp(this)">
+        </div>
+    </div>
+
+    <!-- DRAG-AND-DROP & UTILS JAVASCRIPT -->
+    <script>
+        // Stamp drag & resize logic
+        const stamp = document.getElementById('draggable-stamp');
+        const resizer = document.getElementById('stamp-resizer-handle');
+        
+        let isDragging = false;
+
+        // Medal drag & resize logic
+        const medal = document.getElementById('draggable-medal');
+        const medalResizer = document.getElementById('medal-resizer-handle');
+        
+        let isMedalDragging = false;
+        let isMedalResizing = false;
+        let medalStartX, medalStartY, medalStartLeft, medalStartTop, medalStartWidth, medalStartHeight;
+
+        // Player photo drag & click & pan & zoom logic
+        const playerPhoto = document.getElementById('draggable-player-photo');
+        const certPhoto = document.getElementById('player-cert-photo');
+        const photoInput = document.getElementById('player-photo-input');
+
+        // Logo drag & resize & upload logic
+        const logo = document.getElementById('draggable-logo');
+        const logoResizer = document.getElementById('logo-resizer-handle');
+        const logoImg = document.getElementById('app-logo-img');
+        const logoFileInput = document.getElementById('logo-file-input');
+        
+        let isLogoDragging = false;
+        let isLogoResizing = false;
+        let logoStartX, logoStartY, logoStartLeft, logoStartTop, logoStartWidth;
+        
+        let isPhotoDragging = false;
+        let photoStartX, photoStartY, photoStartLeft, photoStartTop;
+        let photoDragMoved = false;
+
+        let imgScale = 1.0;
+        let imgX = 0;
+        let imgY = 0;
+        let isPanning = false;
+        let panStartX, panStartY, panStartImgX, panStartImgY;
+
+        function updateImageTransform() {
+            certPhoto.style.transform = `translate(${imgX}px, ${imgY}px) scale(${imgScale})`;
+        }
+
+        // Disable right click context menu on the photo container to allow right-click panning
+        playerPhoto.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+
+        playerPhoto.addEventListener('mousedown', (e) => {
+            if (e.button === 0) {
+                // Left click: drag container
+                isPhotoDragging = true;
+                photoDragMoved = false;
+                photoStartX = e.clientX;
+                photoStartY = e.clientY;
+                photoStartLeft = playerPhoto.offsetLeft;
+                photoStartTop = playerPhoto.offsetTop;
+                playerPhoto.style.cursor = 'grabbing';
+                e.preventDefault();
+            } else if (e.button === 2) {
+                // Right click: pan image inside container
+                isPanning = true;
+                panStartX = e.clientX;
+                panStartY = e.clientY;
+                panStartImgX = imgX;
+                panStartImgY = imgY;
+                playerPhoto.style.cursor = 'move';
+                e.preventDefault();
+            }
+        });
+        let isResizing = false;
+        let startX, startY, startLeft, startTop, startWidth;
+
+        // Logo Drag & Resize & Upload Events
+        logo.addEventListener('mousedown', (e) => {
+            if (e.target === logoResizer) return;
+            isLogoDragging = true;
+            logo.dataset.dragged = 'false';
+            logoStartX = e.clientX;
+            logoStartY = e.clientY;
+            logoStartLeft = logo.offsetLeft;
+            logoStartTop = logo.offsetTop;
+            logo.style.cursor = 'grabbing';
+            logo.style.right = 'auto';
+            logo.style.bottom = 'auto';
+            e.preventDefault();
+        });
+
+        logoResizer.addEventListener('mousedown', (e) => {
+            isLogoResizing = true;
+            logoStartX = e.clientX;
+            logoStartWidth = parseFloat(window.getComputedStyle(logo).width);
+            e.stopPropagation();
+            e.preventDefault();
+        });
+
+        logo.addEventListener('click', (e) => {
+            if (e.target === logoResizer || e.target.classList.contains('logo-resizer-handle')) return;
+            if (!logo.dataset.dragged || logo.dataset.dragged === 'false') {
+                logoFileInput.click();
+            }
+        });
+
+        // Mouse Down for Dragging
+        stamp.addEventListener('mousedown', (e) => {
+            if (e.target === resizer) return;
+            isDragging = true;
+            stamp.dataset.dragged = 'false';
+            startX = e.clientX;
+            startY = e.clientY;
+            startLeft = stamp.offsetLeft;
+            startTop = stamp.offsetTop;
+            stamp.style.cursor = 'grabbing';
+            e.preventDefault();
+        });
+
+        // Mouse Down for Resizing
+        resizer.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            startX = e.clientX;
+            startWidth = parseFloat(window.getComputedStyle(stamp).width);
+            e.stopPropagation(); // Prevent drag handler from triggering
+            e.preventDefault();
+        });
+
+        // Medal Mouse Down for Dragging
+        medal.addEventListener('mousedown', (e) => {
+            if (e.target === medalResizer) return;
+            isMedalDragging = true;
+            medalStartX = e.clientX;
+            medalStartY = e.clientY;
+            medalStartLeft = medal.offsetLeft;
+            medalStartTop = medal.offsetTop;
+            medal.style.cursor = 'grabbing';
+            e.preventDefault();
+        });
+
+        // Medal Mouse Down for Resizing
+        medalResizer.addEventListener('mousedown', (e) => {
+            isMedalResizing = true;
+            medalStartX = e.clientX;
+            medalStartWidth = parseFloat(window.getComputedStyle(medal).width);
+            medalStartHeight = parseFloat(window.getComputedStyle(medal).height);
+            e.stopPropagation();
+            e.preventDefault();
+        });
+
+        // Watermark Drag & Resize & Upload Events
+        const watermark = document.getElementById('draggable-watermark');
+        const watermarkResizer = document.getElementById('watermark-resizer-handle');
+        const watermarkFileInput = document.getElementById('watermark-file-input');
+        
+        let isWatermarkDragging = false;
+        let isWatermarkResizing = false;
+        let wmStartX, wmStartY, wmStartLeft, wmStartTop, wmStartWidth;
+        let watermarkEditMode = false;
+
+        watermark.addEventListener('mousedown', (e) => {
+            if (!watermarkEditMode) return;
+            if (e.target === watermarkResizer) return;
+            isWatermarkDragging = true;
+            watermark.dataset.dragged = 'false';
+            wmStartX = e.clientX;
+            wmStartY = e.clientY;
+            wmStartLeft = watermark.offsetLeft;
+            wmStartTop = watermark.offsetTop;
+            watermark.style.cursor = 'grabbing';
+            e.preventDefault();
+        });
+
+        watermarkResizer.addEventListener('mousedown', (e) => {
+            if (!watermarkEditMode) return;
+            isWatermarkResizing = true;
+            wmStartX = e.clientX;
+            wmStartWidth = parseFloat(window.getComputedStyle(watermark).width);
+            e.stopPropagation();
+            e.preventDefault();
+        });
+
+        watermark.addEventListener('click', (e) => {
+            if (!watermarkEditMode) return;
+            if (e.target === watermarkResizer || e.target.classList.contains('stamp-resizer')) return;
+            if (!watermark.dataset.dragged || watermark.dataset.dragged === 'false') {
+                watermarkFileInput.click();
+            }
+        });
+
+        watermark.addEventListener('wheel', (e) => {
+            if (!watermarkEditMode) return;
+            e.preventDefault();
+            const currentWidth = parseFloat(window.getComputedStyle(watermark).width);
+            const delta = e.deltaY < 0 ? 10 : -10;
+            const newWidth = Math.max(100, Math.min(800, currentWidth + delta));
+            watermark.style.width = `${newWidth}px`;
+            const zoomInput = document.getElementById('watermark-zoom');
+            if (zoomInput) zoomInput.value = newWidth;
+        }, { passive: false });
+
+        function toggleWatermarkEditMode() {
+            const wm = document.getElementById('draggable-watermark');
+            const overlay = document.getElementById('watermark-overlay');
+            const resizer = document.getElementById('watermark-resizer-handle');
+            const btn = document.getElementById('btn-watermark-mode');
+            
+            watermarkEditMode = !watermarkEditMode;
+            
+            if (watermarkEditMode) {
+                wm.style.pointerEvents = 'auto';
+                wm.style.zIndex = '9999';
+                wm.style.border = '2px dashed var(--gold)';
+                overlay.style.display = 'flex';
+                resizer.style.display = 'block';
+                btn.classList.add('active');
+                btn.innerHTML = '✅ {% trans "Enregistrer la position" %} / حفظ الموضع';
+            } else {
+                wm.style.pointerEvents = 'none';
+                wm.style.zIndex = '1';
+                wm.style.border = 'none';
+                overlay.style.display = 'none';
+                resizer.style.display = 'none';
+                btn.classList.remove('active');
+                btn.innerHTML = '⚙️ {% trans "Ajuster le filigrane" %} / ضبط العلامة المائية';
+            }
+        }
+
+        function loadCustomWatermark(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const wmImg = document.getElementById('cert-watermark-img');
+                    wmImg.src = e.target.result;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        
+        function adjustWatermarkOpacity(val) {
+            document.getElementById('draggable-watermark').style.opacity = val;
+        }
+
+        function adjustWatermarkZoom(val) {
+            document.getElementById('draggable-watermark').style.width = `${val}px`;
+        }
+
+        function changeDescriptionFont(fontFamily) {
+            const elements = document.querySelectorAll('.cert-description, .cert-intro, .cert-appreciation');
+            elements.forEach(el => {
+                el.style.fontFamily = fontFamily;
+            });
+        }
+
+        function changeIntroFontSize(val) {
+            const intros = document.querySelectorAll('.cert-intro');
+            intros.forEach(el => {
+                el.style.fontSize = `${val}px`;
+            });
+        }
+
+        function changeDescriptionFontSize(val) {
+            const descriptions = document.querySelectorAll('.cert-description');
+            descriptions.forEach(el => {
+                el.style.fontSize = `${val}px`;
+            });
+        }
+
+        function changePlayerNameFontSize(val) {
+            const names = document.querySelectorAll('.player-name');
+            names.forEach(el => {
+                el.style.fontSize = `${val}px`;
+            });
+        }
+
+        function changeSignatureFontSize(val) {
+            const sigs = document.querySelectorAll('.sig-title, .sig-line');
+            sigs.forEach(el => {
+                el.style.fontSize = `${val}px`;
+            });
+        }
+
+        let currentOrientation = 'landscape';
+        function changeOrientation(mode) {
+            currentOrientation = mode;
+            const cert = document.querySelector('.certificate');
+            let styleTag = document.getElementById('dynamic-print-style');
+            if (!styleTag) {
+                styleTag = document.createElement('style');
+                styleTag.id = 'dynamic-print-style';
+                document.head.appendChild(styleTag);
+            }
+
+            document.querySelectorAll('.app-logo-wrapper, .medal-seal, .official-stamp-container, .bottom-row').forEach(el => {
+                if (el.dataset.dragged !== 'true') {
+                    el.style.left = '';
+                    el.style.right = '';
+                    el.style.top = '';
+                    el.style.bottom = '';
+                    el.style.width = '';
+                    el.style.height = '';
+                }
+            });
+
+            if (mode === 'portrait') {
+                cert.classList.add('portrait-mode');
+                styleTag.innerHTML = '@page { size: A4 portrait; margin: 0; }';
+            } else {
+                cert.classList.remove('portrait-mode');
+                styleTag.innerHTML = '@page { size: A4 landscape; margin: 0; }';
+            }
+        }
+
+        window.addEventListener('beforeprint', () => {
+            const cert = document.querySelector('.certificate');
+            const selectEl = document.getElementById('cert-orientation');
+            const mode = cert && cert.classList.contains('portrait-mode') ? 'portrait' : (selectEl ? selectEl.value : 'landscape');
+            changeOrientation(mode);
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const selectEl = document.getElementById('cert-orientation');
+            if (selectEl) {
+                changeOrientation(selectEl.value || 'landscape');
+            }
+        });
+
+        // Mouse Move for Drag & Resize
+        document.addEventListener('mousemove', (e) => {
+            if (isLogoDragging) {
+                logo.dataset.dragged = 'true';
+                const dx = e.clientX - logoStartX;
+                const dy = e.clientY - logoStartY;
+                logo.style.left = `${logoStartLeft + dx}px`;
+                logo.style.top = `${logoStartTop + dy}px`;
+            } else if (isLogoResizing) {
+                const dx = logoStartX - e.clientX;
+                const newWidth = Math.max(40, Math.min(300, logoStartWidth + dx));
+                logo.style.width = `${newWidth}px`;
+                logo.style.height = `${newWidth}px`;
+            }
+
+            if (isDragging) {
+                stamp.dataset.dragged = 'true';
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                stamp.style.left = `${startLeft + dx}px`;
+                stamp.style.top = `${startTop + dy}px`;
+            } else if (isResizing) {
+                // In RTL layout, dragging mouse leftwards (decreasing clientX) increases size
+                const dx = startX - e.clientX;
+                const newWidth = Math.max(50, Math.min(300, startWidth + dx));
+                stamp.style.width = `${newWidth}px`;
+                stamp.style.height = `${newWidth}px`;
+            }
+
+            if (isMedalDragging) {
+                const dx = e.clientX - medalStartX;
+                const dy = e.clientY - medalStartY;
+                medal.style.left = `${medalStartLeft + dx}px`;
+                medal.style.top = `${medalStartTop + dy}px`;
+            } else if (isMedalResizing) {
+                const dx = medalStartX - e.clientX;
+                const newWidth = Math.max(60, Math.min(400, medalStartWidth + dx));
+                const newHeight = newWidth * (270 / 200);
+                medal.style.width = `${newWidth}px`;
+                medal.style.height = `${newHeight}px`;
+            }
+
+            if (isPhotoDragging) {
+                const dx = e.clientX - photoStartX;
+                const dy = e.clientY - photoStartY;
+                if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+                    photoDragMoved = true;
+                }
+                playerPhoto.style.left = `${photoStartLeft + dx}px`;
+                playerPhoto.style.top = `${photoStartTop + dy}px`;
+            }
+
+            if (isPanning) {
+                const dx = e.clientX - panStartX;
+                const dy = e.clientY - panStartY;
+                imgX = panStartImgX + dx;
+                imgY = panStartImgY + dy;
+                updateImageTransform();
+            }
+
+            if (isWatermarkDragging) {
+                watermark.dataset.dragged = 'true';
+                const dx = e.clientX - wmStartX;
+                const dy = e.clientY - wmStartY;
+                watermark.style.left = `${wmStartLeft + dx}px`;
+                watermark.style.top = `${wmStartTop + dy}px`;
+            } else if (isWatermarkResizing) {
+                const dx = wmStartX - e.clientX;
+                const newWidth = Math.max(100, Math.min(800, wmStartWidth + dx));
+                watermark.style.width = `${newWidth}px`;
+                const zoomInput = document.getElementById('watermark-zoom');
+                if (zoomInput) zoomInput.value = newWidth;
+            }
+        });
+
+        // Mouse Up
+        document.addEventListener('mouseup', () => {
+            if (isLogoDragging) {
+                isLogoDragging = false;
+                logo.style.cursor = 'move';
+                setTimeout(() => {
+                    if (logo) logo.dataset.dragged = 'false';
+                }, 50);
+            }
+            if (isLogoResizing) {
+                isLogoResizing = false;
+            }
+
+            if (isDragging) {
+                isDragging = false;
+                stamp.style.cursor = 'move';
+            }
+            if (isResizing) {
+                isResizing = false;
+            }
+
+            if (isMedalDragging) {
+                isMedalDragging = false;
+                medal.style.cursor = 'move';
+            }
+            if (isMedalResizing) {
+                isMedalResizing = false;
+            }
+
+            if (isPhotoDragging) {
+                isPhotoDragging = false;
+                playerPhoto.style.cursor = 'move';
+                if (!photoDragMoved) {
+                    photoInput.click();
+                }
+            }
+
+            if (isPanning) {
+                isPanning = false;
+                playerPhoto.style.cursor = 'move';
+            }
+
+            if (isWatermarkDragging) {
+                isWatermarkDragging = false;
+                watermark.style.cursor = '';
+            }
+            if (isWatermarkResizing) {
+                isWatermarkResizing = false;
+            }
+        });
+
+        // Zoom inner image with mouse wheel
+        playerPhoto.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = e.deltaY < 0 ? 0.08 : -0.08;
+            imgScale = Math.max(1.0, Math.min(4.0, imgScale + delta));
+            updateImageTransform();
+        }, { passive: false });
+
+        // Logo scroll zoom resizing
+        logo.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const currentWidth = parseFloat(window.getComputedStyle(logo).width);
+            const delta = e.deltaY < 0 ? 8 : -8;
+            const newWidth = Math.max(40, Math.min(300, currentWidth + delta));
+            logo.style.width = `${newWidth}px`;
+            logo.style.height = `${newWidth}px`;
+        }, { passive: false });
+
+        // Fluent scroll zoom (Mouse Wheel) resizing
+        stamp.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const currentWidth = parseFloat(window.getComputedStyle(stamp).width);
+            const delta = e.deltaY < 0 ? 8 : -8;
+            const newWidth = Math.max(50, Math.min(300, currentWidth + delta));
+            stamp.style.width = `${newWidth}px`;
+            stamp.style.height = `${newWidth}px`;
+        }, { passive: false });
+
+        // Medal scroll zoom resizing
+        medal.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const currentWidth = parseFloat(window.getComputedStyle(medal).width);
+            const delta = e.deltaY < 0 ? 8 : -8;
+            const newWidth = Math.max(60, Math.min(400, currentWidth + delta));
+            const newHeight = newWidth * (270 / 200);
+            medal.style.width = `${newWidth}px`;
+            medal.style.height = `${newHeight}px`;
+        }, { passive: false });
+
+        // Clean paste for contenteditable fields
+        document.querySelectorAll('[contenteditable]').forEach(el => {
+            el.addEventListener('paste', e => {
+                e.preventDefault();
+                const text = e.clipboardData.getData('text/plain');
+                document.execCommand('insertText', false, text);
+            });
+        });
+
+        // Load and preview player photo locally in browser (resets zoom & pan)
+        function loadPlayerPhoto(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.getElementById('player-cert-photo');
+                    img.src = e.target.result;
+                    imgScale = 1.0;
+                    imgX = 0;
+                    imgY = 0;
+                    updateImageTransform();
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Load custom logo file locally
+        function loadCustomLogo(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    delete logoImg.dataset.bgRemoved; // Allow reprocessing
+                    logoImg.src = e.target.result;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Automatic background removal for the logo image
+        function removeWhiteBackground(imgElement) {
+            if (!imgElement) return;
+            if (imgElement.dataset.bgRemoved === 'true') return;
+            
+            const proceed = () => {
+                if (imgElement.dataset.bgRemoved === 'true') return;
+                
+                try {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const width = imgElement.naturalWidth || imgElement.width || 300;
+                    const height = imgElement.naturalHeight || imgElement.height || 300;
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    ctx.drawImage(imgElement, 0, 0);
+                    const imgData = ctx.getImageData(0, 0, width, height);
+                    const data = imgData.data;
+                    
+                    // Flood-fill starting from the four corners to remove only the outer background
+                    const tolerance = 45; // color match tolerance
+                    const visited = new Uint8Array(width * height);
+                    
+                    const corners = [
+                        {x: 0, y: 0},
+                        {x: width - 1, y: 0},
+                        {x: 0, y: height - 1},
+                        {x: width - 1, y: height - 1}
+                    ];
+                    
+                    let removedAny = false;
+                    
+                    for (const corner of corners) {
+                        const cIdx = (corner.y * width + corner.x);
+                        if (visited[cIdx]) continue;
+                        
+                        const rBg = data[cIdx * 4];
+                        const gBg = data[cIdx * 4 + 1];
+                        const bBg = data[cIdx * 4 + 2];
+                        const aBg = data[cIdx * 4 + 3];
+                        
+                        // If the corner is already transparent, skip
+                        if (aBg < 50) continue;
+                        
+                        // Start BFS from this corner
+                        const queue = [[corner.x, corner.y]];
+                        visited[cIdx] = 1;
+                        
+                        let head = 0;
+                        while (head < queue.length) {
+                            const [cx, cy] = queue[head++];
+                            const idx = (cy * width + cx) * 4;
+                            
+                            // Set this pixel to transparent
+                            data[idx + 3] = 0;
+                            removedAny = true;
+                            
+                            const neighbors = [
+                                [cx + 1, cy],
+                                [cx - 1, cy],
+                                [cx, cy + 1],
+                                [cx, cy - 1]
+                            ];
+                            
+                            for (const [nx, ny] of neighbors) {
+                                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                    const nIdx = ny * width + nx;
+                                    if (!visited[nIdx]) {
+                                        const pIdx = nIdx * 4;
+                                        const r = data[pIdx];
+                                        const g = data[pIdx+1];
+                                        const b = data[pIdx+2];
+                                        const a = data[pIdx+3];
+                                        
+                                        // Match if neighbor color is close to the corner background color
+                                        if (a >= 50 &&
+                                            Math.abs(r - rBg) <= tolerance &&
+                                            Math.abs(g - gBg) <= tolerance &&
+                                            Math.abs(b - bBg) <= tolerance) {
+                                            queue.push([nx, ny]);
+                                            visited[nIdx] = 1;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (removedAny) {
+                        ctx.putImageData(imgData, 0, 0);
+                        imgElement.dataset.bgRemoved = 'true';
+                        imgElement.src = canvas.toDataURL('image/png');
+                    }
+                } catch (e) {
+                    console.warn("Could not remove background (CORS restrict?):", e);
+                }
+            };
+
+            if (imgElement.complete && imgElement.naturalWidth > 0) {
+                proceed();
+            } else {
+                imgElement.onload = proceed;
+            }
+        }
+
+        stamp.addEventListener('click', (e) => {
+            if (e.target === resizer || e.target.classList.contains('stamp-resizer')) return;
+            if (!stamp.dataset.dragged || stamp.dataset.dragged === 'false') {
+                document.getElementById('stamp-file-input').click();
+            }
+        });
+
+        function loadCustomStamp(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const stampImg = document.getElementById('official-stamp-img');
+                    delete stampImg.dataset.bgRemoved;
+                    stampImg.src = e.target.result;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function loadCustomBackground(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const certBg = document.querySelector('.certificate-bg');
+                    if (certBg) {
+                        certBg.style.backgroundImage = `url('${e.target.result}')`;
+                        certBg.style.backgroundRepeat = 'no-repeat';
+                        certBg.style.backgroundPosition = 'center';
+                        certBg.style.backgroundSize = '100% 100%';
+                    } else {
+                        const cert = document.querySelector('.certificate');
+                        cert.style.backgroundImage = `url('${e.target.result}')`;
+                        cert.style.backgroundRepeat = 'no-repeat';
+                        cert.style.backgroundPosition = 'center';
+                        cert.style.backgroundSize = '100% 100%';
+                    }
+                    
+                    // Fade out default SVG overlay slightly so the new background is visible
+                    const svgBg = document.querySelector('.bg-overlay');
+                    if (svgBg) {
+                        svgBg.style.opacity = '0.3';
+                        document.getElementById('bg-opacity').value = '0.3';
+                    }
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function adjustBgOpacity(val) {
+            const svgBg = document.querySelector('.bg-overlay');
+            if (svgBg) {
+                svgBg.style.opacity = val;
+            }
+            const certBg = document.querySelector('.certificate-bg');
+            if (certBg) {
+                certBg.style.opacity = val;
+            }
+        }
+
+        function adjustBgZoom(val) {
+            const certBg = document.querySelector('.certificate-bg');
+            if (certBg && certBg.style.backgroundImage) {
+                certBg.style.backgroundSize = `${val}% ${val}%`;
+            } else {
+                const cert = document.querySelector('.certificate');
+                if (cert.style.backgroundImage) {
+                    cert.style.backgroundSize = `${val}% ${val}%`;
+                }
+            }
+        }
+
+        // Run on initial load
+        removeWhiteBackground(logoImg);
+        
+        const stampImg = document.getElementById('official-stamp-img');
+        removeWhiteBackground(stampImg);
+        
+        // Also run whenever the image src changes
+        logoImg.addEventListener('load', () => {
+            removeWhiteBackground(logoImg);
+        });
+        stampImg.addEventListener('load', () => {
+            removeWhiteBackground(stampImg);
+        });
+
+        // Download PDF function using html-to-image and jsPDF to fix Arabic fonts & SVG paths
+        function downloadPDF() {
+            const element = document.querySelector('.certificate');
+            
+            // Temporary hide resizer handles during PDF generation
+            const resizer = document.getElementById('stamp-resizer-handle');
+            const medalResizer = document.getElementById('medal-resizer-handle');
+            const logoResizer = document.getElementById('logo-resizer-handle');
+            const watermarkResizer = document.getElementById('watermark-resizer-handle');
+            const watermarkOverlay = document.getElementById('watermark-overlay');
+            const watermarkWrapper = document.getElementById('draggable-watermark');
+
+            if (resizer) resizer.style.display = 'none';
+            if (medalResizer) medalResizer.style.display = 'none';
+            if (logoResizer) logoResizer.style.display = 'none';
+            if (watermarkResizer) watermarkResizer.style.display = 'none';
+            if (watermarkOverlay) watermarkOverlay.style.display = 'none';
+            
+            let originalBorder = '';
+            if (watermarkWrapper) {
+                originalBorder = watermarkWrapper.style.border;
+                watermarkWrapper.style.border = 'none';
+            }
+
+            // Get exact dimensions of the certificate container to prevent truncation in RTL
+            const width = element.offsetWidth;
+            const height = element.offsetHeight;
+
+            // Use htmlToImage.toPng to capture DOM exactly as rendered
+            htmlToImage.toPng(element, {
+                width: width,
+                height: height,
+                style: {
+                    transform: 'none',
+                    margin: '0',
+                    boxShadow: 'none',
+                    left: '0',
+                    top: '0'
+                },
+                pixelRatio: 2, // Ultra crisp resolution
+                cacheBust: true
+            })
+            .then(function (dataUrl) {
+                // Restore resizer style
+                if (resizer) resizer.style.display = '';
+                if (medalResizer) medalResizer.style.display = '';
+                if (logoResizer) logoResizer.style.display = '';
+                if (watermarkEditMode) {
+                    if (watermarkResizer) watermarkResizer.style.display = 'block';
+                    if (watermarkOverlay) watermarkOverlay.style.display = 'flex';
+                    if (watermarkWrapper) watermarkWrapper.style.border = originalBorder;
+                }
+
+                // Create landscape A4 PDF: A4 is 297mm x 210mm
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+                pdf.addImage(dataUrl, 'PNG', 0, 0, 297, 210);
+                pdf.save('appreciation_certificate.pdf');
+            })
+            .catch(function (error) {
+                console.error('Error generating PDF:', error);
+                // Restore resizer style in case of error
+                if (resizer) resizer.style.display = '';
+                if (medalResizer) medalResizer.style.display = '';
+                if (logoResizer) logoResizer.style.display = '';
+                if (watermarkResizer) watermarkResizer.style.display = '';
+                if (watermarkOverlay) watermarkOverlay.style.display = '';
+                if (watermarkWrapper) watermarkWrapper.style.border = originalBorder;
+            });
+        }
+    </script>
+</body>
+</html>

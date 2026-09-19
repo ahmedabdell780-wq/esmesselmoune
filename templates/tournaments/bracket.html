@@ -1,0 +1,382 @@
+{% extends 'base.html' %}
+{% load i18n turniq_tags %}
+
+{% block title %}{% trans "Bracket Phase Finale" %} — TurniQ{% endblock %}
+
+{% block content %}
+<div class="cl-theme-container" id="live-bracket-container" hx-get="{% url 'tournaments:bracket' %}" hx-select="#live-bracket-container" hx-target="#live-bracket-container" hx-swap="outerHTML" hx-trigger="every 15s">
+    <!-- Tournament Selector -->
+    <div class="flex justify-center mb-6 no-print z-50 relative">
+        <select onchange="if(this.value) window.location.href=this.value" class="form-input w-full max-w-xs bg-black/60 border-[#C5A028]/30 text-white rounded-xl font-bold py-3 text-center cursor-pointer shadow-[0_0_15px_rgba(197,160,40,0.15)] hover:border-[#C5A028]/60 transition-colors appearance-none">
+            {% for t in tournaments %}
+            <option value="{% url 'tournaments:bracket_detail' t.pk %}" {% if tournament and tournament.pk == t.pk %}selected{% endif %} class="bg-slate-900 text-white">
+                🏆 {{ t.name }} ({{ t.year }})
+            </option>
+            {% endfor %}
+        </select>
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-[#C5A028]">
+            <svg class="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+        </div>
+    </div>
+
+    <!-- Header: Match Day Branding -->
+    <div class="cl-header no-print">
+        <div class="cl-logos">
+            {% if tournament.logo %}
+                <img src="{{ tournament.logo.url }}" class="t-logo">
+            {% else %}
+                <span class="text-4xl">🏆</span>
+            {% endif %}
+            <div class="cl-divider-v"></div>
+            {% if site_settings.app_logo %}
+                <img src="{{ site_settings.app_logo.url }}" class="a-logo" onload="removeWhiteBackground(this)">
+            {% else %}
+                <span class="text-2xl font-bebas">MATCH DAY</span>
+            {% endif %}
+        </div>
+        <h1 class="cl-main-title">BRACKET</h1>
+        <div class="mt-4 flex flex-col items-center gap-3 no-print">
+            <div class="flex flex-wrap justify-center items-center gap-2">
+                <span class="text-xs font-black text-amber-400 bg-amber-500/10 border border-amber-500/30 px-3 py-1.5 rounded-xl">
+                    🖼️ Template Pro (A4):
+                </span>
+                <a href="{% if tournament %}{% url 'tournaments:stage_summary_detail' tournament.pk %}{% else %}{% url 'tournaments:stage_summary' %}{% endif %}?stage=GROUP" target="_blank" class="px-3 py-1.5 rounded-xl bg-black/60 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 text-xs font-bold transition-all">
+                    🟢 المجموعات
+                </a>
+                <a href="{% if tournament %}{% url 'tournaments:stage_summary_detail' tournament.pk %}{% else %}{% url 'tournaments:stage_summary' %}{% endif %}?stage=QF" target="_blank" class="px-3 py-1.5 rounded-xl bg-black/60 text-rose-400 border border-rose-500/30 hover:bg-rose-500/20 text-xs font-bold transition-all">
+                    🔴 الربع النهائي (1/4)
+                </a>
+                <a href="{% if tournament %}{% url 'tournaments:stage_summary_detail' tournament.pk %}{% else %}{% url 'tournaments:stage_summary' %}{% endif %}?stage=SF" target="_blank" class="px-3 py-1.5 rounded-xl bg-black/60 text-blue-400 border border-blue-500/30 hover:bg-blue-500/20 text-xs font-bold transition-all">
+                    🔵 النصف النهائي (1/2)
+                </a>
+                <a href="{% if tournament %}{% url 'tournaments:stage_summary_detail' tournament.pk %}{% else %}{% url 'tournaments:stage_summary' %}{% endif %}?stage=FINAL" target="_blank" class="px-3 py-1.5 rounded-xl bg-black/60 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 text-xs font-bold transition-all">
+                    🏆 النهائي (Final)
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- The Bracket Tree -->
+    {% if bracket %}
+    <div class="cl-bracket-wrap no-scrollbar">
+        <div class="cl-bracket-inner">
+            {% for stage_code, stage_data in bracket.items %}
+            <div class="cl-column col-{{ forloop.counter }}">
+                {% for match in stage_data.matches %}
+                <div class="cl-match-container">
+                    <a href="{% url 'matches:detail' match.pk %}" class="cl-match-box {% if forloop.parentloop.last %}is-final{% endif %}">
+                        <!-- Top Team -->
+                        <div class="cl-match-team {% if match.winner == match.team1 %}is-winner{% endif %}">
+                            <div class="cl-team-info">
+                                <div class="cl-team-logo">
+                                    {% if match.team1.logo %}
+                                        <img src="{{ match.team1.logo.url }}">
+                                    {% else %}
+                                        <div class="cl-shield-placeholder"></div>
+                                    {% endif %}
+                                </div>
+                                <span class="cl-team-name">{{ match.team1.name|default:"???"|upper }}</span>
+                            </div>
+                            <div class="cl-team-score">{{ match.score_team1|default_if_none:"" }}</div>
+                        </div>
+
+                        <!-- Card Separator -->
+                        <div class="cl-match-separator"></div>
+
+                        <!-- Bottom Team -->
+                        <div class="cl-match-team {% if match.winner == match.team2 %}is-winner{% endif %}">
+                            <div class="cl-team-info">
+                                <div class="cl-team-logo">
+                                    {% if match.team2.logo %}
+                                        <img src="{{ match.team2.logo.url }}">
+                                    {% else %}
+                                        <div class="cl-shield-placeholder"></div>
+                                    {% endif %}
+                                </div>
+                                <span class="cl-team-name">{{ match.team2.name|default:"???"|upper }}</span>
+                            </div>
+                            <div class="cl-team-score">{{ match.score_team2|default_if_none:"" }}</div>
+                        </div>
+                        
+                        <!-- Connecting Lines (CSS based) -->
+                        {% if not forloop.parentloop.last %}
+                        <div class="cl-connector {% if forloop.counter|divisibleby:2 %}conn-bottom{% else %}conn-top{% endif %}"></div>
+                        {% endif %}
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+        <!-- Trophy Under Bracket Tree -->
+        <div class="cl-final-trophy-new animate-float">
+            <img src="/media/branding/turniq_trophy.png" alt="Trophy">
+        </div>
+    </div>
+    {% else %}
+    <div class="cl-empty">
+        <div class="cl-empty-icon">🏆</div>
+        {% if tournament.format == 'round_robin' %}
+        <h2 class="mb-2">{% trans "Championnat en format Ligue" %} / دوري بنظام النقاط</h2>
+        <p class="mb-4">{% trans "Ce tournoi suit un format de Championnat aller-retour. Le vainqueur est déterminé directement par le classement !" %} / تتبع هذه البطولة نظام الدوري ذهاباً وإياباً، حيث يتم تحديد البطل والوصيف مباشرةً من خلال جدول الترتيب العام.</p>
+        <div class="mt-6 flex justify-center">
+            <a href="{% url 'tournaments:standings_detail' tournament.pk %}" class="btn btn-sm font-bold shadow-lg" style="background:var(--cl-accent); color:#000; padding:10px 24px; border-radius:30px;">
+                📊 {% trans "Voir le classement" %} / مشاهدة الترتيب
+            </a>
+        </div>
+        {% else %}
+        <h2>{% trans "Phase finale en cours de préparation" %}</h2>
+        <p>{% trans "Revenez bientôt pour voir le tableau des matchs !" %}</p>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    :root {
+        --cl-bg-top: rgba(15, 23, 42, 0.4);
+        --cl-bg-bottom: rgba(2, 6, 23, 0.95);
+        --cl-card-bg: rgba(30, 41, 59, 0.3);
+        --cl-border: rgba(197, 160, 40, 0.2);
+        --cl-accent: #C5A028;
+        --cl-text: #f8fafc;
+        --cl-line: rgba(197, 160, 40, 0.3);
+    }
+
+    .cl-theme-container {
+        background: linear-gradient(180deg, var(--cl-bg-top) 0%, var(--cl-bg-bottom) 100%);
+        min-height: 100vh;
+        color: var(--cl-text);
+        padding: 40px 20px;
+        font-family: 'Inter', sans-serif;
+        overflow-x: hidden;
+    }
+
+    /* Header Styling */
+    .cl-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 40px;
+    }
+
+    .cl-logos {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .t-logo { height: 60px; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); }
+    .a-logo { height: 40px; }
+    .cl-divider-v { width: 1px; height: 30px; background: rgba(255,255,255,0.2); }
+
+    .cl-main-title {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 5rem;
+        letter-spacing: 12px;
+        margin: 0;
+        color: var(--cl-accent);
+        text-shadow: 0 0 20px rgba(197, 160, 40, 0.5);
+    }
+
+    /* Bracket Tree Layout */
+    .cl-bracket-wrap {
+        display: flex;
+        justify-content: center;
+        overflow-x: auto;
+        padding: 40px 0;
+    }
+
+    .cl-bracket-inner {
+        display: flex;
+        gap: 100px;
+        align-items: center;
+        padding-right: 150px;
+    }
+
+    .cl-column {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        gap: 60px;
+        height: 100%;
+    }
+
+    /* Match Box Styling */
+    .cl-match-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .cl-match-box {
+        width: 280px;
+        background: var(--cl-card-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--cl-border);
+        border-radius: 12px;
+        overflow: hidden;
+        position: relative;
+        text-decoration: none !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .cl-match-box:hover {
+        transform: translateY(-5px);
+        border-color: var(--cl-accent);
+        background: rgba(0, 18, 66, 0.6);
+        box-shadow: 0 15px 40px rgba(197, 160, 40, 0.15);
+    }
+
+    .cl-match-box.is-final {
+        width: 340px;
+        border-color: var(--cl-accent);
+        box-shadow: 0 0 30px rgba(197, 160, 40, 0.1);
+    }
+
+    .cl-match-team {
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 15px;
+    }
+
+    .cl-team-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        max-width: 80%;
+    }
+
+    .cl-team-logo {
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.1);
+        background: rgba(0,0,0,0.3);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .cl-match-box:hover .cl-team-logo {
+        transform: scale(1.2) rotate(5deg);
+        box-shadow: 0 0 10px var(--cl-accent);
+        border-color: var(--cl-accent);
+    }
+
+    .cl-team-logo img {
+        max-width: 100%;
+        max-height: 100%;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .cl-shield-placeholder {
+        width: 24px;
+        height: 24px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 50%;
+    }
+
+    .cl-team-name {
+        font-weight: 700;
+        font-size: 0.95rem;
+        letter-spacing: 0.5px;
+        color: rgba(255,255,255,0.85);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .cl-team-score {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 1.8rem;
+        color: var(--cl-accent);
+    }
+
+    .cl-match-separator {
+        height: 1px;
+        background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
+        width: 100%;
+    }
+
+    /* Connector Lines */
+    .cl-connector {
+        position: absolute;
+        right: -100px;
+        width: 100px;
+        border-color: var(--cl-line);
+        border-style: solid;
+        border-width: 0;
+        pointer-events: none;
+        z-index: -1;
+    }
+
+    .conn-top {
+        top: 50%;
+        height: 55px; /* Half of vertical gap between matches */
+        border-right-width: 2px;
+        border-top-width: 2px;
+        border-top-right-radius: 15px;
+    }
+
+    .conn-bottom {
+        bottom: 50%;
+        height: 55px;
+        border-right-width: 2px;
+        border-bottom-width: 2px;
+        border-bottom-right-radius: 15px;
+    }
+
+    /* Trophy Styling (New Position) */
+    .cl-final-trophy-new {
+        display: flex;
+        justify-content: center;
+        margin-top: -60px; /* Overlap slightly with lines */
+        margin-bottom: 40px;
+        z-index: 10;
+        pointer-events: none;
+    }
+    .cl-final-trophy-new img { 
+        width: 300px; 
+        filter: drop-shadow(0 0 30px rgba(234, 179, 8, 0.4));
+    }
+
+    /* Empty State */
+    .cl-empty {
+        text-align: center;
+        padding: 100px 20px;
+        opacity: 0.6;
+    }
+
+    .cl-empty-icon { font-size: 5rem; margin-bottom: 20px; }
+
+    /* Animations */
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-15px); }
+    }
+
+    .animate-float { animation: float 4s ease-in-out infinite; }
+
+    /* Scrollbar */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+        .cl-bracket-inner { gap: 60px; }
+        .cl-connector { width: 60px; right: -60px; }
+        .cl-match-box { width: 220px; }
+        .cl-team-name { font-size: 0.8rem; }
+    }
+</style>
+{% endblock %}

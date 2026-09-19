@@ -1,0 +1,315 @@
+{% load i18n static turniq_tags %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>{% trans "Calendrier Officiel" %} - {{ tournament.name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Bebas+Neue&family=Outfit:wght@800;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+    <style>
+        :root {
+            --bg-dark-1: #1a5b8f;
+            --bg-dark-2: #0e3d65;
+            --bg-dark-3: #05213b;
+            --primary-red: #d62222;
+            --accent-green: #79ff38;
+            --text-light: #ffffff;
+        }
+
+        @page { size: A4; margin: 0; }
+
+        body {
+            font-family: 'Cairo', sans-serif; margin: 0; padding: 0;
+            background: #e2e8f0;
+            -webkit-print-color-adjust: exact; print-color-adjust: exact;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh;
+        }
+
+        .print-page {
+            width: 210mm; height: 297mm; /* Strictly A4 */
+            background: linear-gradient(185deg, var(--bg-dark-1) 0%, var(--bg-dark-2) 50%, var(--bg-dark-3) 100%);
+            position: relative;
+            padding: 8mm 4mm; /* Greatly reduced side padding for 4-column layout */
+            box-sizing: border-box; color: var(--text-light);
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+
+        .diagonal-stripe-1 {
+            position: absolute; top: -10%; left: -10%; width: 120%; height: 45%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 80%);
+            transform: rotate(-12deg); pointer-events: none; z-index: 1;
+        }
+
+        .watermark-container {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 60%; opacity: 0.12; pointer-events: none; z-index: 2;
+            display: flex; justify-content: center; align-items: center; mix-blend-mode: overlay;
+        }
+        .watermark-img { width: 100%; max-width: 500px; object-fit: contain; filter: grayscale(100%); }
+
+        /* Ultra Compact Header */
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 8px; position: relative; z-index: 10;
+            border-bottom: 1.5px solid rgba(255, 255, 255, 0.15); padding-bottom: 6px;
+        }
+        .header-left { flex: 1; text-align: right; }
+        .header-main-title { font-size: 22px; font-weight: 900; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.5); line-height: 1.1; }
+        .header-subtitle { font-family: 'Outfit', sans-serif; font-size: 12px; color: var(--accent-green); font-weight: 900; letter-spacing: 0.5px; }
+        .edition-badge {
+            background: rgba(0, 26, 53, 0.7); border: 1px solid var(--text-light); border-radius: 50px;
+            padding: 1px 8px; font-size: 9px; width: fit-content; margin-top: 3px;
+            text-transform: uppercase; font-family: 'Outfit', sans-serif; font-weight: 800;
+        }
+        .header-right { width: 50px; display: flex; justify-content: flex-end; }
+        .header-logo-container {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: #ffffff; border: 1.5px solid #ffffff;
+            display: flex; justify-content: center; align-items: center; overflow: hidden;
+        }
+        .header-logo { width: 85%; height: 85%; object-fit: contain; }
+
+        /* Grid */
+        .calendar-body {
+            position: relative; z-index: 10; flex: 1;
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 12px 16px;
+            align-content: start; width: 100%;
+            margin-top: 20px;
+        }
+
+        .day-section {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px; padding: 6px;
+            display: flex; flex-direction: column; gap: 4px;
+        }
+
+        .day-top-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 8px;
+        }
+        .day-date-pill {
+            color: var(--accent-green); font-size: 8.5px; font-weight: 900; letter-spacing: 0.5px;
+            background: rgba(255, 255, 255, 0.08); border-radius: 3px; padding: 2px 6px;
+            white-space: nowrap; /* Fix year 2026 wrapping */
+        }
+        .exempted-text {
+            background: var(--primary-red); color: var(--text-light);
+            border-radius: 3px; padding: 2px 6px; font-weight: 900; font-size: 8px;
+            font-family: 'Cairo', sans-serif; white-space: nowrap;
+        }
+
+        .match-row {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #ffffff; border-radius: 12px; padding: 12px 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            min-height: 85px; /* Ensures they stretch nicely */
+        }
+        .match-row:last-child { margin-bottom: 0; }
+
+        .team-side {
+            display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden;
+        }
+        .team-side.home { justify-content: flex-end; }
+        .team-side.away { justify-content: flex-start; }
+
+        .team-names {
+            display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; overflow: hidden; flex: 1;
+        }
+
+        .team-fullname {
+            font-size: 13px; font-weight: 900; color: #032b55;
+            white-space: normal; overflow: hidden; text-align: center;
+            display: block; width: 100%;
+            line-height: 1.2; letter-spacing: 0px; text-overflow: ellipsis;
+        }
+
+        .team-logo {
+            width: 36px; height: 36px; border-radius: 50%; object-fit: contain;
+            border: 2px solid rgba(0,0,0,0.05); flex-shrink: 0; background: #fff;
+            display: flex; justify-content: center; align-items: center; font-size: 16px;
+        }
+
+        .match-center {
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: #f1f5f9; border: 1px solid #e2e8f0;
+            border-radius: 8px; margin: 0 8px; min-width: 50px; padding: 6px 4px; flex-shrink: 0;
+        }
+        
+        .match-time {
+            color: var(--primary-red); font-family: 'Outfit', 'Bebas Neue', sans-serif;
+            font-weight: 900; font-size: 18px; line-height: 1;
+        }
+
+        .match-date-mini {
+            font-size: 10px; color: #475569; font-weight: 900; font-family: 'Cairo', sans-serif; line-height: 1; margin-bottom: 4px;
+        }
+
+        .footer {
+            margin-top: auto; text-align: center; font-size: 9px; color: rgba(255,255,255,0.4);
+            padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.1); position: relative; z-index: 10;
+        }
+
+        /* Print Controls */
+        .print-controls-container {
+            position: fixed; top: 15px; left: 15px; z-index: 9999;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .group-selector {
+            background: rgba(255,255,255,0.9); border: 2px solid var(--primary-red);
+            border-radius: 6px; padding: 8px; font-family: 'Cairo', sans-serif;
+            font-weight: 800; color: var(--bg-dark-3); width: 100%; cursor: pointer;
+        }
+        .no-print-btn {
+            background: var(--bg-dark-3); color: var(--text-light);
+            padding: 8px 16px; border-radius: 6px; text-decoration: none;
+            font-weight: 800; font-size: 12px; border: 1px solid var(--primary-red);
+            display: flex; align-items: center; gap: 6px; cursor: pointer; justify-content: center;
+        }
+        @media print {
+            .no-print, .print-controls-container { display: none !important; }
+            body { background: none !important; min-height: 0 !important; }
+            .print-page { margin: 0 !important; box-shadow: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="print-controls-container no-print">
+        <form method="get" id="group-form">
+            <select name="group_id" class="group-selector" onchange="document.getElementById('group-form').submit();">
+                {% for g in groups %}
+                    <option value="{{ g.id }}" {% if selected_group and selected_group.id == g.id %}selected{% endif %}>{{ g.name }}</option>
+                {% endfor %}
+            </select>
+        </form>
+        <a href="javascript:window.print()" class="no-print-btn primary-btn">🖨️ طباعة A4</a>
+        <button id="exportImageBtn" onclick="exportToPng()" class="no-print-btn" style="background: #ffffff; color: var(--bg-dark-3); border-color: #ffffff;">📸 حفظ صورة</button>
+        <a href="{% url 'tournaments:bracket_detail' tournament.pk %}" class="no-print-btn" style="border-color: var(--accent-green);">🔙 عودة</a>
+    </div>
+
+    <div class="print-page">
+        <div class="diagonal-stripe-1"></div>
+        <div class="watermark-container">
+            {% if site_settings.app_logo %}
+                <img src="{{ site_settings.app_logo.url }}" class="watermark-img" alt="Watermark">
+            {% else %}
+                <img src="{% static 'img/app_logo.png' %}" class="watermark-img" alt="Watermark">
+            {% endif %}
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <h1 class="header-main-title">
+                    {% if "دورة" in tournament.name %}{{ tournament.name }}{% else %}دورة {{ tournament.name }} للكهول{% endif %}
+                </h1>
+                <div class="header-subtitle" style="font-size: 16px;">برنامج المباريات - ( {{ selected_group.name }} )</div>
+                <div class="edition-badge">{% trans "ÉDITION" %} {{ tournament.edition }} - {{ tournament.year }}</div>
+            </div>
+            <div class="header-right">
+                <div class="header-logo-container">
+                    {% if site_settings.app_logo %}<img src="{{ site_settings.app_logo.url }}" class="header-logo">{% else %}<img src="{% static 'img/app_logo.png' %}" class="header-logo">{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="calendar-body">
+            {% for match in matches %}
+                {% if match.team2 %}
+                <div class="match-row">
+                    <div class="team-side home">
+                        {% if match.team1.logo %}<img src="{{ match.team1.logo.url }}" class="team-logo">{% else %}<div class="team-logo">🛡️</div>{% endif %}
+                        <div class="team-names">
+                            <span class="team-fullname">{{ match.team1.name|split_team_name }}</span>
+                        </div>
+                    </div>
+
+                    <div class="match-center">
+                        <span class="match-date-mini">{{ match.match_date|arabic_date_full }}</span>
+                        <span class="match-time">
+                            {% if match.status == 'finished' %}{{ match.score_team1 }} - {{ match.score_team2 }}{% else %}{{ match.match_date|date:"H:i" }}{% endif %}
+                        </span>
+                    </div>
+
+                    <div class="team-side away">
+                        <div class="team-names">
+                            <span class="team-fullname">{{ match.team2.name|split_team_name }}</span>
+                        </div>
+                        {% if match.team2.logo %}<img src="{{ match.team2.logo.url }}" class="team-logo">{% else %}<div class="team-logo">🛡️</div>{% endif %}
+                    </div>
+                </div>
+
+                {% endif %}
+            {% empty %}
+                <div style="grid-column: span 2; text-align: center; font-size: 16px; padding: 40px; color: rgba(255,255,255,0.5);">
+                    لا توجد مباريات مبرمجة لهذه المجموعة
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="footer">
+            {{ site_settings.site_name }} - Document généré le {{ now|date:"d/m/Y H:i" }} | صُمم ليتناسب مع صفحة A4 واحدة
+        </div>
+    </div>
+
+    <script>
+        async function exportToPng() {
+            const btn = document.getElementById('exportImageBtn');
+            const originalText = btn.innerHTML;
+            const element = document.querySelector('.print-page');
+            
+            try {
+                // UI Loading state
+                btn.innerHTML = '⏳ معالجة الصورة...';
+                btn.disabled = true;
+                
+                // Scroll to top (critical for html2canvas)
+                window.scrollTo(0, 0);
+
+                // Temporarily disable complex CSS that causes crashes
+                const watermark = document.querySelector('.watermark-container');
+                let originalBlend = '';
+                if (watermark) {
+                    originalBlend = watermark.style.mixBlendMode;
+                    watermark.style.mixBlendMode = 'normal'; // bypass mix-blend-mode crash
+                }
+
+                // Wait for fonts to be perfectly loaded
+                await document.fonts.ready;
+                await new Promise(r => setTimeout(r, 150));
+
+                const dataUrl = await htmlToImage.toPng(element, {
+                    pixelRatio: 3.5, 
+                    useCORS: true,
+                    cacheBust: true,
+                    backgroundColor: '#1a5b8f',
+                    style: { margin: '0', transform: 'none' }
+                });
+
+                // Restore CSS
+                if (watermark) {
+                    watermark.style.mixBlendMode = originalBlend;
+                }
+
+                // Download
+                const link = document.createElement('a');
+                link.download = 'Group_Calendar_{{ selected_group.name|slugify }}_A4.png';
+                link.href = dataUrl;
+                link.click();
+
+                // Restore UI
+                btn.innerHTML = '✅ تم الحفظ';
+                setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000);
+
+            } catch (error) {
+                console.error("Export Error:", error);
+                alert('فشل في حفظ الصورة. التفاصيل: ' + (error.message || 'خطأ غير معروف'));
+                btn.innerHTML = '❌ فشل';
+                setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>
