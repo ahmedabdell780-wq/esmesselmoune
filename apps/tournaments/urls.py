@@ -1,0 +1,43 @@
+from django.urls import path
+from . import views
+
+app_name = 'tournaments'
+
+urlpatterns = [
+    path('',                  views.TournamentListView.as_view(),   name='list'),
+    path('standings/',        views.StandingsView.as_view(),        name='standings'),
+    path('<int:pk>/standings/', views.StandingsView.as_view(),      name='standings_detail'),
+    path('groups-print/',  views.StandingsPrintView.as_view(),   name='groups_print'),
+    path('<int:pk>/groups-print/', views.StandingsPrintView.as_view(), name='groups_print_detail'),
+    path('group-poster/',  views.GroupStandingsPosterView.as_view(),   name='group_poster'),
+    path('<int:pk>/group-poster/', views.GroupStandingsPosterView.as_view(), name='group_poster_detail'),
+    path('stage-summary/', views.StageSummaryPosterView.as_view(), name='stage_summary'),
+    path('<int:pk>/stage-summary/', views.StageSummaryPosterView.as_view(), name='stage_summary_detail'),
+    path('<int:pk>/teams-print/', views.TournamentTeamsPrintView.as_view(), name='teams_print_detail'),
+    path('<int:pk>/teams-by-group-print/', views.TournamentTeamsByGroupPrintView.as_view(), name='teams_by_group_print_detail'),
+    path('<int:pk>/draw-slips-print/', views.TournamentDrawSlipsPrintView.as_view(), name='draw_slips_print'),
+    path('calendar-print/', views.MatchesPrintView.as_view(), name='calendar_print'),
+    path('<int:pk>/calendar-print/', views.MatchesPrintView.as_view(), name='calendar_print_detail'),
+    path('<int:pk>/group-calendar-print/', views.GroupMatchesPrintView.as_view(), name='group_calendar_print_detail'),
+    path('<int:pk>/all-players-print/', views.TournamentAllPlayersPrintView.as_view(), name='all_players_print'),
+    path('bracket/',          views.BracketView.as_view(),          name='bracket'),
+    path('<int:pk>/bracket/', views.BracketView.as_view(),          name='bracket_detail'),
+    path('<int:pk>/tree-print/', views.TournamentTreePrintView.as_view(), name='tree_print'),
+    path('admin/',            views.TournamentAdminView.as_view(),  name='admin_panel'),
+    path('admin/<int:pk>/manual-groups/', views.ManualGroupView.as_view(), name='manual_groups'),
+    path('admin/<int:pk>/manual-knockout/', views.ManualKnockoutView.as_view(), name='manual_knockout'),
+    path('admin/<int:pk>/save-group-order/', views.SaveGroupOrderAPIView.as_view(), name='save_group_order'),
+    path('admin/<int:pk>/finance/', views.TournamentFinanceView.as_view(), name='finance'),
+    path('admin/<int:pk>/finance/report/', views.TournamentFinanceReportView.as_view(), name='finance_report'),
+    path('admin/payment/<int:pk>/receipt/', views.PaymentReceiptView.as_view(), name='payment_receipt'),
+    path('admin/participation/<int:pk>/action/', views.ParticipationActionView.as_view(), name='participation_action'),
+    path('admin/<int:pk>/manual-inclusion/', views.ManualTeamInclusionView.as_view(), name='manual_inclusion'),
+    path('admin/create-veterans/', views.CreateVeteransTournamentView.as_view(), name='create_veterans'),
+    path('<int:pk>/best-xi/', views.BestXIView.as_view(), name='best_xi'),
+    path('<int:pk>/book/', views.TournamentBookView.as_view(), name='tournament_book'),
+    path('<int:pk>/awards/', views.AwardsDashboardView.as_view(), name='awards_dashboard'),
+    path('final-certificate/<int:pk>/', views.FinalCertificateView.as_view(), name='final_certificate'),
+    path('<int:pk>/committee/', views.CommitteeMemberListView.as_view(), name='committee_list'),
+    path('<int:pk>/committee/cards/', views.CommitteeMemberCardsAllView.as_view(), name='committee_cards_all'),
+    path('committee/card/<int:pk>/', views.CommitteeMemberCardView.as_view(), name='committee_card'),
+]
