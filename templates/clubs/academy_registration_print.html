@@ -21,7 +21,7 @@
             @page { margin: 1cm; size: A4 portrait; }
         }
         
-        .form-container { max-width: 800px; margin: 0 auto; padding: 10px; transform: scale(0.95); transform-origin: top center; }
+        .form-container { max-width: 800px; margin: 0 auto; padding: 5px; }
         .green-header { background-color: #047857 !important; color: white !important; font-weight: bold; padding: 6px 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; border: 1px solid #047857; margin-top: 15px; }
         .field-box { border: 1px solid #e5e7eb; padding: 6px 12px; display: flex; align-items: center; gap: 8px; }
         .field-label { font-weight: bold; color: #374151; white-space: nowrap; }
@@ -40,7 +40,7 @@
     <div class="form-container">
         <!-- HEADER -->
         <div class="flex justify-between items-start border-b-2 border-emerald-700 pb-2 mb-2">
-            <div class="w-24 h-28 border border-dashed border-gray-400 flex items-center justify-center text-xs text-gray-400">
+            <div class="w-24 h-24 border border-dashed border-gray-400 flex items-center justify-center text-xs text-gray-400">
                 {% if player.photo %}<img src="{{ player.photo.url }}" class="w-full h-full object-cover">{% else %}Photo{% endif %}
             </div>
             <div class="text-center flex-1 px-4">
@@ -207,17 +207,17 @@
                     {{ player.medical_history|default:"" }}
                 </span>
             </div>
-            <div class="border-b-2 border-dotted border-gray-500 w-full mt-8"></div>
+            <div class="border-b-2 border-dotted border-gray-500 w-full mt-4"></div>
         </div>
 
         <!-- 3. CERTIFICAT -->
-        <div class="green-header mt-8">3. شهادة التأهيل والأهلية الطبية الرياضية / CERTIFICAT D'APTITUDE SPORTIVE</div>
-        <div class="border border-green-600 p-6 rounded-lg mt-2 relative">
+        <div class="green-header mt-4">3. شهادة التأهيل والأهلية الطبية الرياضية / CERTIFICAT D'APTITUDE SPORTIVE</div>
+        <div class="border border-green-600 p-3 rounded-lg mt-2 relative">
             <div class="absolute inset-0 opacity-5 pointer-events-none flex items-center justify-center">
                 <img src="{% static 'images/messelmoun.jpg' %}" class="w-64 opacity-20 object-contain">
             </div>
             
-            <div class="flex flex-col gap-6 relative z-10">
+            <div class="flex flex-col gap-3 relative z-10">
                 <div class="flex items-end gap-2 text-lg font-bold">
                     <span class="whitespace-nowrap">أنا الطبيب(ة) الموقع(ة) أسفله الدكتور(ة):</span>
                     <span class="border-b-2 border-dotted border-gray-500 flex-1"></span>
@@ -233,7 +233,7 @@
                 </p>
             </div>
             
-            <div class="flex flex-col items-center gap-4 my-8 relative z-10">
+            <div class="flex flex-col items-center gap-4 my-4 relative z-10">
                 <div class="flex items-center gap-3 text-2xl font-black text-emerald-700">
                     <div class="w-6 h-6 border-2 border-emerald-700 rounded"></div>
                     مؤهل وقادر بدنياً لممارسة كرة القدم في التدريبات والمنافسات (APTE)
@@ -249,10 +249,10 @@
                     <span class="whitespace-nowrap">توصيات أو إرشادات وقائية خاصة باللاعب:</span>
                     <span class="border-b-2 border-dotted border-gray-500 flex-1"></span>
                 </div>
-                <div class="border-b-2 border-dotted border-gray-500 w-full mt-8"></div>
+                <div class="border-b-2 border-dotted border-gray-500 w-full mt-4"></div>
             </div>
             
-            <div class="flex justify-between mt-12 relative z-10">
+            <div class="flex justify-between mt-6 relative z-10">
                 <div class="text-center w-1/2">
                     <p class="text-lg font-bold">حرر بـمـسـلمـون فـي: _____ / _____ / 2026</p>
                 </div>
@@ -263,7 +263,7 @@
             </div>
         </div>
 
-        <div class="text-center mt-8 text-[10px] text-gray-500">
+        <div class="text-center mt-4 text-[10px] text-gray-500">
             نادي الوفاق الرياضي مسلمون (ESM) — بلدية مسلمون، دائرة قوراية، ولاية تيبازة | الملف الطبي الرياضي الإجباري — فئة البراعم والمواهب الشابة (الصفحة 2/2)
         </div>
     </div>
