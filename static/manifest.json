@@ -1,0 +1,14 @@
+{
+  "name": "TurniQ — بطولة مسلمون",
+  "short_name": "TurniQ",
+  "description": "Tournoi Inter-Quartiers MESSLMOUNE / بطولة أحياء مسلمون",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#C5A028",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/static/img/trophy.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/static/img/trophy.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

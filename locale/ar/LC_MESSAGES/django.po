@@ -1,0 +1,221 @@
+# Arabic translations for TurniQ
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ar\n"
+
+msgid "Accueil"
+msgstr "الرئيسية"
+
+msgid "Calendrier"
+msgstr "الجدول"
+
+msgid "Classement"
+msgstr "الترتيب"
+
+msgid "Bracket"
+msgstr "الأدوار"
+
+msgid "Équipes"
+msgstr "الفرق"
+
+msgid "Stats"
+msgstr "الإحصائيات"
+
+msgid "Connexion"
+msgstr "تسجيل الدخول"
+
+msgid "Déconnexion"
+msgstr "خروج"
+
+msgid "Profil"
+msgstr "الملف الشخصي"
+
+msgid "Apparence"
+msgstr "المظهر"
+
+msgid "Admin"
+msgstr "الإدارة"
+
+msgid "Tournoi Inter-Quartiers MESSLMOUNE"
+msgstr "دوري أحياء مسلمون"
+
+msgid "Vainqueur"
+msgstr "الفائز"
+
+msgid "Finaliste"
+msgstr "المتأهل للنهائي"
+
+msgid "Équipe"
+msgstr "الفريق"
+
+msgid "Joueur"
+msgstr "اللاعب"
+
+msgid "Administrateur"
+msgstr "مدير"
+
+msgid "Organisateur"
+msgstr "منظم"
+
+msgid "Responsable d'équipe"
+msgstr "مسؤول الفريق"
+
+msgid "Spectateur"
+msgstr "متفرج"
+
+msgid "Phase de groupes"
+msgstr "دور المجموعات"
+
+msgid "Phase finale"
+msgstr "الدور النهائي"
+
+msgid "Huitièmes de finale"
+msgstr "دور الـ16"
+
+msgid "Quarts de finale"
+msgstr "ربع النهائي"
+
+msgid "Demi-finales"
+msgstr "نصف النهائي"
+
+msgid "Finale"
+msgstr "النهائي"
+
+msgid "Programmé"
+msgstr "مجدول"
+
+msgid "En cours"
+msgstr "جارٍ الآن"
+
+msgid "Terminé"
+msgstr "منتهي"
+
+msgid "But"
+msgstr "هدف"
+
+msgid "Carton jaune"
+msgstr "بطاقة صفراء"
+
+msgid "Carton rouge"
+msgstr "بطاقة حمراء"
+
+msgid "Blessure"
+msgstr "إصابة"
+
+msgid "Gardien de but"
+msgstr "حارس مرمى"
+
+msgid "Défenseur"
+msgstr "مدافع"
+
+msgid "Milieu"
+msgstr "وسط"
+
+msgid "Attaquant"
+msgstr "مهاجم"
+
+msgid "Recherche"
+msgstr "بحث"
+
+msgid "Ajouter"
+msgstr "إضافة"
+
+msgid "Modifier"
+msgstr "تعديل"
+
+msgid "Supprimer"
+msgstr "حذف"
+
+msgid "Confirmer"
+msgstr "تأكيد"
+
+msgid "Annuler"
+msgstr "إلغاء"
+
+msgid "Enregistrer"
+msgstr "حفظ"
+
+msgid "Retour"
+msgstr "رجوع"
+
+msgid "Tous les matchs"
+msgstr "كل المباريات"
+
+msgid "Résultats"
+msgstr "النتائج"
+
+msgid "Joueurs"
+msgstr "اللاعبون"
+
+msgid "Nom"
+msgstr "الاسم"
+
+msgid "Quartier"
+msgstr "الحي"
+
+msgid "Téléphone"
+msgstr "الهاتف"
+
+msgid "Email"
+msgstr "البريد الإلكتروني"
+
+msgid "VOTE FAN : MOTM"
+msgstr "تصويت الجمهور: رجل المباراة"
+
+msgid "تصويت الجمهور"
+msgstr "تصويت الجمهور"
+
+msgid "Choisissez l'homme du match en temps réel !"
+msgstr "اختر رجل المباراة مباشرة !"
+
+msgid "اختر رجل المباراة مباشرة !"
+msgstr "اختر رجل المباراة مباشرة !"
+
+msgid "VOTER"
+msgstr "تصويت"
+
+msgid "إرسال التصويت"
+msgstr "إرسال التصويت"
+
+msgid "Classement en temps réel du joueur de la rencontre"
+msgstr "الترتيب المباشر للاعب المباراة"
+
+msgid "الترتيب المباشر للاعب المباراة"
+msgstr "الترتيب المباشر للاعب المباراة"
+
+msgid "Total des votes"
+msgstr "إجمالي الأصوات"
+
+msgid "إجمالي الأصوات"
+msgstr "إجمالي الأصوات"
+
+msgid "Meneur"
+msgstr "المتصدر"
+
+msgid "المتصدر"
+msgstr "المتصدر"
+
+msgid "Veuillez sélectionner un joueur / الرجاء اختيار لاعب"
+msgstr "الرجاء اختيار لاعب / Veuillez sélectionner un joueur"
+
+msgid "Vous avez déjà voté pour ce match / لقد قمت بالتصويت بالفعل لهذه المباراة"
+msgstr "لقد قمت بالتصويت بالفعل لهذه المباراة / Vous avez déjà voté pour ce match"
+
+msgid "Retour au match"
+msgstr "العودة للمباراة"
+
+msgid "Imprimer le certificat de l'Homme du Match"
+msgstr "طباعة شهادة رجل المباراة"
+
+msgid "Télécharger le certificat PDF"
+msgstr "تحميل الشهادة PDF"
+
+msgid "Imprimer le certificat d'appréciation"
+msgstr "طباعة شهادة تقديرية"
+
+msgid "Imprimer le certificat (A4)"
+msgstr "طباعة الشهادة (A4)"
+
+
