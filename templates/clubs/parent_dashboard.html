@@ -1,0 +1,90 @@
+﻿{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block title %}{% trans "Espace Parents / بوابة الأولياء" %}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 animate-fade-in" dir="rtl">
+    
+    <div class="card p-6 border-l-4 border-l-primary flex flex-col md:flex-row justify-between items-center gap-4">
+        <div>
+            <h1 class="text-3xl font-bebas text-white tracking-wide">
+                <i class="fa-solid fa-users text-primary mr-2"></i> بوابة الأولياء
+            </h1>
+            <p class="text-gray-400 text-sm mt-1">مرحباً بك {{ user.first_name }}، يمكنك من هنا متابعة أبنائك المسجلين في الأكاديمية.</p>
+        </div>
+        <a href="{% url 'clubs:academy_register' %}" class="btn btn-primary">
+            <i class="fa-solid fa-plus ml-2"></i> تسجيل لاعب جديد
+        </a>
+    </div>
+
+    {% if not kids %}
+        <div class="card p-12 text-center text-gray-400">
+            <i class="fa-solid fa-child text-5xl mb-4 text-gray-500"></i>
+            <h3 class="text-xl text-white font-bold mb-2">ليس لديك أي أبناء مسجلين بعد</h3>
+            <p class="mb-6">قم بتسجيل ابنك في الأكاديمية ليتم ربط ملفه بحسابك مباشرة.</p>
+            <a href="{% url 'clubs:academy_register' %}" class="btn btn-primary inline-flex">
+                <i class="fa-solid fa-user-plus ml-2"></i> تسجيل الآن
+            </a>
+        </div>
+    {% else %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {% for kid in kids %}
+            <div class="card overflow-hidden">
+                <!-- Header Card -->
+                <div class="p-6 border-b border-white/5 bg-gradient-to-r from-primary/10 to-transparent flex items-start gap-4">
+                    {% if kid.photo %}
+                        <img src="{{ kid.photo.url }}" class="w-20 h-20 rounded-xl object-cover shadow-lg border-2 border-primary/30" alt="">
+                    {% else %}
+                        <div class="w-20 h-20 rounded-xl bg-white/5 flex items-center justify-center border-2 border-white/10 shadow-lg">
+                            <i class="fa-solid fa-user text-3xl text-gray-400"></i>
+                        </div>
+                    {% endif %}
+                    <div class="flex-1">
+                        <h3 class="text-2xl font-bold text-white">{{ kid.first_name }} {{ kid.last_name }}</h3>
+                        <p class="text-emerald-400 text-sm font-bold mt-1"><i class="fa-solid fa-shield mr-1"></i> الفئة: {{ kid.category.name|default:"غير محدد" }}</p>
+                        <p class="text-gray-400 text-sm mt-1"><i class="fa-solid fa-cake-candles mr-1"></i> {{ kid.date_of_birth|date:"Y-m-d" }}</p>
+                    </div>
+                </div>
+
+                <div class="p-6 space-y-6">
+                    <!-- Subscriptions -->
+                    <div>
+                        <h4 class="text-lg font-bold text-white mb-4 border-b border-white/10 pb-2">
+                            <i class="fa-solid fa-file-invoice-dollar text-primary mr-2"></i> الاشتراكات الشهرية
+                        </h4>
+                        {% if kid.subscriptions.all %}
+                            <div class="space-y-3">
+                            {% for sub in kid.subscriptions.all|slice:":3" %}
+                                <div class="flex justify-between items-center p-3 rounded-lg bg-white/5 border border-white/5">
+                                    <div class="flex items-center gap-3">
+                                        <div class="text-gray-300 font-bold" dir="ltr">{{ sub.month|date:"Y/m" }}</div>
+                                        <div class="text-sm text-gray-400">{{ sub.amount }} DA</div>
+                                    </div>
+                                    {% if sub.is_paid %}
+                                        <span class="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-xs font-bold border border-emerald-500/30">مدفوع</span>
+                                    {% else %}
+                                        <span class="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-xs font-bold border border-red-500/30">غير مدفوع</span>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-gray-400 text-sm text-center py-2">لا توجد سجلات اشتراكات بعد.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Attendance (Placeholder for now) -->
+                    <div>
+                        <h4 class="text-lg font-bold text-white mb-4 border-b border-white/10 pb-2">
+                            <i class="fa-solid fa-clipboard-user text-primary mr-2"></i> الحضور والغياب (قريباً)
+                        </h4>
+                        <p class="text-gray-400 text-sm text-center py-2">سيتم تفعيل هذه الميزة قريباً من طرف الإدارة.</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

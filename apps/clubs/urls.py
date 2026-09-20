@@ -24,6 +24,11 @@ urlpatterns = [
     # New features
     path('staff/', views.StaffListView.as_view(), name='staff_list'),
     path('staff/add/', views.StaffCreateView.as_view(), name='staff_add'),
+    
+    # Phase 2
+    path('subscriptions/', views.SubscriptionListView.as_view(), name='subscription_list'),
+    path('parent-dashboard/', views.ParentDashboardView.as_view(), name='parent_dashboard'),
+
     path('subscriptions/add/', views.SubscriptionCreateView.as_view(), name='subscription_add'),
     path('subscriptions/<int:pk>/edit/', views.SubscriptionUpdateView.as_view(), name='subscription_edit'),
     path('subscriptions/<int:pk>/delete/', views.SubscriptionDeleteView.as_view(), name='subscription_delete'),

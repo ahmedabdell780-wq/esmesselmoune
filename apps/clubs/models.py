@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -56,6 +57,7 @@ class Category(models.Model):
 class ClubPlayer(models.Model):
     """لاعب في النادي"""
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='players', verbose_name=_('Catégorie'))
+    parent_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='kids', verbose_name=_('Compte Parent (Lien)'))
     
     # Informations Personnelles
     first_name = models.CharField(max_length=50, verbose_name=_('Prénom'))

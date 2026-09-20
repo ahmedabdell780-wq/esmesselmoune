@@ -1,0 +1,97 @@
+﻿{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block title %}{% trans "Gestion des Abonnements / إدارة الاشتراكات" %}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 animate-fade-in">
+    <!-- Header -->
+    <div class="card p-6 border-l-4 border-l-primary flex flex-col md:flex-row justify-between items-center gap-4">
+        <div>
+            <h1 class="text-3xl font-bebas text-white tracking-wide">
+                <i class="fa-solid fa-file-invoice-dollar text-primary mr-2"></i> إدارة الاشتراكات
+            </h1>
+            <p class="text-gray-400 text-sm mt-1">تتبع الدفعات الشهرية للاعبين</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'clubs:dashboard' %}" class="btn btn-ghost">
+                <i class="fa-solid fa-arrow-right ml-2"></i> عودة للإدارة
+            </a>
+            <a href="{% url 'clubs:subscription_add' %}" class="btn btn-primary">
+                <i class="fa-solid fa-plus ml-2"></i> إضافة اشتراك جديد
+            </a>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-right" dir="rtl">
+                <thead>
+                    <tr class="border-b border-white/10 text-gray-400 text-sm">
+                        <th class="p-4 font-normal">اللاعب</th>
+                        <th class="p-4 font-normal">الفئة</th>
+                        <th class="p-4 font-normal">شهر الاشتراك</th>
+                        <th class="p-4 font-normal">المبلغ (DA)</th>
+                        <th class="p-4 font-normal">الحالة</th>
+                        <th class="p-4 font-normal">تاريخ الدفع</th>
+                        <th class="p-4 font-normal text-center">إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                    {% for sub in subscriptions %}
+                    <tr class="hover:bg-white/5 transition-colors">
+                        <td class="p-4">
+                            <div class="flex items-center gap-3">
+                                {% if sub.player.photo %}
+                                    <img src="{{ sub.player.photo.url }}" class="w-10 h-10 rounded-full object-cover border border-white/10" alt="">
+                                {% else %}
+                                    <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                                        <i class="fa-solid fa-user text-gray-400"></i>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <div class="font-bold text-white">{{ sub.player.first_name }} {{ sub.player.last_name }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="p-4 text-gray-300">{{ sub.player.category.name|default:"-" }}</td>
+                        <td class="p-4 text-gray-300 font-bold" dir="ltr">{{ sub.month|date:"Y/m" }}</td>
+                        <td class="p-4 text-emerald-400 font-bold">{{ sub.amount }} DA</td>
+                        <td class="p-4">
+                            {% if sub.is_paid %}
+                                <span class="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-xs font-bold border border-emerald-500/30">
+                                    <i class="fa-solid fa-check-circle mr-1"></i> مدفوع
+                                </span>
+                            {% else %}
+                                <span class="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-xs font-bold border border-red-500/30">
+                                    <i class="fa-solid fa-times-circle mr-1"></i> غير مدفوع
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="p-4 text-gray-400 text-sm">{{ sub.paid_date|date:"Y-m-d"|default:"-" }}</td>
+                        <td class="p-4">
+                            <div class="flex justify-center gap-2">
+                                <a href="{% url 'clubs:subscription_edit' sub.pk %}" class="btn btn-ghost btn-xs btn-circle text-blue-400 hover:text-blue-300" title="تعديل">
+                                    <i class="fa-solid fa-pen"></i>
+                                </a>
+                                <a href="{% url 'clubs:subscription_delete' sub.pk %}" class="btn btn-ghost btn-xs btn-circle text-red-400 hover:text-red-300" title="حذف">
+                                    <i class="fa-solid fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="p-8 text-center text-gray-400">
+                            <i class="fa-solid fa-folder-open text-4xl mb-3 opacity-50 block"></i>
+                            لا توجد اشتراكات مسجلة بعد.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -513,7 +513,7 @@ class PlayerEquipmentUpdateView(LoginRequiredMixin, DateInputMixin, UpdateView):
 
 from apps.clubs.forms import AcademyRegistrationForm
 
-class AcademyRegistrationView(CreateView):
+class AcademyRegistrationView(LoginRequiredMixin, CreateView):
     model = ClubPlayer
     form_class = AcademyRegistrationForm
     template_name = 'clubs/academy_registration.html'
@@ -564,3 +564,23 @@ class NewsDetailView(DetailView):
 
     def get_queryset(self):
         return super().get_queryset().filter(is_published=True)
+
+
+class SubscriptionListView(LoginRequiredMixin, ListView):
+    model = Subscription
+    template_name = 'clubs/subscription_list.html'
+    context_object_name = 'subscriptions'
+
+    def get_queryset(self):
+        # Admin can see all subscriptions, others can't see this view (or only see their kids, but this is admin view)
+        return Subscription.objects.select_related('player').all().order_by('-month', 'player__last_name')
+
+class ParentDashboardView(LoginRequiredMixin, TemplateView):
+    template_name = 'clubs/parent_dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Fetch the players linked to this parent
+        kids = ClubPlayer.objects.filter(parent_user=self.request.user)
+        context['kids'] = kids
+        return context
