@@ -13,7 +13,7 @@
 {% block content %}
 <div class="max-w-4xl mx-auto px-4 py-8">
     <div class="text-center mb-10">
-        <img src="{% if settings.logo %}{{ settings.logo.url }}{% else %}{% static 'images/messelmoun.jpg' %}{% endif %}" alt="Logo" class="w-32 h-32 mx-auto mb-4 object-contain rounded-full bg-white">
+        <img src="{% if settings.logo %}{{ settings.logo.url }}{% elif site_settings.app_logo %}{{ site_settings.app_logo.url }}{% else %}{% static 'images/messelmoun.jpg' %}{% endif %}" alt="Logo" class="w-32 h-32 mx-auto mb-4 object-contain rounded-full bg-white">
         <h1 class="font-bebas text-5xl text-primary mb-4">التسجيل في أكاديمية الوفاق</h1>
         <p class="text-gray-400">نادي الوفاق الرياضي مسلمون</p>
     </div>
