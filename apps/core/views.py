@@ -19,3 +19,28 @@ class HomeView(TemplateView):
         }
         
         return ctx
+
+
+from django.shortcuts import redirect
+from django.views.decorators.http import require_POST
+from apps.accounts.models import AppearanceSettings
+
+@require_POST
+def update_appearance(request):
+    if request.user.is_authenticated:
+        appearance, _ = AppearanceSettings.objects.get_or_create(user=request.user)
+        
+        # update theme
+        theme = request.POST.get('theme')
+        if theme in dict(AppearanceSettings.Theme.choices):
+            appearance.theme = theme
+            
+        # update language
+        language = request.POST.get('language')
+        if language in ['fr', 'ar']:
+            appearance.language = language
+            
+        appearance.save()
+    
+    next_url = request.POST.get('next', request.META.get('HTTP_REFERER', '/'))
+    return redirect(next_url)
