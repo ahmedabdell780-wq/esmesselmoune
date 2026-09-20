@@ -32,7 +32,7 @@ class ClubMatchAdmin(admin.ModelAdmin):
     date_hierarchy = 'date'
     search_fields = ('opponent',)
 
-from .models import ClubSettings, StaffMember, Subscription, MedicalRecord
+from .models import ClubSettings, ClubNews, StaffMember, Subscription, MedicalRecord
 
 @admin.register(ClubSettings)
 class ClubSettingsAdmin(admin.ModelAdmin):
@@ -57,3 +57,11 @@ class MedicalRecordAdmin(admin.ModelAdmin):
     list_filter = ('is_recovered', 'date_of_injury')
     search_fields = ('player__first_name', 'player__last_name', 'injury_type')
 
+
+
+@admin.register(ClubNews)
+class ClubNewsAdmin(admin.ModelAdmin):
+    list_display = ('title', 'is_published', 'created_at')
+    list_filter = ('is_published', 'created_at')
+    search_fields = ('title', 'content')
+    prepopulated_fields = {'slug': ('title',)}

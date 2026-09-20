@@ -343,3 +343,21 @@ class PlayerEquipment(models.Model):
 
     def __str__(self):
         return f"Équipements de {self.player}"
+
+
+class ClubNews(models.Model):
+    title = models.CharField(max_length=200, verbose_name=_('Titre / العنوان'))
+    slug = models.SlugField(max_length=200, unique=True, blank=True)
+    content = models.TextField(verbose_name=_('Contenu / المحتوى'))
+    image = models.ImageField(upload_to='clubs/news/', blank=True, null=True, verbose_name=_('Image / صورة'))
+    is_published = models.BooleanField(default=True, verbose_name=_('Publie / منشور'))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _('Actualite du Club')
+        verbose_name_plural = _('Actualites du Club')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.title

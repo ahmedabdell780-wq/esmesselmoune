@@ -34,4 +34,8 @@ urlpatterns = [
     # Public Academy Registration
     path('academy/register/', views.AcademyRegistrationView.as_view(), name='academy_register'),
     path('academy/player/<int:pk>/print/', views.AcademyRegistrationPrintView.as_view(), name='academy_print_form'),
+
+    path('news/', views.NewsListView.as_view(), name='news_list'),
+    path('news/<slug:slug>/', views.NewsDetailView.as_view(), name='news_detail'),
+
 ]

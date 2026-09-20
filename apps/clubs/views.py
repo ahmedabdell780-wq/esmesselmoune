@@ -543,3 +543,24 @@ class AcademyRegistrationPrintView(DetailView):
         from apps.clubs.models import ClubSettings
         ctx['settings'] = ClubSettings.get_settings()
         return ctx
+
+
+from django.views.generic import ListView, DetailView
+from .models import ClubNews
+
+class NewsListView(ListView):
+    model = ClubNews
+    template_name = 'clubs/news_list.html'
+    context_object_name = 'news_list'
+    paginate_by = 10
+
+    def get_queryset(self):
+        return super().get_queryset().filter(is_published=True)
+
+class NewsDetailView(DetailView):
+    model = ClubNews
+    template_name = 'clubs/news_detail.html'
+    context_object_name = 'news'
+
+    def get_queryset(self):
+        return super().get_queryset().filter(is_published=True)
