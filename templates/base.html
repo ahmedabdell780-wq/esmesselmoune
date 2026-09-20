@@ -270,17 +270,16 @@
 
     <!-- RIGHT ACTIONS -->
     <div class="flex items-center gap-2">
+      <!-- Academy Registration Shortcut -->
+      <a href="{% url 'clubs:dashboard' %}" class="hidden sm:flex items-center gap-2 btn btn-primary btn-sm rounded-full bg-emerald-600 hover:bg-emerald-500 border-none text-white shadow-[0_0_10px_rgba(16,185,129,0.5)] transition-transform hover:scale-105 px-4" title="أكاديمية الوفاق">
+        <i class="fa-solid fa-graduation-cap"></i> <span class="font-bold text-xs">أكاديمية الوفاق</span>
+      </a>
+
       {% if user.is_staff %}
       <a href="/admin/" class="btn btn-ghost btn-circle btn-sm text-gray-400 hover:text-white" title="الإعدادات (لوحة التحكم)">
         <i class="fa-solid fa-gear hover:rotate-90 transition-transform duration-300"></i>
       </a>
       {% endif %}
-      
-      
-      <!-- Academy Registration Shortcut -->
-      <a href="{% url 'clubs:academy_register' %}" class="hidden sm:flex items-center gap-2 btn btn-primary btn-sm rounded-full bg-emerald-600 hover:bg-emerald-500 border-none text-white shadow-[0_0_10px_rgba(16,185,129,0.5)] transition-transform hover:scale-105 px-4" title="أكاديمية الوفاق">
-        <i class="fa-solid fa-graduation-cap"></i> <span class="font-bold text-xs">أكاديمية الوفاق</span>
-      </a>
 
       <!-- Dark mode toggle -->
       <form action="{% url 'core:update_appearance' %}" method="post" class="inline">
@@ -296,7 +295,6 @@
       </form>
 
       {% if user.is_authenticated %}
-        
         <!-- User Menu -->
         <div class="relative" x-data="{ open: false }">
           <button @click="open = !open" @click.away="open = false" class="flex items-center gap-2 btn btn-ghost btn-sm rounded-xl">
@@ -324,7 +322,6 @@
             </form>
           </div>
         </div>
-
       {% else %}
         <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-sm rounded-xl font-bold px-4">
           <i class="fa-solid fa-right-to-bracket mr-1"></i> {% trans "Connexion" %}
