@@ -29,6 +29,11 @@ urlpatterns = [
     path('subscriptions/', views.SubscriptionListView.as_view(), name='subscription_list'),
     path('parent-dashboard/', views.ParentDashboardView.as_view(), name='parent_dashboard'),
 
+    # Phase 3
+    path('coach-dashboard/', views.CoachDashboardView.as_view(), name='coach_dashboard'),
+    path('attendance/take/<int:session_id>/', views.TakeAttendanceView.as_view(), name='take_attendance'),
+
+
     path('medical/', views.MedicalRecordListView.as_view(), name='medical_list'),
     path('evaluations/', views.PlayerEvaluationListView.as_view(), name='evaluation_list'),
     path('equipment/', views.PlayerEquipmentListView.as_view(), name='equipment_list'),

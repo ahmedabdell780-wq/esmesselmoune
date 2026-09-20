@@ -225,6 +225,7 @@ class ClubSettings(models.Model):
 
 class StaffMember(models.Model):
     """الطاقم الفني والإداري"""
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='staff_profile', verbose_name=_('Compte Utilisateur'))
     class Role(models.TextChoices):
         COACH = 'COACH', _('Entraîneur (مدرب)')
         ADMIN = 'ADMIN', _('Administrateur (إداري)')

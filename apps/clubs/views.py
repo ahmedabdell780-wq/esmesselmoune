@@ -618,3 +618,68 @@ class TrainingAttendanceListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         return TrainingSession.objects.order_by('-date', '-start_time')
 
+
+
+class CoachDashboardView(LoginRequiredMixin, TemplateView):
+    template_name = 'clubs/coach_dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if hasattr(self.request.user, 'staff_profile'):
+            staff = self.request.user.staff_profile
+            context['staff'] = staff
+            if staff.category_assigned:
+                context['players'] = ClubPlayer.objects.filter(category=staff.category_assigned)
+                # Get upcoming sessions for this category
+                context['sessions'] = TrainingSession.objects.filter(target_categories=staff.category_assigned).order_by('-date')[:5]
+        return context
+
+class TakeAttendanceView(LoginRequiredMixin, TemplateView):
+    template_name = 'clubs/take_attendance.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        session_id = self.kwargs.get('session_id')
+        session = get_object_or_404(TrainingSession, id=session_id)
+        context['session'] = session
+        
+        # Get players for this session's categories
+        categories = session.target_categories.all()
+        if categories.exists():
+            players = ClubPlayer.objects.filter(category__in=categories)
+        else:
+            players = ClubPlayer.objects.all()
+            
+        context['players'] = players
+        
+        # Get existing attendances
+        context['existing_attendances'] = {
+            a.player_id: a.is_present 
+            for a in TrainingAttendance.objects.filter(session=session)
+        }
+        return context
+
+    def post(self, request, *args, **kwargs):
+        session_id = self.kwargs.get('session_id')
+        session = get_object_or_404(TrainingSession, id=session_id)
+        
+        # The form will submit player_id_1=on/off etc.
+        # We can just check which players were submitted
+        for key, value in request.POST.items():
+            if key.startswith('player_'):
+                try:
+                    player_id = int(key.split('_')[1])
+                    player = ClubPlayer.objects.get(id=player_id)
+                    is_present = (value == 'on')
+                    
+                    # Update or create attendance
+                    TrainingAttendance.objects.update_or_create(
+                        session=session,
+                        player=player,
+                        defaults={'is_present': is_present}
+                    )
+                except (ValueError, ClubPlayer.DoesNotExist):
+                    pass
+                    
+        messages.success(request, 'تم حفظ سجل الحضور بنجاح.')
+        return redirect('clubs:coach_dashboard')
