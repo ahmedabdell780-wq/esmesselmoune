@@ -1,0 +1,77 @@
+﻿{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block title %}{% trans "Résultats et Calendrier / الرزنامة والنتائج" %}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 animate-fade-in" dir="rtl">
+    <div class="text-center space-y-4 mb-12">
+        <h1 class="text-5xl font-bebas text-white tracking-wide">
+            <span class="text-emerald-500">الرزنامة</span> والنتائج
+        </h1>
+        <p class="text-gray-400 max-w-2xl mx-auto">تتبع مباريات جميع فئات النادي، الودية والرسمية، والنتائج أولاً بأول.</p>
+    </div>
+
+    <div class="space-y-6">
+        {% for match in matches %}
+        <div class="card overflow-hidden hover:-translate-y-1 transition-transform border border-white/5 bg-gradient-to-r from-emerald-500/10 to-transparent">
+            <div class="p-4 bg-black/40 flex justify-between items-center text-sm border-b border-white/5">
+                <span class="text-gray-300"><i class="fa-solid fa-calendar-days text-emerald-400 mr-2"></i> {{ match.date|date:"l d F Y" }} - {{ match.time|time:"H:i" }}</span>
+                <span class="px-3 py-1 bg-white/10 rounded-full text-emerald-400 font-bold text-xs">{{ match.category.name|default:"الفريق الأول" }}</span>
+            </div>
+            
+            <div class="p-6 md:p-8 flex flex-col md:flex-row justify-center items-center gap-8 md:gap-16">
+                <!-- Our Team -->
+                <div class="flex flex-col items-center flex-1">
+                    <div class="w-24 h-24 rounded-full bg-white flex items-center justify-center p-2 mb-3 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                        {% if site_settings.app_logo %}
+                            <img src="{{ site_settings.app_logo.url }}" alt="ESM" class="max-w-full max-h-full object-contain">
+                        {% else %}
+                            <img src="{% static 'img/logo.png' %}" alt="ESM" class="max-w-full max-h-full object-contain" onerror="this.src='/media/logos/logo.png.jpeg'">
+                        {% endif %}
+                    </div>
+                    <h3 class="text-xl font-bold text-white text-center">الوفاق الرياضي</h3>
+                </div>
+
+                <!-- Score / VS -->
+                <div class="flex flex-col items-center justify-center">
+                    {% if match.is_played %}
+                        <div class="flex items-center gap-4 text-4xl md:text-5xl font-bebas font-bold">
+                            <span class="{% if match.our_score > match.opponent_score %}text-emerald-400{% else %}text-white{% endif %}">{{ match.our_score }}</span>
+                            <span class="text-gray-500 text-2xl">-</span>
+                            <span class="{% if match.opponent_score > match.our_score %}text-red-400{% else %}text-white{% endif %}">{{ match.opponent_score }}</span>
+                        </div>
+                        <span class="text-xs text-gray-500 uppercase tracking-widest mt-2 border border-gray-600 rounded px-2 py-1">نهاية المباراة</span>
+                    {% else %}
+                        <div class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-gray-400 font-bebas text-xl">
+                            VS
+                        </div>
+                        <span class="text-sm text-emerald-400 font-bold mt-2">لم تلعب بعد</span>
+                    {% endif %}
+                </div>
+
+                <!-- Opponent -->
+                <div class="flex flex-col items-center flex-1">
+                    <div class="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center p-2 mb-3 border border-white/20">
+                        <i class="fa-solid fa-shield-halved text-4xl text-gray-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white text-center">{{ match.opponent }}</h3>
+                </div>
+            </div>
+            
+            {% if match.location %}
+            <div class="p-3 bg-white/5 text-center text-sm text-gray-400">
+                <i class="fa-solid fa-location-dot mr-1"></i> الملعب: {{ match.location }}
+            </div>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="card p-12 text-center text-gray-400">
+            <i class="fa-solid fa-calendar-xmark text-5xl mb-4 opacity-50"></i>
+            <h3 class="text-xl text-white font-bold mb-2">لا توجد مباريات مسجلة حالياً</h3>
+            <p>ترقبوا قريباً جدول المباريات القادمة لفريقنا.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -253,10 +253,10 @@
           <i class="fa-solid fa-chevron-down text-[10px] ml-1"></i>
         </button>
         <div x-show="open" x-transition class="absolute top-full mt-2 w-48 rounded-xl shadow-2xl py-2 z-50 border border-white/10" style="background:var(--card2)">
-          <a href="/tournaments/" class="block px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors">
+          <a href="{% url 'clubs:public_matches' %}" class="block px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors">
             <i class="fa-solid fa-calendar text-primary w-5"></i> الرزنامة
           </a>
-          <a href="/teams/" class="block px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors">
+          <a href="{% url 'clubs:public_categories' %}" class="block px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors">
             <i class="fa-solid fa-shield text-primary w-5"></i> الفرق
           </a>
         </div>
@@ -340,7 +340,7 @@
   <div id="mobile-nav" class="hidden md:hidden border-t border-white/5 p-4 space-y-2" style="background:var(--card)">
     <a href="{% url 'core:home' %}" class="block py-2 text-white/80 hover:text-white"><i class="fa-solid fa-house w-6 text-center text-primary"></i> الرئيسية</a>
     <a href="{% url 'clubs:news_list' %}" class="block py-2 text-white/80 hover:text-white"><i class="fa-solid fa-newspaper w-6 text-center text-primary"></i> أخبار النادي</a>
-    <a href="/tournaments/" class="block py-2 text-white/80 hover:text-white"><i class="fa-solid fa-trophy w-6 text-center text-primary"></i> البطولات</a>
+    <a href="{% url 'clubs:public_matches' %}" class="block py-2 text-white/80 hover:text-white"><i class="fa-solid fa-trophy w-6 text-center text-primary"></i> البطولات</a>
     <a href="{% url 'clubs:academy_register' %}" class="block py-2 text-emerald-400 font-bold"><i class="fa-solid fa-user-plus w-6 text-center text-emerald-400"></i> التسجيل في الأكاديمية</a>
   </div>
 </nav>

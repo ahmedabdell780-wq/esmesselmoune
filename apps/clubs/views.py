@@ -631,7 +631,20 @@ class CoachDashboardView(LoginRequiredMixin, TemplateView):
             if staff.category_assigned:
                 context['players'] = ClubPlayer.objects.filter(category=staff.category_assigned)
                 # Get upcoming sessions for this category
-                context['sessions'] = TrainingSession.objects.filter(target_categories=staff.category_assigned).order_by('-date')[:5]
+                
+                
+                # Match stats
+                matches = ClubMatch.objects.filter(category=staff.category_assigned, is_played=True)
+                wins = 0
+                draws = 0
+                losses = 0
+                for match in matches:
+                    if match.our_score > match.opponent_score: wins += 1
+                    elif match.our_score == match.opponent_score: draws += 1
+                    else: losses += 1
+                context['wins'] = wins
+                context['draws'] = draws
+                context['losses'] = losses
         return context
 
 class TakeAttendanceView(LoginRequiredMixin, TemplateView):
@@ -683,3 +696,21 @@ class TakeAttendanceView(LoginRequiredMixin, TemplateView):
                     
         messages.success(request, 'تم حفظ سجل الحضور بنجاح.')
         return redirect('clubs:coach_dashboard')
+
+
+class PublicMatchListView(ListView):
+    model = ClubMatch
+    template_name = 'clubs/public_match_list.html'
+    context_object_name = 'matches'
+    
+    def get_queryset(self):
+        return ClubMatch.objects.order_by('-date', '-time')
+
+class PublicCategoryListView(ListView):
+    model = Category
+    template_name = 'clubs/public_category_list.html'
+    context_object_name = 'categories'
+    
+    def get_queryset(self):
+        # We can prefetch players or just let the template do it
+        return Category.objects.prefetch_related('players', 'staff').all()

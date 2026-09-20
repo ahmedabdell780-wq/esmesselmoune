@@ -1,0 +1,64 @@
+﻿{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block title %}{% trans "Nos Catégories / فئات الأكاديمية" %}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 animate-fade-in" dir="rtl">
+    <div class="text-center space-y-4 mb-12">
+        <h1 class="text-5xl font-bebas text-white tracking-wide">
+            <span class="text-emerald-500">فئات</span> الأكاديمية
+        </h1>
+        <p class="text-gray-400 max-w-2xl mx-auto">تعرف على مختلف الفئات العمرية الناشطة في الأكاديمية والمؤطرة من طرف خيرة المدربين.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for category in categories %}
+        <div class="card overflow-hidden hover:-translate-y-2 transition-transform duration-300 group">
+            <!-- Card Header -->
+            <div class="h-32 bg-gradient-to-br from-emerald-600 to-teal-900 relative p-6 flex flex-col justify-end">
+                <div class="absolute top-4 right-4 text-white/20">
+                    <i class="fa-solid fa-shield text-6xl group-hover:scale-110 transition-transform"></i>
+                </div>
+                <h3 class="text-3xl font-bebas text-white tracking-wider relative z-10">{{ category.name }}</h3>
+            </div>
+            
+            <!-- Card Body -->
+            <div class="p-6 space-y-4">
+                <div class="flex justify-between items-center text-sm border-b border-white/10 pb-3">
+                    <span class="text-gray-400">عدد اللاعبين</span>
+                    <span class="font-bold text-white bg-white/10 px-3 py-1 rounded-full">{{ category.players.count }} لاعب</span>
+                </div>
+                
+                <div>
+                    <span class="text-gray-400 text-sm block mb-2">الطاقم الفني المشرف:</span>
+                    <div class="space-y-2">
+                        {% for staff in category.staff.all %}
+                        <div class="flex items-center gap-3 bg-white/5 p-2 rounded-lg">
+                            {% if staff.photo %}
+                                <img src="{{ staff.photo.url }}" class="w-8 h-8 rounded-full object-cover" alt="">
+                            {% else %}
+                                <div class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-user-tie"></i>
+                                </div>
+                            {% endif %}
+                            <div>
+                                <div class="text-white text-sm font-bold">{{ staff.first_name }} {{ staff.last_name }}</div>
+                                <div class="text-xs text-emerald-400">{{ staff.get_role_display }}</div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-sm text-gray-500 italic">لم يتم تعيين طاقم فني بعد.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-12 text-gray-400">
+            لا توجد فئات مسجلة حالياً.
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
