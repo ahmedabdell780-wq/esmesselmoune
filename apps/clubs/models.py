@@ -181,6 +181,7 @@ class ClubMatch(models.Model):
     
     our_score = models.PositiveIntegerField(null=True, blank=True, verbose_name=_('Notre score'))
     their_score = models.PositiveIntegerField(null=True, blank=True, verbose_name=_('Leur score'))
+    squad = models.ManyToManyField('ClubPlayer', blank=True, related_name='matches_called', verbose_name=_('Joueurs Convoqués'))
     
     notes = models.TextField(blank=True, verbose_name=_('Compte-rendu'))
 
@@ -364,3 +365,18 @@ class ClubNews(models.Model):
 
     def __str__(self):
         return self.title
+
+class ClubNotification(models.Model):
+    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='club_notifications', verbose_name=_('Destinataire'))
+    title = models.CharField(max_length=200, verbose_name=_('Titre'))
+    message = models.TextField(verbose_name=_('Message'))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Date'))
+    is_read = models.BooleanField(default=False, verbose_name=_('Lu'))
+
+    class Meta:
+        verbose_name = _('Notification')
+        verbose_name_plural = _('Notifications')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.title} - {self.recipient}"

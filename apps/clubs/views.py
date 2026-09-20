@@ -580,6 +580,8 @@ class ParentDashboardView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['notifications'] = ClubNotification.objects.filter(recipient=self.request.user, is_read=False)[:5]
+
         # Fetch the players linked to this parent
         kids = ClubPlayer.objects.filter(parent_user=self.request.user)
         context['kids'] = kids
@@ -634,13 +636,13 @@ class CoachDashboardView(LoginRequiredMixin, TemplateView):
                 context['sessions'] = TrainingSession.objects.filter(target_categories=staff.category_assigned).order_by('-date')[:5]
                 
                 # Match stats
-                matches = ClubMatch.objects.filter(category=staff.category_assigned, is_played=True)
+                matches = ClubMatch.objects.filter(category=staff.category_assigned, our_score__isnull=False)
                 wins = 0
                 draws = 0
                 losses = 0
                 for match in matches:
-                    if match.our_score > match.opponent_score: wins += 1
-                    elif match.our_score == match.opponent_score: draws += 1
+                    if match.our_score > match.their_score: wins += 1
+                    elif match.our_score == match.their_score: draws += 1
                     else: losses += 1
                 context['wins'] = wins
                 context['draws'] = draws
@@ -714,3 +716,53 @@ class PublicCategoryListView(ListView):
     def get_queryset(self):
         # We can prefetch players or just let the template do it
         return Category.objects.prefetch_related('players', 'staff').all()
+
+
+from django.db.models import Sum, Count
+from django.utils import timezone
+from .models import ClubNotification
+
+class FinancialDashboardView(LoginRequiredMixin, TemplateView):
+    template_name = 'clubs/financial_dashboard.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Admin check
+        if not self.request.user.is_staff:
+            return context
+            
+        now = timezone.now()
+        subscriptions = Subscription.objects.all()
+        
+        total_revenue = subscriptions.aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0
+        total_players = ClubPlayer.objects.count()
+        paid_players = subscriptions.filter(start_date__lte=now, end_date__gte=now).values('player').distinct().count()
+        unpaid_players = total_players - paid_players
+        
+        context['total_revenue'] = total_revenue
+        context['total_players'] = total_players
+        context['paid_players'] = paid_players
+        context['unpaid_players'] = unpaid_players
+        return context
+
+class SendNotificationView(LoginRequiredMixin, CreateView):
+    model = ClubNotification
+    fields = ['recipient', 'title', 'message']
+    template_name = 'clubs/send_notification.html'
+    
+    def form_valid(self, form):
+        messages.success(self.request, 'تم إرسال الإشعار بنجاح.')
+        return super().form_valid(form)
+        
+    def get_success_url(self):
+        return reverse('clubs:dashboard')
+
+class MatchSquadUpdateView(LoginRequiredMixin, UpdateView):
+    model = ClubMatch
+    fields = ['squad']
+    template_name = 'clubs/match_squad_form.html'
+    
+    def get_success_url(self):
+        messages.success(self.request, 'تم تحديث قائمة المستدعين للمباراة.')
+        return reverse('clubs:coach_dashboard')
