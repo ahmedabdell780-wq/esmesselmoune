@@ -631,7 +631,7 @@ class CoachDashboardView(LoginRequiredMixin, TemplateView):
             if staff.category_assigned:
                 context['players'] = ClubPlayer.objects.filter(category=staff.category_assigned)
                 # Get upcoming sessions for this category
-                
+                context['sessions'] = TrainingSession.objects.filter(target_categories=staff.category_assigned).order_by('-date')[:5]
                 
                 # Match stats
                 matches = ClubMatch.objects.filter(category=staff.category_assigned, is_played=True)

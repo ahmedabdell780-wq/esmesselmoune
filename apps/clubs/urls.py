@@ -35,7 +35,7 @@ urlpatterns = [
     path('matches/', views.PublicMatchListView.as_view(), name='public_matches'),
     path('categories/', views.PublicCategoryListView.as_view(), name='public_categories'),
 
-    ath\(\'coach-dashboard/\', views\.CoachDashboardView\.as_view\(\), name=\'coach_dashboard\'\'),
+    path('coach-dashboard/', views.CoachDashboardView.as_view(), name='coach_dashboard'),
     path('attendance/take/<int:session_id>/', views.TakeAttendanceView.as_view(), name='take_attendance'),
 
 
