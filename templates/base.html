@@ -276,6 +276,12 @@
       </a>
       {% endif %}
       
+      
+      <!-- Academy Registration Shortcut -->
+      <a href="{% url 'clubs:academy_register' %}" class="hidden sm:flex items-center gap-2 btn btn-primary btn-sm rounded-full bg-emerald-600 hover:bg-emerald-500 border-none text-white shadow-[0_0_10px_rgba(16,185,129,0.5)] transition-transform hover:scale-105 px-4" title="أكاديمية الوفاق">
+        <i class="fa-solid fa-graduation-cap"></i> <span class="font-bold text-xs">أكاديمية الوفاق</span>
+      </a>
+
       <!-- Dark mode toggle -->
       <form action="{% url 'core:update_appearance' %}" method="post" class="inline">
         {% csrf_token %}
