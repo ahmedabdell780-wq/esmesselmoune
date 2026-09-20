@@ -217,19 +217,19 @@
   <div class="max-w-7xl mx-auto px-4 flex items-center justify-between h-14 gap-3">
 
     <!-- LOGO -->
-    <a href="{% url 'core:home' %}" class="flex items-center gap-2 flex-shrink-0 group">
-        <div class="h-10 flex items-center justify-center overflow-hidden bg-transparent transition-transform group-hover:scale-110">
+    <a href="{% url 'core:home' %}" class="flex items-center gap-3 flex-shrink-0 group">
+        <div class="h-12 w-12 rounded-full border-2 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.6)] overflow-hidden transition-all duration-700 ease-in-out group-hover:rotate-[360deg] group-hover:scale-110 flex items-center justify-center bg-white">
             {% if site_settings.app_logo %}
-                <img src="{{ site_settings.app_logo.url }}" alt="Logo" class="h-full object-contain drop-shadow-lg" onload="removeWhiteBackground(this)">
+                <img src="{{ site_settings.app_logo.url }}" alt="Logo" class="h-full w-full object-cover" onload="removeWhiteBackground(this)">
             {% else %}
-                <i class="fa-solid fa-futbol text-2xl text-primary drop-shadow-[0_0_8px_rgba(197,160,40,0.8)]"></i>
+                <img src="/media/logos/logo.png.jpeg" alt="Logo" class="h-full w-full object-cover">
             {% endif %}
         </div>
         <div class="hidden sm:block">
-            <h1 class="font-bebas text-2xl leading-none text-white tracking-wide group-hover:text-primary transition-colors">
-                {{ site_settings.app_name|upper }}
+            <h1 class="font-bebas text-2xl leading-none text-white tracking-wide group-hover:text-emerald-400 transition-colors">
+                {{ site_settings.app_name|default:'ESM'|upper }}
             </h1>
-            <p class="text-[9px] text-primary uppercase font-bold tracking-widest opacity-80" style="font-family:'Bebas Neue', sans-serif">FOOTBALL CLUB</p>
+            <p class="text-[9px] text-emerald-500 uppercase font-bold tracking-widest opacity-80" style="font-family:'Bebas Neue', sans-serif">FOOTBALL CLUB</p>
         </div>
     </a>
 
@@ -270,6 +270,12 @@
 
     <!-- RIGHT ACTIONS -->
     <div class="flex items-center gap-2">
+      {% if user.is_staff %}
+      <a href="/admin/" class="btn btn-ghost btn-circle btn-sm text-gray-400 hover:text-white" title="الإعدادات (لوحة التحكم)">
+        <i class="fa-solid fa-gear hover:rotate-90 transition-transform duration-300"></i>
+      </a>
+      {% endif %}
+      
       <!-- Dark mode toggle -->
       <form action="{% url 'core:update_appearance' %}" method="post" class="inline">
         {% csrf_token %}
