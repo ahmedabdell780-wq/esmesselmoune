@@ -29,6 +29,12 @@ urlpatterns = [
     path('subscriptions/', views.SubscriptionListView.as_view(), name='subscription_list'),
     path('parent-dashboard/', views.ParentDashboardView.as_view(), name='parent_dashboard'),
 
+    path('medical/', views.MedicalRecordListView.as_view(), name='medical_list'),
+    path('evaluations/', views.PlayerEvaluationListView.as_view(), name='evaluation_list'),
+    path('equipment/', views.PlayerEquipmentListView.as_view(), name='equipment_list'),
+    path('attendance/', views.TrainingAttendanceListView.as_view(), name='attendance_list'),
+
+
     path('subscriptions/add/', views.SubscriptionCreateView.as_view(), name='subscription_add'),
     path('subscriptions/<int:pk>/edit/', views.SubscriptionUpdateView.as_view(), name='subscription_edit'),
     path('subscriptions/<int:pk>/delete/', views.SubscriptionDeleteView.as_view(), name='subscription_delete'),

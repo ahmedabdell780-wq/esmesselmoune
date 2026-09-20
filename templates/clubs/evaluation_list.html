@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block title %}التقييم الفني للاعبين{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 animate-fade-in" dir="rtl">
+    <!-- Header -->
+    <div class="card p-6 border-l-4 border-l-purple-500 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div>
+            <h1 class="text-3xl font-bebas text-white tracking-wide">
+                <i class="fa-solid fa-star text-purple-500 mr-2"></i> التقييم الفني للاعبين
+            </h1>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'clubs:dashboard' %}" class="btn btn-ghost">
+                <i class="fa-solid fa-arrow-right ml-2"></i> عودة للإدارة
+            </a>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-right">
+                <thead>
+                    <tr class="border-b border-white/10 text-gray-400 text-sm">
+                        
+    <th class="p-4 font-normal">اللاعب</th>
+    <th class="p-4 font-normal">التاريخ</th>
+    <th class="p-4 font-normal">اللياقة</th>
+    <th class="p-4 font-normal">السرعة</th>
+    <th class="p-4 font-normal">التمرير</th>
+    <th class="p-4 font-normal">التكتيك</th>
+    <th class="p-4 font-normal">الانضباط</th>
+    <th class="p-4 font-normal">المجموع</th>
+    
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                    
+    {% for ev in evaluations %}
+    <tr class="hover:bg-white/5 transition-colors">
+        <td class="p-4 font-bold text-white">{{ ev.player.first_name }} {{ ev.player.last_name }}</td>
+        <td class="p-4 text-gray-400 text-sm">{{ ev.date_evaluated|date:"Y-m-d" }}</td>
+        <td class="p-4 text-gray-300">{{ ev.physical_fitness }}/10</td>
+        <td class="p-4 text-gray-300">{{ ev.speed }}/10</td>
+        <td class="p-4 text-gray-300">{{ ev.passing }}/10</td>
+        <td class="p-4 text-gray-300">{{ ev.tactical_awareness }}/10</td>
+        <td class="p-4 text-gray-300">{{ ev.discipline }}/10</td>
+        <td class="p-4 font-bold text-emerald-400">{{ ev.total_score }}/50</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="8" class="p-8 text-center text-gray-400">لا توجد سجلات.</td></tr>
+    {% endfor %}
+    
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

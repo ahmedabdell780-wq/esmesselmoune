@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block title %}سجل الحضور والغياب (التدريبات){% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 animate-fade-in" dir="rtl">
+    <!-- Header -->
+    <div class="card p-6 border-l-4 border-l-blue-500 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div>
+            <h1 class="text-3xl font-bebas text-white tracking-wide">
+                <i class="fa-solid fa-clipboard-user text-blue-500 mr-2"></i> سجل الحضور والغياب (التدريبات)
+            </h1>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'clubs:dashboard' %}" class="btn btn-ghost">
+                <i class="fa-solid fa-arrow-right ml-2"></i> عودة للإدارة
+            </a>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-right">
+                <thead>
+                    <tr class="border-b border-white/10 text-gray-400 text-sm">
+                        
+    <th class="p-4 font-normal">التاريخ</th>
+    <th class="p-4 font-normal">التوقيت</th>
+    <th class="p-4 font-normal">الفئة المستهدفة</th>
+    <th class="p-4 font-normal">الملعب</th>
+    
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                    
+    {% for session in sessions %}
+    <tr class="hover:bg-white/5 transition-colors">
+        <td class="p-4 font-bold text-white">{{ session.date|date:"Y-m-d" }}</td>
+        <td class="p-4 text-gray-300">{{ session.start_time|time:"H:i" }} - {{ session.end_time|time:"H:i" }}</td>
+        <td class="p-4 text-gray-300">
+            {% for cat in session.target_categories.all %}
+                <span class="px-2 py-1 bg-white/10 rounded text-xs">{{ cat.name }}</span>
+            {% empty %}
+                <span class="text-gray-500">الجميع</span>
+            {% endfor %}
+        </td>
+        <td class="p-4 text-gray-300">{{ session.location }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4" class="p-8 text-center text-gray-400">لا توجد تدريبات مسجلة.</td></tr>
+    {% endfor %}
+    
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block title %}العتاد الرياضي{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 animate-fade-in" dir="rtl">
+    <!-- Header -->
+    <div class="card p-6 border-l-4 border-l-orange-500 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div>
+            <h1 class="text-3xl font-bebas text-white tracking-wide">
+                <i class="fa-solid fa-shirt text-orange-500 mr-2"></i> العتاد الرياضي
+            </h1>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'clubs:dashboard' %}" class="btn btn-ghost">
+                <i class="fa-solid fa-arrow-right ml-2"></i> عودة للإدارة
+            </a>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-right">
+                <thead>
+                    <tr class="border-b border-white/10 text-gray-400 text-sm">
+                        
+    <th class="p-4 font-normal">اللاعب</th>
+    <th class="p-4 font-normal text-center">بدلة التدريب</th>
+    <th class="p-4 font-normal text-center">بدلة الخروج (Survêtement)</th>
+    <th class="p-4 font-normal text-center">الحقيبة</th>
+    
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                    
+    {% for eq in equipments %}
+    <tr class="hover:bg-white/5 transition-colors">
+        <td class="p-4 font-bold text-white">{{ eq.player.first_name }} {{ eq.player.last_name }}</td>
+        <td class="p-4 text-center">
+            {% if eq.received_training_kit %}
+                <i class="fa-solid fa-check text-emerald-400"></i>
+            {% else %}
+                <i class="fa-solid fa-times text-red-400"></i>
+            {% endif %}
+        </td>
+        <td class="p-4 text-center">
+            {% if eq.received_tracksuit %}
+                <i class="fa-solid fa-check text-emerald-400"></i>
+            {% else %}
+                <i class="fa-solid fa-times text-red-400"></i>
+            {% endif %}
+        </td>
+        <td class="p-4 text-center">
+            {% if eq.received_bag %}
+                <i class="fa-solid fa-check text-emerald-400"></i>
+            {% else %}
+                <i class="fa-solid fa-times text-red-400"></i>
+            {% endif %}
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4" class="p-8 text-center text-gray-400">لا توجد سجلات.</td></tr>
+    {% endfor %}
+    
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

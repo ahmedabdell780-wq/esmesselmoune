@@ -584,3 +584,37 @@ class ParentDashboardView(LoginRequiredMixin, TemplateView):
         kids = ClubPlayer.objects.filter(parent_user=self.request.user)
         context['kids'] = kids
         return context
+
+
+class MedicalRecordListView(LoginRequiredMixin, ListView):
+    model = MedicalRecord
+    template_name = 'clubs/medical_list.html'
+    context_object_name = 'records'
+    
+    def get_queryset(self):
+        return MedicalRecord.objects.select_related('player').order_by('-date_of_injury')
+
+class PlayerEvaluationListView(LoginRequiredMixin, ListView):
+    model = PlayerEvaluation
+    template_name = 'clubs/evaluation_list.html'
+    context_object_name = 'evaluations'
+    
+    def get_queryset(self):
+        return PlayerEvaluation.objects.select_related('player', 'evaluator').order_by('-date_evaluated')
+
+class PlayerEquipmentListView(LoginRequiredMixin, ListView):
+    model = PlayerEquipment
+    template_name = 'clubs/equipment_list.html'
+    context_object_name = 'equipments'
+    
+    def get_queryset(self):
+        return PlayerEquipment.objects.select_related('player').order_by('player__last_name')
+
+class TrainingAttendanceListView(LoginRequiredMixin, ListView):
+    model = TrainingSession
+    template_name = 'clubs/attendance_list.html'
+    context_object_name = 'sessions'
+    
+    def get_queryset(self):
+        return TrainingSession.objects.order_by('-date', '-start_time')
+
