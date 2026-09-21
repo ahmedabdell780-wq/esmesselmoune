@@ -270,8 +270,14 @@
 
     <!-- RIGHT ACTIONS -->
     <div class="flex items-center gap-2">
-      <!-- Academy Registration Shortcut -->
-      <a href="{% url 'clubs:dashboard' %}" class="hidden sm:flex items-center gap-2 btn btn-primary btn-sm rounded-full bg-emerald-600 hover:bg-emerald-500 border-none text-white shadow-[0_0_10px_rgba(16,185,129,0.5)] transition-transform hover:scale-105 px-4" title="أكاديمية الوفاق">
+        <!-- Academy Registration Shortcut -->
+        {% if request.user.is_superuser or request.user.role == 'ORGANIZER' %}
+        <a href="{% url 'tournaments:admin_panel' %}" class="hidden sm:flex items-center gap-2 btn btn-danger btn-sm rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)] transition-transform hover:scale-105 px-4" title="إدارة الدورات">
+          <i class="fa-solid fa-trophy"></i> <span class="font-bold text-xs">إدارة الدورات</span>
+        </a>
+        {% endif %}
+
+        <a href="{% url 'clubs:dashboard' %}" class="hidden sm:flex items-center gap-2 btn btn-primary btn-sm rounded-full bg-emerald-600 hover:bg-emerald-500 border-none text-white shadow-[0_0_10px_rgba(16,185,129,0.5)] transition-transform hover:scale-105 px-4" title="أكاديمية النادي">
         <i class="fa-solid fa-graduation-cap"></i> <span class="font-bold text-xs">أكاديمية الوفاق</span>
       </a>
 
@@ -345,6 +351,10 @@
     <a href="{% url 'clubs:news_list' %}" class="block py-2 text-white/80 hover:text-white"><i class="fa-solid fa-newspaper w-6 text-center text-primary"></i> أخبار النادي</a>
     <a href="{% url 'clubs:public_matches' %}" class="block py-2 text-white/80 hover:text-white"><i class="fa-solid fa-trophy w-6 text-center text-primary"></i> البطولات</a>
     <a href="{% url 'clubs:academy_register' %}" class="block py-2 text-emerald-400 font-bold"><i class="fa-solid fa-user-plus w-6 text-center text-emerald-400"></i> التسجيل في الأكاديمية</a>
+
+    {% if request.user.is_superuser or request.user.role == 'ORGANIZER' %}
+    <a href="{% url 'tournaments:admin_panel' %}" class="block py-2 text-red-400 font-bold"><i class="fa-solid fa-trophy w-6 text-center text-red-400"></i> إدارة الدورات</a>
+    {% endif %}
   </div>
 </nav>
 
