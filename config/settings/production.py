@@ -75,3 +75,21 @@ LOGGING = {
         'apps': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
     },
 }
+
+
+# Cloudinary Settings
+if config('CLOUDINARY_URL', default=''):
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+
+# Cloudinary Settings
+if config('CLOUDINARY_URL', default=''):
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+INSTALLED_APPS += [
+    'cloudinary',
+    'cloudinary_storage',
+]
+
+if config('CLOUDINARY_URL', default=''):
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
