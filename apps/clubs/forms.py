@@ -2,6 +2,19 @@ from django import forms
 from .models import ClubPlayer
 
 class AcademyRegistrationForm(forms.ModelForm):
+    
+    captcha = forms.IntegerField(
+        label='سؤال الأمان: 3 + 4 = ؟', 
+        required=True,
+        widget=forms.NumberInput(attrs={'class': 'form-input', 'placeholder': 'الرجاء إدخال النتيجة رقماً للحماية من البريد العشوائي'})
+    )
+
+    def clean_captcha(self):
+        value = self.cleaned_data.get('captcha')
+        if value != 7:
+            raise forms.ValidationError('إجابة سؤال الأمان خاطئة. يرجى المحاولة مرة أخرى.')
+        return value
+
     class Meta:
         model = ClubPlayer
         fields = [

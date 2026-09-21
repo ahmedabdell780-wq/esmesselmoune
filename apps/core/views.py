@@ -44,3 +44,7 @@ def update_appearance(request):
     
     next_url = request.POST.get('next', request.META.get('HTTP_REFERER', '/'))
     return redirect(next_url)
+
+
+class AboutUsView(TemplateView):
+    template_name = 'core/about.html'

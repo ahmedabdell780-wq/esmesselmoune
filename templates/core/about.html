@@ -1,0 +1,50 @@
+﻿{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block title %}من نحن - أكاديمية الوفاق{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 animate-fade-in" dir="rtl">
+    <div class="card p-8">
+        <h1 class="text-3xl font-bold text-white mb-6 border-b border-white/10 pb-4 text-center">
+            <i class="fa-solid fa-circle-info text-primary mr-2"></i> من نحن
+        </h1>
+        
+        <div class="space-y-6 text-gray-300 leading-relaxed text-lg text-justify">
+            <p>
+                مرحباً بكم في <strong>أكاديمية ونادي الوفاق</strong>، الصرح الرياضي الرائد في تكوين وصناعة المواهب الشابة. 
+                نحن لسنا مجرد نادٍ رياضي، بل بيئة تربوية واحترافية متكاملة تهدف إلى صقل مهارات اللاعبين بدنياً، ذهنياً، وأخلاقياً.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                <div class="p-6 bg-white/5 rounded-xl border border-white/10 hover:border-primary/50 transition-colors">
+                    <h3 class="text-xl font-bold text-primary mb-3"><i class="fa-solid fa-bullseye mr-2"></i> رؤيتنا</h3>
+                    <p class="text-sm">أن نكون الأكاديمية الأولى في اكتشاف وصناعة أبطال المستقبل، وتصدير المواهب للفرق المحترفة محلياً ودولياً.</p>
+                </div>
+                
+                <div class="p-6 bg-white/5 rounded-xl border border-white/10 hover:border-emerald-500/50 transition-colors">
+                    <h3 class="text-xl font-bold text-emerald-400 mb-3"><i class="fa-solid fa-handshake-angle mr-2"></i> رسالتنا</h3>
+                    <p class="text-sm">تقديم تدريب رياضي متطور، غرس القيم الأخلاقية، وتوفير الدعم الأكاديمي والرياضي لكل لاعب للانطلاق نحو الاحتراف.</p>
+                </div>
+            </div>
+
+            <div class="mt-8">
+                <h3 class="text-2xl font-bold text-white mb-4">ماذا نقدم؟</h3>
+                <ul class="list-disc list-inside space-y-2 text-gray-400">
+                    <li>تدريب احترافي على أيدي مدربين معتمدين وذوي خبرة.</li>
+                    <li>متابعة مستمرة لتطور اللاعب (بدنياً وفنياً).</li>
+                    <li>متابعة دراسية وتقييمات دورية لتشجيع التفوق.</li>
+                    <li>ملف طبي متكامل ورعاية مستمرة لحماية صحة اللاعبين.</li>
+                    <li>مشاركة في بطولات ومنافسات على مدار الموسم الرياضي.</li>
+                </ul>
+            </div>
+            
+            <div class="mt-8 text-center">
+                <a href="{% url 'clubs:academy_register' %}" class="btn btn-primary px-8 py-3 text-lg rounded-full">
+                    <i class="fa-solid fa-user-plus ml-2"></i> انضم إلينا الآن
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

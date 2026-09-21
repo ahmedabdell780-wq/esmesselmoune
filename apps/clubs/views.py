@@ -513,7 +513,7 @@ class PlayerEquipmentUpdateView(LoginRequiredMixin, DateInputMixin, UpdateView):
 
 from apps.clubs.forms import AcademyRegistrationForm
 
-class AcademyRegistrationView(LoginRequiredMixin, CreateView):
+class AcademyRegistrationView(CreateView):
     model = ClubPlayer
     form_class = AcademyRegistrationForm
     template_name = 'clubs/academy_registration.html'
