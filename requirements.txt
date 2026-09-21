@@ -74,8 +74,6 @@ python-decouple==3.8
 python-dotenv==1.2.2
 pythonnet==3.1.0
 pywebview==6.2.1
-pywin32==312
-pywin32-ctypes==0.2.3
 qrcode==8.2
 referencing==0.37.0
 rembg==2.0.75
@@ -103,7 +101,6 @@ waitress==3.0.2
 weasyprint==70.0
 webencodings==0.6.1
 whitenoise==6.8.2
-winotify==1.1.0
 xhtml2pdf==0.2.19
 yarl==1.24.5
 zopfli==0.4.3
