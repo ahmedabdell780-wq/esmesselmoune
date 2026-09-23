@@ -1,4 +1,3 @@
-{% load static %}
 {% load i18n turniq_tags static %}
 <!DOCTYPE html>
 <html lang="{{ appearance.language|default:'fr' }}"
@@ -218,92 +217,84 @@
   <div class="max-w-7xl mx-auto px-4 flex items-center justify-between h-14 gap-3">
 
     <!-- LOGO -->
-    <a href="{% url 'core:home' %}" class="flex items-center gap-3 flex-shrink-0 group">
-        <div class="h-12 w-12 rounded-full border-2 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.6)] overflow-hidden transition-all duration-700 ease-in-out group-hover:rotate-[360deg] group-hover:scale-110 flex items-center justify-center bg-white">
-            <img src="{% static 'img/logo.png' %}" alt="Logo" class="h-full w-full object-cover">
+    <a href="{% url 'core:home' %}" class="flex items-center gap-2 flex-shrink-0 group">
+        <div class="h-10 flex items-center justify-center overflow-hidden bg-transparent transition-transform group-hover:scale-110">
+          <img src="{% static 'img/logo.png' %}" alt="Logo" class="h-full w-auto max-w-[120px] object-contain" onload="removeWhiteBackground(this)" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
         </div>
-        <div class="hidden sm:block">
-            <h1 class="font-bebas text-2xl leading-none text-white tracking-wide group-hover:text-emerald-400 transition-colors">
-                {{ site_settings.app_name|default:'ESM'|upper }}
-            </h1>
-            <p class="text-[9px] text-emerald-500 uppercase font-bold tracking-widest opacity-80" style="font-family:'Bebas Neue', sans-serif">FOOTBALL CLUB</p>
-        </div>
+      <div class="flex flex-col leading-none">
+        <span class="font-bebas text-xl tracking-widest">{{ site_settings.app_name|upper }}</span>
+        <span class="text-[8px] uppercase tracking-[0.2em] opacity-50">{% trans "Championnat" %}</span>
+      </div>
+      {% if active_tournament %}
+        <span class="hidden lg:block badge badge-gold ml-1">{{ active_tournament.name|truncatechars:16 }}</span>
+      {% endif %}
     </a>
 
-    <!-- DESKTOP MENU -->
-    <div class="hidden md:flex items-center gap-1">
-      <a href="{% url 'core:home' %}" class="nav-btn {% if request.resolver_match.url_name == 'home' %}active{% endif %}" title="الرئيسية">
-        <i class="fa-solid fa-house"></i>
-        <span>الرئيسية</span>
-      </a>
+    <!-- GLOBAL SEARCH -->
+    <div class="flex-1 max-w-xs relative hidden md:block" id="search-wrapper">
+      <form onsubmit="handleSearchSubmit(event)" class="relative flex items-center">
+        <input type="text" id="global-search"
+               placeholder="{% trans 'Rechercher... / ابحث عن فريق، لاعب، بطولة' %}"
+               autocomplete="off"
+               class="form-input py-2 ps-9 pe-8 text-xs font-bold rounded-2xl w-full border border-white/10 transition-all focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
+               style="background:var(--card2); color: var(--text-light);"/>
+        <span class="absolute inset-y-0 start-3 flex items-center text-xs pointer-events-none" style="color:var(--muted)">🔍</span>
+        <button id="search-clear-btn" type="button" onclick="clearGlobalSearch()" class="hidden absolute inset-y-0 end-3 items-center text-xs text-gray-400 hover:text-white transition-colors">✕</button>
+      </form>
       
-      <a href="{% url 'clubs:news_list' %}" class="nav-btn {% if request.resolver_match.url_name == 'news_list' %}active{% endif %}" title="أخبار النادي">
-        <i class="fa-solid fa-newspaper"></i>
-        <span>أخبار النادي</span>
-      </a>
-
-      <!-- Tournaments Dropdown -->
-      <div class="relative" x-data="{ open: false }">
-        <button @click="open = !open" @click.away="open = false" class="nav-btn" title="البطولات">
-          <i class="fa-solid fa-trophy"></i>
-          <span>البطولات</span>
-          <i class="fa-solid fa-chevron-down text-[10px] ml-1"></i>
-        </button>
-        <div x-show="open" x-transition class="absolute top-full mt-2 w-48 rounded-xl shadow-2xl py-2 z-50 border border-white/10" style="background:var(--card2)">
-          <a href="{% url 'clubs:public_matches' %}" class="block px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors">
-            <i class="fa-solid fa-calendar text-primary w-5"></i> الرزنامة
-          </a>
-          <a href="{% url 'clubs:public_categories' %}" class="block px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors">
-            <i class="fa-solid fa-shield text-primary w-5"></i> الفرق
-          </a>
-        </div>
+      <!-- Dropdown Results Box -->
+      <div id="search-results" 
+           class="absolute top-full mt-2 end-0 w-80 md:w-96 card rounded-2xl shadow-2xl z-50 overflow-hidden backdrop-blur-2xl border border-white/10"
+           style="display:none; max-height:420px; overflow-y:auto; background: color-mix(in srgb, var(--card) 95%, black);">
       </div>
-
-      <a href="{% url 'clubs:academy_register' %}" class="nav-btn {% if request.resolver_match.url_name == 'academy_register' %}active{% endif %} !text-emerald-400 font-bold" title="التسجيل في الأكاديمية">
-        <i class="fa-solid fa-user-plus"></i>
-        <span>التسجيل في الأكاديمية</span>
-      </a>
     </div>
 
-    <!-- RIGHT ACTIONS -->
-    <div class="flex items-center gap-2">
-        <!-- Academy Registration Shortcut -->
-        {% if request.user.is_superuser or request.user.role == 'ORGANIZER' %}
-        <a href="{% url 'tournaments:admin_panel' %}" class="hidden sm:flex items-center gap-2 btn btn-danger btn-sm rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)] transition-transform hover:scale-105 px-4" title="إدارة الدورات">
-          <i class="fa-solid fa-trophy"></i> <span class="font-bold text-xs">إدارة الدورات</span>
-        </a>
-        {% endif %}
-
-        <a href="{% url 'clubs:dashboard' %}" class="hidden sm:flex items-center gap-2 btn btn-primary btn-sm rounded-full bg-emerald-600 hover:bg-emerald-500 border-none text-white shadow-[0_0_10px_rgba(16,185,129,0.5)] transition-transform hover:scale-105 px-4" title="أكاديمية النادي">
-        <i class="fa-solid fa-graduation-cap"></i> <span class="font-bold text-xs">أكاديمية الوفاق</span>
-      </a>
-
-      {% if user.is_staff %}
-      <a href="/admin/" class="btn btn-ghost btn-circle btn-sm text-gray-400 hover:text-white" title="الإعدادات (لوحة التحكم)">
-        <i class="fa-solid fa-gear hover:rotate-90 transition-transform duration-300"></i>
+    <!-- DESKTOP NAV -->
+    <div class="hidden md:flex items-center gap-0.5">
+      <a href="{% url 'core:home' %}"                class="nav-link">🏠</a>
+      <a href="{% url 'matches:calendar' %}"         class="nav-link">📅 {% trans "Calendrier" %}</a>
+      <a href="{% url 'tournaments:standings' %}"    class="nav-link">📊 {% trans "Classement" %}</a>
+      <a href="{% url 'tournaments:bracket' %}"      class="nav-link">🏆 {% trans "Bracket" %}</a>
+      <a href="{% url 'teams:list' %}"               class="nav-link">⚽ {% trans "Équipes" %}</a>
+      <a href="{% url 'teams:global_ranking' %}"     class="nav-link">🌍 {% trans "Classement Global" %}</a>
+      <a href="{% url 'clubs:dashboard' %}"          class="nav-link">🛡️ أكاديمية الوفاق</a>
+      <a href="{% url 'clubs:academy_register' %}"   class="nav-link text-emerald-400 font-bold">📝 التسجيل في الأكاديمية</a>
+      <a href="{% url 'matches:stats' %}"            class="nav-link">📈 {% trans "Stats" %}</a>
+      {% if registration_open_tournament %}
+      <a href="{% url 'teams:registration' %}" class="btn btn-primary btn-sm ml-2 animate-pulse">
+        🚀 {% trans "S'inscrire" %}
       </a>
       {% endif %}
+    </div>
 
-      <!-- Dark mode toggle -->
-      <form action="{% url 'core:update_appearance' %}" method="post" class="inline">
-        {% csrf_token %}
-        <input type="hidden" name="theme" value="{% if appearance.theme == 'dark' %}light{% else %}dark{% endif %}">
-        <button type="submit" class="btn btn-ghost btn-circle btn-sm text-gray-400 hover:text-white" title="{% trans 'Thème / المظهر' %}">
-          {% if appearance.theme == 'dark' %}
-          <i class="fa-solid fa-sun text-yellow-400"></i>
-          {% else %}
-          <i class="fa-solid fa-moon"></i>
-          {% endif %}
-        </button>
-      </form>
+    <!-- RIGHT CONTROLS -->
+    <div class="flex items-center gap-1.5 flex-shrink-0">
+
+      <!-- Theme cycle -->
+      <button onclick="cycleTheme()" title="{% trans 'Changer le thème' %}"
+              class="nav-link px-2" id="theme-btn">
+        {% if appearance.theme == 'dark' %}🌙{% elif appearance.theme == 'light' %}☀️{% elif appearance.theme == 'emerald' %}🌿{% else %}🌊{% endif %}
+      </button>
+
+      <!-- Fullscreen toggle -->
+      <button onclick="toggleFullScreen()" title="{% trans 'Plein écran' %} / ملء الشاشة"
+              class="nav-link px-2 hidden sm:flex no-print" id="fullscreen-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+        </svg>
+      </button>
+
+      <!-- Print -->
+      <button onclick="window.print()" title="{% trans 'Imprimer' %}"
+              class="nav-link px-2 hidden md:flex no-print">🖨️</button>
 
       {% if user.is_authenticated %}
         {% if user.role == 'admin' or user.role == 'organizer' %}
           <a href="{% url 'teams:approval_list' %}"
-             class="btn btn-ghost btn-circle btn-sm hidden sm:flex text-gray-400 hover:text-white relative" title="Demandes d'équipes">
-             <i class="fa-solid fa-clipboard-list text-lg"></i>
+             class="btn btn-ghost btn-sm hidden sm:flex no-print relative" title="{% trans 'Demandes d\'équipes' %}">
+             📋
              {% if pending_teams_count > 0 %}
-             <span class="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center animate-pulse border-2 border-gray-900">
+             <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center animate-pulse">
                {{ pending_teams_count }}
              </span>
              {% endif %}
@@ -311,130 +302,143 @@
 
           {% if user.role == 'admin' %}
           <a href="{% url 'accounts:pending_users' %}"
-             class="btn btn-ghost btn-circle btn-sm hidden sm:flex text-gray-400 hover:text-white relative" title="Demandes d'adhésion">
-             <i class="fa-solid fa-user-clock text-lg"></i>
+             class="btn btn-ghost btn-sm hidden sm:flex no-print relative" title="{% trans 'Demandes d\'adhésion' %}">
+             👤
              {% if pending_users_count > 0 %}
-             <span class="absolute top-0 right-0 w-4 h-4 bg-yellow-500 text-white text-[10px] rounded-full flex items-center justify-center animate-pulse border-2 border-gray-900">
+             <span class="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 text-white text-[10px] rounded-full flex items-center justify-center animate-pulse">
                {{ pending_users_count }}
              </span>
              {% endif %}
           </a>
           {% endif %}
+          <a href="{% url 'tournaments:admin_panel' %}"
+             class="btn btn-danger btn-sm hidden sm:flex no-print">⚙️ Admin</a>
         {% endif %}
 
         <!-- NOTIFICATIONS DROPDOWN -->
-        <div class="relative" x-data="{ notifOpen: false }">
-          <button @click="notifOpen = !notifOpen" @click.away="notifOpen = false" class="btn btn-ghost btn-circle btn-sm text-gray-400 hover:text-white relative">
-            <i class="fa-solid fa-bell text-xl"></i>
+        <div class="relative group no-print">
+          <button class="nav-link px-2 relative">
+            <span class="text-lg">🔔</span>
             {% if unread_notifications_count > 0 %}
-            <span class="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center border-2 border-gray-900">
+            <span class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center border-2 border-card">
               {{ unread_notifications_count }}
             </span>
             {% endif %}
           </button>
           
-          <div x-show="notifOpen" 
-               x-transition:enter="transition ease-out duration-200"
-               x-transition:enter-start="opacity-0 translate-y-2"
-               x-transition:enter-end="opacity-100 translate-y-0"
-               x-transition:leave="transition ease-in duration-150"
-               x-transition:leave-start="opacity-100 translate-y-0"
-               x-transition:leave-end="opacity-0 translate-y-2"
-               class="absolute end-0 top-full mt-2 w-80 card rounded-2xl shadow-2xl overflow-hidden z-50 border border-white/10"
-               style="background:var(--card); display: none;">
-            <div class="px-4 py-3 border-b border-white/10 flex items-center justify-between bg-black/20">
-              <span class="text-xs font-bold uppercase tracking-wider text-white">الإشعارات</span>
+          <div class="absolute end-0 top-full mt-1 w-80 card rounded-2xl shadow-2xl overflow-hidden z-50
+                      opacity-0 invisible group-hover:opacity-100 group-hover:visible
+                      transition-all duration-200 origin-top-right">
+            <div class="px-4 py-3 border-b flex items-center justify-between bg-card2" style="border-color:var(--border)">
+              <span class="text-xs font-bold uppercase tracking-wider">{% trans "Notifications" %}</span>
               {% if unread_notifications_count > 0 %}
-              <button onclick="markAllRead()" class="text-[10px] text-emerald-400 hover:underline">تحديد الكل كمقروء</button>
+              <button onclick="markAllRead()" class="text-[10px] text-primary hover:underline">{% trans "Tout marquer comme lu" %}</button>
               {% endif %}
             </div>
             <div class="max-h-[350px] overflow-y-auto">
               {% for notif in unread_notifications %}
-              <div id="notif-{{ notif.pk }}" class="p-4 border-b border-white/5 last:border-0 hover:bg-white/5 transition relative group/item">
+              <div id="notif-{{ notif.pk }}" class="p-4 border-b last:border-0 hover:bg-white/5 transition relative group/item" style="border-color:var(--border)">
                 <div class="flex gap-3">
                   <div class="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 text-primary flex-shrink-0">
-                    {% if notif.notif_type == 'tournament' %}<i class="fa-solid fa-trophy"></i>
-                    {% elif notif.notif_type == 'team_registration' %}<i class="fa-solid fa-users"></i>
-                    {% else %}<i class="fa-solid fa-bell"></i>{% endif %}
+                    {% if notif.notif_type == 'tournament' %}🏆
+                    {% elif notif.notif_type == 'team_registration' %}⚽
+                    {% else %}🔔{% endif %}
                   </div>
                   <div class="flex-1">
-                    <p class="text-[11px] font-bold leading-tight text-white/90">{{ notif.title }}</p>
-                    <p class="text-[10px] text-white/60 mt-0.5">{{ notif.message }}</p>
-                    <p class="text-[9px] text-white/40 mt-1">{{ notif.created_at|timesince }}</p>
+                    <p class="text-[11px] font-bold leading-tight">{{ notif.title }}</p>
+                    <p class="text-[10px] opacity-70 mt-0.5">{{ notif.message }}</p>
+                    <p class="text-[9px] opacity-40 mt-1">{{ notif.created_at|timesince }}</p>
                     
                     {% if notif.link %}
                     <a href="{{ notif.link }}" onclick="markRead({{ notif.pk }})" class="mt-2 btn btn-primary btn-xs w-full justify-center">
-                      عرض
+                      {% trans "Voir" %}
                     </a>
                     {% endif %}
                   </div>
-                  <button onclick="markRead({{ notif.pk }})" class="opacity-0 group-hover/item:opacity-100 text-xs text-white/40 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
+                  <button onclick="markRead({{ notif.pk }})" class="opacity-0 group-hover/item:opacity-100 text-xs text-muted hover:text-white transition">✕</button>
                 </div>
               </div>
               {% empty %}
               <div class="p-8 text-center opacity-40">
-                <p class="text-3xl mb-2"><i class="fa-regular fa-bell-slash"></i></p>
-                <p class="text-xs text-white">لا توجد إشعارات جديدة</p>
+                <p class="text-3xl mb-2">📭</p>
+                <p class="text-xs">{% trans "Aucune nouvelle notification" %}</p>
               </div>
               {% endfor %}
             </div>
           </div>
         </div>
 
-        <!-- User Menu -->
-        <div class="relative" x-data="{ open: false }">
-          <button @click="open = !open" @click.away="open = false" class="flex items-center gap-2 btn btn-ghost btn-sm rounded-xl">
-            <i class="fa-solid fa-user-circle text-xl text-primary"></i>
-            <span class="hidden sm:inline text-white font-bold">{{ user.username }}</span>
-            <i class="fa-solid fa-chevron-down text-[10px] text-gray-400"></i>
+        <!-- USER MENU -->
+        <div class="relative group">
+          <button class="flex items-center gap-1.5 nav-link">
+            <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold overflow-hidden flex-shrink-0"
+                 style="background:var(--primary-glow);color:var(--primary);border:1px solid var(--primary)">
+              {% if user.avatar %}
+                <img src="{{ user.avatar.url }}" class="w-full h-full object-cover"/>
+              {% else %}
+                {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+              {% endif %}
+            </div>
+            <span class="hidden sm:inline text-sm">{{ user.get_short_name|default:user.username }}</span>
+            <span class="text-xs" style="color:var(--muted)">▾</span>
           </button>
-          
-          <div x-show="open" x-transition class="absolute left-0 mt-2 w-48 rounded-xl shadow-2xl py-2 z-50 border border-white/10" style="background:var(--card2); display:none;">
-            {% if user.is_staff %}
-            <a href="/admin/" class="block px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors">
-              <i class="fa-solid fa-lock text-primary w-5"></i> {% trans "Administration" %}
-            </a>
+
+          <div class="absolute end-0 top-full mt-1 w-48 card rounded-xl shadow-2xl py-1 z-50
+                      opacity-0 invisible group-hover:opacity-100 group-hover:visible
+                      transition-all duration-150">
+            <div class="px-4 py-2 border-b" style="border-color:var(--border)">
+              <div class="text-xs font-bold">{{ user.get_full_name|default:user.username }}</div>
+              <div class="text-xs mt-0.5 badge badge-gray">{{ user.get_role_display }}</div>
+            </div>
+            <a href="{% url 'accounts:profile' %}"    class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-white/5 transition">👤 {% trans "Profil" %}</a>
+            <a href="{% url 'accounts:appearance' %}" class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-white/5 transition">🎨 {% trans "Apparence" %}</a>
+            {% if user.role == 'admin' or user.role == 'organizer' %}
+            <a href="{% url 'teams:create' %}"        class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-white/5 transition">➕ {% trans "Nouvelle équipe" %}</a>
             {% endif %}
-            
-            <a href="{% url 'accounts:profile' %}" class="block px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors">
-              <i class="fa-solid fa-user-gear text-primary w-5"></i> {% trans "Mon Profil" %}
-            </a>
-            
-            <form action="{% url 'accounts:logout' %}" method="post" class="block w-full">
+            <div class="border-t my-1" style="border-color:var(--border)"></div>
+            <form method="post" action="{% url 'accounts:logout' %}">
               {% csrf_token %}
-              <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/5 transition-colors">
-                <i class="fa-solid fa-right-from-bracket w-5"></i> {% trans "Déconnexion" %}
+              <button type="submit" class="w-full text-left flex items-center gap-2 px-4 py-2 text-sm hover:bg-white/5 transition text-red-400">
+                🚪 {% trans "Déconnexion" %}
               </button>
             </form>
           </div>
         </div>
+
       {% else %}
-        <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-sm rounded-xl font-bold px-4">
-          <i class="fa-solid fa-right-to-bracket mr-1"></i> {% trans "Connexion" %}
-        </a>
+        <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-sm">{% trans "Connexion" %}</a>
       {% endif %}
-      
-      <!-- Mobile menu toggle -->
-      <button class="mobile-nav-toggle md:hidden btn btn-ghost btn-circle btn-sm text-gray-400" onclick="document.getElementById('mobile-nav').classList.toggle('hidden')">
-        <i class="fa-solid fa-bars text-lg"></i>
-      </button>
+
+      <!-- Mobile menu btn -->
+      <button class="md:hidden nav-link px-2" onclick="toggleMobileNav()">☰</button>
     </div>
 
   </div>
 
-  <!-- MOBILE MENU -->
-  <div id="mobile-nav" class="hidden md:hidden border-t border-white/5 p-4 space-y-2" style="background:var(--card)">
-    <a href="{% url 'core:home' %}" class="block py-2 text-white/80 hover:text-white"><i class="fa-solid fa-house w-6 text-center text-primary"></i> الرئيسية</a>
-
-    <a href="{% url 'core:about' %}" class="block py-2 text-white/80 hover:text-white"><i class="fa-solid fa-circle-info w-6 text-center text-primary"></i> من نحن</a>
-
-    <a href="{% url 'clubs:news_list' %}" class="block py-2 text-white/80 hover:text-white"><i class="fa-solid fa-newspaper w-6 text-center text-primary"></i> أخبار النادي</a>
-    <a href="{% url 'clubs:public_matches' %}" class="block py-2 text-white/80 hover:text-white"><i class="fa-solid fa-trophy w-6 text-center text-primary"></i> البطولات</a>
-    <a href="{% url 'clubs:academy_register' %}" class="block py-2 text-emerald-400 font-bold"><i class="fa-solid fa-user-plus w-6 text-center text-emerald-400"></i> التسجيل في الأكاديمية</a>
-
-    {% if request.user.is_superuser or request.user.role == 'ORGANIZER' %}
-    <a href="{% url 'tournaments:admin_panel' %}" class="block py-2 text-red-400 font-bold"><i class="fa-solid fa-trophy w-6 text-center text-red-400"></i> إدارة الدورات</a>
+  <!-- MOBILE NAV -->
+  <div id="mobile-nav" class="hidden md:hidden border-t px-4 py-3 grid grid-cols-3 gap-2 no-print"
+       style="border-color:var(--border)">
+    <a href="{% url 'core:home' %}"             class="nav-link justify-center text-center flex-col text-xs gap-0.5">🏠<span>{% trans "Accueil" %}</span></a>
+    <a href="{% url 'matches:calendar' %}"      class="nav-link justify-center text-center flex-col text-xs gap-0.5">📅<span>{% trans "Calendrier" %}</span></a>
+    <a href="{% url 'tournaments:standings' %}" class="nav-link justify-center text-center flex-col text-xs gap-0.5">📊<span>{% trans "Classement" %}</span></a>
+    <a href="{% url 'tournaments:bracket' %}"   class="nav-link justify-center text-center flex-col text-xs gap-0.5">🏆<span>{% trans "Bracket" %}</span></a>
+    <a href="{% url 'teams:list' %}"            class="nav-link justify-center text-center flex-col text-xs gap-0.5">⚽<span>{% trans "Équipes" %}</span></a>
+    <a href="{% url 'teams:global_ranking' %}"  class="nav-link justify-center text-center flex-col text-xs gap-0.5">🌍<span>{% trans "Class. Global" %}</span></a>
+    <a href="{% url 'clubs:dashboard' %}"  class="nav-link justify-center text-center flex-col text-xs gap-0.5">🛡️<span>أكاديمية الوفاق</span></a>
+    <a href="{% url 'clubs:academy_register' %}" class="nav-link justify-center text-center flex-col text-xs gap-0.5" style="color: #34d399;">📝<span class="font-bold">تسجيل</span></a>
+    <a href="{% url 'matches:stats' %}"         class="nav-link justify-center text-center flex-col text-xs gap-0.5">📈<span>{% trans "Stats" %}</span></a>
+    {% if registration_open_tournament %}
+    <a href="{% url 'teams:registration' %}" class="nav-link justify-center text-center flex-col text-xs gap-0.5" style="color:var(--primary)">🚀<span>{% trans "S'inscrire" %}</span></a>
     {% endif %}
+    <!-- Mobile search -->
+    <div class="col-span-3 mt-1 relative">
+      <form onsubmit="handleMobileSearchSubmit(event)" class="relative flex items-center">
+        <input type="text" id="mobile-search-input" placeholder="{% trans 'Rechercher... / ابحث عن فريق، لاعب، بطولة' %}"
+               class="form-input py-2 ps-9 pe-4 text-xs font-bold rounded-xl w-full border border-white/10"
+               style="background:var(--card2); color: var(--text-light);"/>
+        <span class="absolute inset-y-0 start-3 flex items-center text-xs pointer-events-none" style="color:var(--muted)">🔍</span>
+      </form>
+    </div>
   </div>
 </nav>
 
