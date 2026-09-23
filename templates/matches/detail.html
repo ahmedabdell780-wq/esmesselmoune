@@ -2575,9 +2575,7 @@
         <!-- Header -->
         <div class="flex items-center justify-between border-b-4 border-slate-950 pb-5">
             <div class="flex items-center gap-4">
-                {% if site_settings.app_logo %}
-                    <img src="{{ site_settings.app_logo.url }}" class="h-16 w-auto object-contain" onload="removeWhiteBackground(this)">
-                {% endif %}
+                
                 <div>
                     <h1 class="text-3xl font-black tracking-wide text-slate-950 uppercase leading-none mb-1.5">{{ site_settings.app_name }}</h1>
                     <div class="flex items-center gap-2">

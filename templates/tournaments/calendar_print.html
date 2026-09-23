@@ -180,11 +180,7 @@
         <!-- Header -->
         <div class="header">
             <div class="header-logo-container">
-                {% if site_settings.app_logo %}
-                    <img src="{{ request.scheme }}://{{ request.get_host }}{{ site_settings.app_logo.url }}" class="header-logo">
-                {% else %}
-                    <img src="{{ request.scheme }}://{{ request.get_host }}{% static 'img/app_logo.png' %}" class="header-logo">
-                {% endif %}
+                <img src="{{ request.scheme }}://{{ request.get_host }}{% static 'img/app_logo.png' %}" class="header-logo">
             </div>
             
             <div class="header-center">

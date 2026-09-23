@@ -474,11 +474,7 @@ function updateInclusionAction(tournamentId) {
         <div class="flex items-center gap-4">
           <div class="w-16 h-16 rounded-xl border flex items-center justify-center overflow-hidden bg-white/5" 
                style="border-color:var(--border)">
-            {% if site_settings.app_logo %}
-              <img src="{{ site_settings.app_logo.url }}" class="w-full h-full object-contain p-2" onload="removeWhiteBackground(this)">
-            {% else %}
-              <span class="text-xs opacity-40">NO LOGO</span>
-            {% endif %}
+            <span class="text-xs opacity-40">NO LOGO</span>
           </div>
           <div class="flex-1">
             <input type="file" name="app_logo" accept="image/*" class="text-xs w-full"/>

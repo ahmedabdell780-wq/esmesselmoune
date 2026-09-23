@@ -7,9 +7,7 @@
     <!-- Open Graph Meta Tags for Facebook sharing -->
     <meta property="og:title" content="{{ tournament.name }} - Livre du Tournoi">
     <meta property="og:description" content="Découvrez le livre officiel du tournoi {{ tournament.name }} ({{ tournament.year }}) avec tous les résultats, statistiques et distinctions.">
-    {% if site_settings.app_logo %}
-    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ site_settings.app_logo.url }}">
-    {% endif %}
+    
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -428,15 +426,9 @@
             
             <!-- Header Section (Logo & Club Name) -->
             <div class="cover-badge-container">
-                {% if site_settings.app_logo %}
-                <div>
-                    <img src="{{ site_settings.app_logo.url }}" alt="Logo" class="cover-logo">
-                </div>
-                {% else %}
                 <div style="width: 110px; height: 110px; border-radius: 50%; background: rgba(197,160,40,0.15); border: 3px solid #C5A028; display: flex; align-items: center; justify-content: center; font-size: 48px; margin-bottom: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
                     🏆
                 </div>
-                {% endif %}
                 
                 <p style="color: rgba(255,255,255,0.6); font-size: 11px; font-weight: 700; margin-bottom: 2px;">نادي الوفاق الرياضي</p>
                 <h3 style="color: #C5A028; font-size: 32px; font-weight: 900; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">مسلمون</h3>
@@ -719,9 +711,7 @@
                     <h2 class="text-3xl font-black text-slate-900">مقدمة وكلمة الختام</h2>
                     <p class="text-slate-500 font-bold tracking-widest uppercase">Introduction & Conclusion</p>
                 </div>
-                {% if site_settings.app_logo %}
-                    <img src="{{ site_settings.app_logo.url }}" class="h-14 w-auto object-contain" onload="removeWhiteBackground(this)">
-                {% endif %}
+                
             </div>
 
             <div class="space-y-8 text-justify">
@@ -2352,9 +2342,7 @@
                     <h2 style="font-size:28px;font-weight:900;color:#0f172a;margin:0;">الإمضاءات الرسمية</h2>
                     <p style="color:#64748b;font-weight:700;letter-spacing:3px;text-transform:uppercase;font-size:11px;margin:4px 0 0;">Signatures Officielles / Official Signatures</p>
                 </div>
-                {% if site_settings.app_logo %}
-                <img src="{{ site_settings.app_logo.url }}" style="height:52px;width:auto;object-fit:contain;">
-                {% endif %}
+                
             </div>
 
             <!-- Official text -->

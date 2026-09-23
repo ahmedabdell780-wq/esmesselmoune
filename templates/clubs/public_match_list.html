@@ -25,11 +25,7 @@
                 <!-- Our Team -->
                 <div class="flex flex-col items-center flex-1">
                     <div class="w-24 h-24 rounded-full bg-white flex items-center justify-center p-2 mb-3 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-                        {% if site_settings.app_logo %}
-                            <img src="{{ site_settings.app_logo.url }}" alt="ESM" class="max-w-full max-h-full object-contain">
-                        {% else %}
-                            <img src="{% static 'img/logo.png' %}" alt="ESM" class="max-w-full max-h-full object-contain" onerror="this.src="{% static 'img/logo.png' %}"">
-                        {% endif %}
+                        <img src="{% static 'img/logo.png' %}" alt="ESM" class="max-w-full max-h-full object-contain" onerror="this.src="{% static 'img/logo.png' %}"">
                     </div>
                     <h3 class="text-xl font-bold text-white text-center">الوفاق الرياضي</h3>
                 </div>

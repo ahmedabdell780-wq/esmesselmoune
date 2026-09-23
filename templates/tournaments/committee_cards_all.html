@@ -669,11 +669,7 @@
                 <div class="card-header">
                     <!-- Logo -->
                     <div class="header-logo-wrap">
-                        {% if site_settings.app_logo %}
-                            <img src="{{ site_settings.app_logo.url }}" alt="Logo">
-                        {% else %}
-                            <span style="font-size:22px;">🏆</span>
-                        {% endif %}
+                        <span style="font-size:22px;">🏆</span>
                     </div>
                     <!-- Text -->
                     <div class="header-text">
@@ -688,11 +684,7 @@
                 <!-- Body -->
                 <div class="card-body">
                     <!-- Watermark -->
-                    {% if site_settings.app_logo %}
-                    <div class="logo-overlay">
-                        <img src="{{ site_settings.app_logo.url }}" alt="Watermark">
-                    </div>
-                    {% endif %}
+                    
 
                     <!-- Photo + Hologram -->
                     <div class="photo-col">
@@ -797,11 +789,7 @@
                 <!-- Body -->
                 <div class="back-body">
                     <!-- Watermark -->
-                    {% if site_settings.app_logo %}
-                    <div class="logo-overlay" style="opacity: 0.04;">
-                        <img src="{{ site_settings.app_logo.url }}" alt="Watermark">
-                    </div>
-                    {% endif %}
+                    
 
                     <div>
                         <div class="back-zones-title">🛡️ مناطق التواجد المسموح بها:</div>

@@ -223,11 +223,7 @@
         <div class="header">
         <!-- App Logo (Left) -->
         <div class="header-logo-container">
-            {% if site_settings.app_logo %}
-                <img src="{{ site_settings.app_logo.url }}" class="header-logo" alt="App Logo" onload="removeWhiteBackground(this)">
-            {% else %}
-                <div class="header-logo-placeholder">{{ site_settings.app_name|slice:":1" }}</div>
-            {% endif %}
+            <div class="header-logo-placeholder">{{ site_settings.app_name|slice:":1" }}</div>
         </div>
         
         <!-- Tournament Info (Center) -->

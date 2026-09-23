@@ -563,9 +563,7 @@
         <!-- HEADER -->
         <div class="header" id="report-header">
           <div class="logo-container">
-            {% if site_settings.app_logo %}
-              <img src="{{ site_settings.app_logo.url }}" class="app-logo" alt="Logo">
-            {% endif %}
+            
             <span class="brand-name">{{ site_settings.app_name|default:"TurniQ" }}</span>
           </div>
           <div class="report-title-box">

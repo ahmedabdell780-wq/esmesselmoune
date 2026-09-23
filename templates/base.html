@@ -220,11 +220,7 @@
     <!-- LOGO -->
     <a href="{% url 'core:home' %}" class="flex items-center gap-3 flex-shrink-0 group">
         <div class="h-12 w-12 rounded-full border-2 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.6)] overflow-hidden transition-all duration-700 ease-in-out group-hover:rotate-[360deg] group-hover:scale-110 flex items-center justify-center bg-white">
-            {% if site_settings.app_logo %}
-                <img src="{{ site_settings.app_logo.url }}" alt="Logo" class="h-full w-full object-cover" onload="removeWhiteBackground(this)">
-            {% else %}
-                <img src="{% static 'img/logo.png' %}" alt="Logo" class="h-full w-full object-cover">
-            {% endif %}
+            <img src="{% static 'img/logo.png' %}" alt="Logo" class="h-full w-full object-cover">
         </div>
         <div class="hidden sm:block">
             <h1 class="font-bebas text-2xl leading-none text-white tracking-wide group-hover:text-emerald-400 transition-colors">

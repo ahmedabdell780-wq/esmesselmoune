@@ -251,11 +251,7 @@
 
         <!-- Header -->
         <div class="header-card">
-            {% if site_settings.app_logo %}
-                <img src="{{ site_settings.app_logo.url }}" class="header-logo" alt="Logo">
-            {% else %}
-                <div class="header-logo-fallback">🏆</div>
-            {% endif %}
+            <div class="header-logo-fallback">🏆</div>
             <div class="header-text">
                 <p>نادي الوفاق الرياضي مسلمون</p>
                 <h1>أعضاء اللجنة المنظمة</h1>
@@ -370,7 +366,7 @@
             if (!checked.length) return;
 
             // Build the print content
-            const logoHtml = `{% if site_settings.app_logo %}<img class="print-logo" src="{{ site_settings.app_logo.url }}" alt="Logo">{% else %}<span style="font-size:48px;">🏆</span>{% endif %}`;
+            const logoHtml = `<span style="font-size:48px;">🏆</span>`;
 
             const rows = Array.from(checked).map(cb => {
                 const photoSrc = cb.dataset.photo;
@@ -447,7 +443,7 @@
                 return;
             }
 
-            const logoHtml = `{% if site_settings.app_logo %}<img style="width: 70px; height: 70px; border-radius: 50%; border: 3px solid #C5A028; object-fit: contain;" src="{{ site_settings.app_logo.url }}" alt="Logo">{% else %}<span style="font-size:48px;">🏆</span>{% endif %}`;
+            const logoHtml = `<span style="font-size:48px;">🏆</span>`;
 
             const rows = Array.from(checkboxes).map(cb => {
                 const photoSrc = cb.dataset.photo;

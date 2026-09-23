@@ -192,11 +192,7 @@
     <div class="print-page">
         <div class="diagonal-stripe-1"></div>
         <div class="watermark-container">
-            {% if site_settings.app_logo %}
-                <img src="{{ site_settings.app_logo.url }}" class="watermark-img" alt="Watermark">
-            {% else %}
-                <img src="{% static 'img/app_logo.png' %}" class="watermark-img" alt="Watermark">
-            {% endif %}
+            <img src="{% static 'img/app_logo.png' %}" class="watermark-img" alt="Watermark">
         </div>
 
         <!-- Header -->
@@ -210,7 +206,7 @@
             </div>
             <div class="header-right">
                 <div class="header-logo-container">
-                    {% if site_settings.app_logo %}<img src="{{ site_settings.app_logo.url }}" class="header-logo">{% else %}<img src="{% static 'img/app_logo.png' %}" class="header-logo">{% endif %}
+                    <img src="{% static 'img/app_logo.png' %}" class="header-logo">
                 </div>
             </div>
         </div>
