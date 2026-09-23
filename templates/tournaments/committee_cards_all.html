@@ -1,3 +1,4 @@
+{% load static %}
 {% load i18n static %}
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -635,12 +636,12 @@
 
                 <!-- Draggable Official Stamp -->
                 <div class="official-stamp-container draggable-stamp" id="draggable-stamp-{{ member.pk }}" title="اسحب باليسار لتحريك الختم، واستخدم عجلة الماوس لتكبيره/تصغيره، واضغط لتغيير الصورة">
-                    <img src="/media/logos/stamp_esm_v2.png"
+                    <img src="{% static 'img/logo.png' %}"
                          class="official-stamp-img"
                          id="official-stamp-img-{{ member.pk }}"
                          alt="الختم الرسمي"
                          crossorigin="anonymous"
-                         onerror="this.src='/media/logos/stamp_esm.png'; this.onerror=null;"
+                         onerror="this.src="{% static 'img/logo.png' %}"; this.onerror=null;"
                          draggable="false">
                     <div class="stamp-overlay">
                         <span>🔄 تغيير الختم</span>
@@ -651,7 +652,7 @@
 
                 <!-- Draggable Official Signature -->
                 <div class="official-signature-container draggable-signature" id="draggable-signature-{{ member.pk }}" title="اسحب باليسار لتحريك الإمضاء، واستخدم عجلة الماوس لتكبيره/تصغيره، واضغط لتغيير الصورة">
-                    <img src="/media/logos/signature_custom.jpg"
+                    <img src="{% static 'img/logo.png' %}"
                          class="official-signature-img"
                          id="official-signature-img-{{ member.pk }}"
                          alt="الإمضاء الرسمي"

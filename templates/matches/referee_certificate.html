@@ -1,3 +1,4 @@
+{% load static %}
 {% load static i18n %}
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -895,11 +896,11 @@
 
         <!-- Draggable Official Stamp -->
         <div class="official-stamp-container" id="draggable-stamp" title="اسحب باليسار لتحريك الختم، واستخدم عجلة الماوس لتكبيره/تصغيره، واضغط لتغيير الصورة">
-            <img src="/media/logos/stamp_esm_v2.png"
+            <img src="{% static 'img/logo.png' %}"
                  class="official-stamp-img"
                  id="official-stamp-img"
                  alt="الختم الرسمي"
-                 onerror="this.src='/media/logos/stamp_esm.png'"
+                 onerror="this.src="{% static 'img/logo.png' %}""
                  draggable="false">
             <div class="logo-overlay" style="border-radius: 50%;">
                 <span>🔄 تغيير الختم</span>

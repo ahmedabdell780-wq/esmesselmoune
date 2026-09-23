@@ -1,3 +1,4 @@
+{% load static %}
 {% load i18n static turniq_tags %}
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -757,8 +758,8 @@
           <div class="sign-box">
             <!-- Professional Stamp Integration -->
             <div class="official-stamp-container" id="draggable-stamp" title="اسحب لتحريك الختم، واستخدم الزاوية للتكبير/التصغير، واضغط لتغيير الصورة">
-              <img src="/media/logos/stamp_esm_v2.png" 
-                   onerror="this.src='/media/logos/stamp_esm.png'"
+              <img src="{% static 'img/logo.png' %}" 
+                   onerror="this.src="{% static 'img/logo.png' %}""
                    alt="Stamp"
                    id="receipt-stamp-img"
                    crossorigin="anonymous"

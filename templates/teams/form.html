@@ -100,7 +100,7 @@
             {% endif %}
             <div class="flex-1">
               <input type="file" name="logo" accept="image/*" class="form-input flex-1"
-                   onchange="if(this.files[0]) { document.getElementById('logo-preview').innerHTML = '<img src=\''+URL.createObjectURL(this.files[0])+'\' class=\'w-full h-full object-cover rounded-xl\'>'; }"/>
+                   onchange="if(this.files[0]) { document.getElementById('logo-preview').innerHTML = '<img src=''+URL.createObjectURL(this.files[0])+'' class='w-full h-full object-cover rounded-xl'>'; }"/>
             </div>
           </div>
         </div>
@@ -121,7 +121,7 @@
             </div>
             {% endif %}
             <input type="file" name="cover_photo" accept="image/*" class="form-input"
-                   onchange="if(this.files[0]) { document.getElementById('cover-preview').innerHTML = '<img src=\''+URL.createObjectURL(this.files[0])+'\' class=\'w-full h-full object-cover rounded-xl\'>'; }"/>
+                   onchange="if(this.files[0]) { document.getElementById('cover-preview').innerHTML = '<img src=''+URL.createObjectURL(this.files[0])+'' class='w-full h-full object-cover rounded-xl'>'; }"/>
           </div>
         </div>
 
@@ -226,7 +226,7 @@
             ← {% trans "Retour" %} / رجوع
           </a>
           <button type="button"
-                  onclick="confirmDelete('{% trans "Supprimer l\'équipe" %}','{{ object.name }} - هل أنت متأكد من الحذف؟','{% url "teams:delete" object.pk %}')"
+                  onclick="confirmDelete('{% trans "Supprimer l'équipe" %}','{{ object.name }} - هل أنت متأكد من الحذف؟','{% url "teams:delete" object.pk %}')"
                   class="btn btn-danger ms-auto no-print">
             🗑️ {% trans "Supprimer" %} / حذف
           </button>

@@ -1,3 +1,4 @@
+{% load static %}
 {% load i18n turniq_tags static %}
 <!DOCTYPE html>
 <html lang="{{ appearance.language|default:'fr' }}"
@@ -222,7 +223,7 @@
             {% if site_settings.app_logo %}
                 <img src="{{ site_settings.app_logo.url }}" alt="Logo" class="h-full w-full object-cover" onload="removeWhiteBackground(this)">
             {% else %}
-                <img src="/media/logos/logo.png.jpeg" alt="Logo" class="h-full w-full object-cover">
+                <img src="{% static 'img/logo.png' %}" alt="Logo" class="h-full w-full object-cover">
             {% endif %}
         </div>
         <div class="hidden sm:block">

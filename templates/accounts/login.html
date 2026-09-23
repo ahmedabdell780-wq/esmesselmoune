@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% load i18n turniq_tags %}
 {% block title %}{% trans "Connexion" %} / تسجيل الدخول{% endblock %}
 
@@ -147,9 +148,7 @@
           {% if site_settings.app_logo %}
             <img src="{{ site_settings.app_logo.url }}" class="h-full w-auto max-w-[240px] object-contain" onload="removeWhiteBackground(this)">
           {% else %}
-            <div class="w-32 h-32 rounded-full border-2 border-primary/50 flex items-center justify-center">
-              <span class="font-bebas text-5xl text-primary">{{ site_settings.app_name|slice:":1" }}</span>
-            </div>
+              <img src="{% static 'img/logo.png' %}" class="h-full w-auto max-w-[240px] object-contain" onload="removeWhiteBackground(this)">
           {% endif %}
         </div>
       </div>
@@ -182,9 +181,7 @@
                 {% if site_settings.app_logo %}
                    <img src="{{ site_settings.app_logo.url }}" class="h-full w-auto max-w-[150px] object-contain" onload="removeWhiteBackground(this)">
                 {% else %}
-                   <div class="w-16 h-16 rounded-full border-2 border-primary/50 flex items-center justify-center">
-                     <span class="font-bebas text-3xl text-primary">{{ site_settings.app_name|slice:":1" }}</span>
-                   </div>
+              <img src="{% static 'img/logo.png' %}" class="h-full w-auto max-w-[240px] object-contain" onload="removeWhiteBackground(this)">
                 {% endif %}
              </div>
           </div>
