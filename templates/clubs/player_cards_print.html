@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -442,20 +443,14 @@
                         </svg>
 
                         <div class="watermark" style="left: 65%;">
-                            {% if settings.logo %}
-                                <img src="{{ settings.logo.url }}" alt="Watermark">
-                            {% endif %}
+                            <img src="{% static 'img/logo.png' %}" alt="Logo" class="w-full h-full object-contain rounded-full">
                         </div>
                         
                         <div class="content">
                             <div class="right-col" style="padding: 2.5mm 2mm 2.5mm 3mm;">
                                 <div class="header-row" style="margin-bottom: 1mm; display: flex; align-items: center;">
                                     <div class="club-logo" style="position: relative; top: 0; right: 0; margin-left: 2mm; width: 13mm; height: 13mm; display: flex; justify-content: center; align-items: center;">
-                                        {% if settings.logo %}
-                                            <img src="{{ settings.logo.url }}" alt="Logo">
-                                        {% else %}
-                                            <span>{{ settings.club_abbreviation|default:"WRM" }}</span>
-                                        {% endif %}
+                                        <img src="{% static 'img/logo.png' %}" alt="Logo" class="w-full h-full object-contain rounded-full">
                                     </div>
                                     <div style="flex: 1; min-width: 0;">
                                         <div style="font-size: 3.1mm; font-weight: 900; color: var(--primary-dark); line-height: 1.1; white-space: nowrap; letter-spacing: -0.2px; margin-top: -1mm;">الوفاق الرياضي مسلمون</div>
@@ -556,18 +551,12 @@
 
                         <!-- Intersecting Logo -->
                         <div style="position: absolute; top: 9mm; left: 50%; transform: translateX(-50%); width: 11mm; height: 11mm; background: white; border-radius: 50%; border: 0.4mm solid #ca8a04; display: flex; align-items: center; justify-content: center; z-index: 3; box-shadow: 0 2px 4px rgba(0,0,0,0.2); overflow: hidden;">
-                            {% if settings.logo %}
-                                <img src="{{ settings.logo.url }}" alt="Logo" style="width: 85%; height: 85%; object-fit: contain;">
-                            {% else %}
-                                <span style="font-size: 2mm; font-weight: 900; color: var(--primary);">ESM</span>
-                            {% endif %}
+                            <img src="{% static 'img/logo.png' %}" alt="Logo" class="w-full h-full object-contain rounded-full">
                         </div>
 
                         <!-- Watermark -->
                         <div class="watermark" style="left: 50%; top: 55%; width: 45mm; height: 45mm; opacity: 0.08;">
-                            {% if settings.logo %}
-                                <img src="{{ settings.logo.url }}" alt="Watermark">
-                            {% endif %}
+                            <img src="{% static 'img/logo.png' %}" alt="Logo" class="w-full h-full object-contain rounded-full">
                         </div>
 
                         <!-- Content Area -->

@@ -206,9 +206,7 @@
         <div class="official-header">
             <!-- Logo & Club Info -->
             <div class="header-brand">
-                {% if settings.logo %}
-                <img src="{{ settings.logo.url }}" alt="" onerror="this.style.display='none';">
-                {% endif %}
+                <img src="{% static 'img/logo.png' %}" alt="Logo" class="w-full h-full object-contain rounded-full">
                 <div>
                     <h4 class="mb-1 fw-bold text-dark" style="font-size: 20px;">{{ settings.club_name }}</h4>
                     <p class="mb-0 text-secondary" style="font-size: 14px; font-weight: 600;">{{ settings.club_subtitle }}</p>
