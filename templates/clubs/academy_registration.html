@@ -157,7 +157,12 @@
                 </div>
             </div>
 
-            <div class="pt-6 border-t border-white/10 flex justify-end gap-4">
+            
+            <div class="mb-6 p-4 rounded-xl border border-white/10 bg-white/5">
+                <label class="form-label font-bold text-lg text-primary">{{ form.captcha.label }}</label>
+                {{ form.captcha }}
+            </div>
+<div class="pt-6 border-t border-white/10 flex justify-end gap-4">
                 <button type="submit" class="btn btn-primary px-8">
                     <i class="fa-solid fa-check ml-2"></i> تأكيد وتسجيل اللاعب
                 </button>
