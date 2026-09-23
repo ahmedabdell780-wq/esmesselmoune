@@ -637,7 +637,7 @@
             <!-- Team 1 -->
             <div class="team-box team1">
                 {% if match.team1 and match.team1.logo %}
-                    <img src="{{ match.team1.logo.url }}" class="team-logo" alt="{{ match.team1.name }}">
+                    <img src="{{ match.team1.logo.url }}" class="team-logo" alt="{{ match.team1.name }}" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                 {% else %}
                     <div class="team-logo" style="display:flex; align-items:center; justify-content:center; font-size:28px;">🛡️</div>
                 {% endif %}
@@ -661,7 +661,7 @@
             <!-- Team 2 -->
             <div class="team-box team2">
                 {% if match.team2 and match.team2.logo %}
-                    <img src="{{ match.team2.logo.url }}" class="team-logo" alt="{{ match.team2.name }}">
+                    <img src="{{ match.team2.logo.url }}" class="team-logo" alt="{{ match.team2.name }}" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                 {% else %}
                     <div class="team-logo" style="display:flex; align-items:center; justify-content:center; font-size:28px;">🛡️</div>
                 {% endif %}

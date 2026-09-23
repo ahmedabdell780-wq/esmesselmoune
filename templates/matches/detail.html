@@ -62,7 +62,7 @@
                     <div class="relative w-14 h-14 md:w-20 md:h-20 rounded-full flex items-center justify-center overflow-hidden bg-[#161826] border-2 border-primary/45 shadow-[0_0_15px_rgba(197,160,40,0.15)] group-hover:scale-105 transition-transform duration-300">
                         <div class="absolute inset-0 bg-gradient-to-tr from-primary/10 to-transparent"></div>
                         {% if match.team1.logo %}
-                            <img src="{{ match.team1.logo.url }}" class="w-[85%] h-[85%] object-contain rounded-full">
+                            <img src="{{ match.team1.logo.url }}" class="w-[85%] h-[85%] object-contain rounded-full" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         {% else %}
                             <div class="text-2xl md:text-3xl">🛡️</div>
                         {% endif %}
@@ -82,7 +82,7 @@
                     <div class="relative w-14 h-14 md:w-20 md:h-20 rounded-full flex items-center justify-center overflow-hidden bg-[#161826] border-2 border-[#00b84c]/45 shadow-[0_0_15px_rgba(0,184,76,0.15)] group-hover:scale-105 transition-transform duration-300">
                         <div class="absolute inset-0 bg-gradient-to-tr from-[#00b84c]/10 to-transparent"></div>
                         {% if match.team2.logo %}
-                            <img src="{{ match.team2.logo.url }}" class="w-[85%] h-[85%] object-contain rounded-full">
+                            <img src="{{ match.team2.logo.url }}" class="w-[85%] h-[85%] object-contain rounded-full" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         {% else %}
                             <div class="text-2xl md:text-3xl">🛡️</div>
                         {% endif %}
@@ -250,7 +250,7 @@
                 <div class="absolute inset-0 rounded-2xl bg-amber-500/20 blur-md opacity-40 group-hover:opacity-100 transition-opacity"></div>
                 <div class="relative w-14 h-14 rounded-2xl overflow-hidden border border-amber-400/50 bg-[#131524] group-hover:scale-105 transition-transform duration-300 flex items-center justify-center">
                     {% if match.man_of_the_match and match.man_of_the_match.photo %}
-                        <img src="{{ match.man_of_the_match.photo.url }}" class="w-full h-full object-cover">
+                        <img src="{{ match.man_of_the_match.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                     {% else %}
                         <div class="text-2xl">⭐</div>
                     {% endif %}
@@ -504,7 +504,7 @@
                                                 <!-- Photo -->
                                                 <div class="w-12 h-12 rounded-full overflow-hidden border border-white/10 bg-[#131524] flex items-center justify-center relative">
                                                     {% if perf.player.photo %}
-                                                        <img src="{{ perf.player.photo.url }}" class="w-full h-full object-cover">
+                                                        <img src="{{ perf.player.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                                                     {% else %}
                                                         <span class="text-xs font-black text-white/70">{{ perf.player.jersey_number }}</span>
                                                     {% endif %}
@@ -533,7 +533,7 @@
                                                 <!-- Photo -->
                                                 <div class="w-12 h-12 rounded-full overflow-hidden border border-white/10 bg-[#131524] flex items-center justify-center relative">
                                                     {% if perf.player.photo %}
-                                                        <img src="{{ perf.player.photo.url }}" class="w-full h-full object-cover">
+                                                        <img src="{{ perf.player.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                                                     {% else %}
                                                         <span class="text-xs font-black text-white/70">{{ perf.player.jersey_number }}</span>
                                                     {% endif %}
@@ -699,7 +699,7 @@
                             {% if event.team %}
                             <div class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-inner group-hover:border-white/30 transition-colors">
                                 {% if event.team.logo %}
-                                    <img src="{{ event.team.logo.url }}" class="w-full h-full object-cover">
+                                    <img src="{{ event.team.logo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                                 {% else %}
                                     <span class="text-xs font-bold text-white">{{ event.team.name|slice:":1"|upper }}</span>
                                 {% endif %}
@@ -1765,7 +1765,7 @@
                                 <!-- Photo thumbnail or team-colored fallback circle -->
                                 <div class="w-8 h-8 rounded-full overflow-hidden border border-white/10 bg-[#131524] flex items-center justify-center flex-shrink-0">
                                     {% if p.photo %}
-                                        <img src="{{ p.photo.url }}" class="w-full h-full object-cover">
+                                        <img src="{{ p.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                                     {% else %}
                                         <span class="text-[9px] font-black text-white/70">{{ p.jersey_number }}</span>
                                     {% endif %}
@@ -1817,7 +1817,7 @@
                         <!-- Premium Player Circle -->
                         <div class="player-circle w-14 h-14 md:w-16 md:h-16 rounded-full border-2 {% if perf.player.team == match.team1 %}border-blue-500 bg-blue-600/80 shadow-[0_0_15px_rgba(59,130,246,0.5)]{% else %}border-red-500 bg-red-600/80 shadow-[0_0_15px_rgba(239,68,68,0.5)]{% endif %} backdrop-blur-md flex items-center justify-center shadow-2xl group-hover/player:scale-110 group-hover/player:border-white transition-all duration-300 relative">
                             {% if perf.player.photo %}
-                                <img src="{{ perf.player.photo.url }}" class="w-full h-full object-cover rounded-full">
+                                <img src="{{ perf.player.photo.url }}" class="w-full h-full object-cover rounded-full" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                                 <!-- Overlay badge for jersey number on photo -->
                                 <div class="absolute bottom-0 right-0 w-5 h-5 bg-black border border-white/20 rounded-full flex items-center justify-center text-[9px] font-black text-white shadow-lg">{{ perf.player.jersey_number }}</div>
                             {% else %}
@@ -1862,7 +1862,7 @@
                                 <!-- Photo thumbnail or team-colored fallback circle -->
                                 <div class="w-8 h-8 rounded-full overflow-hidden border border-white/10 bg-[#131524] flex items-center justify-center flex-shrink-0">
                                     {% if p.photo %}
-                                        <img src="{{ p.photo.url }}" class="w-full h-full object-cover">
+                                        <img src="{{ p.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                                     {% else %}
                                         <span class="text-[9px] font-black text-white/70">{{ p.jersey_number }}</span>
                                     {% endif %}
@@ -2628,7 +2628,7 @@
                     <span class="text-sm font-black text-slate-950 uppercase tracking-wide leading-tight max-w-[180px]">{{ match.team1.name }}</span>
                     {% if match.team1.logo %}
                         <div class="w-14 h-14 rounded-full bg-white border-2 border-slate-955 shadow-sm flex items-center justify-center p-1.5 flex-shrink-0">
-                            <img src="{{ match.team1.logo.url }}" class="w-full h-full object-contain">
+                            <img src="{{ match.team1.logo.url }}" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         </div>
                     {% endif %}
                 </div>
@@ -2651,7 +2651,7 @@
                 <div class="flex items-center gap-4 w-5/12 pl-4 text-left">
                     {% if match.team2.logo %}
                         <div class="w-14 h-14 rounded-full bg-white border-2 border-slate-955 shadow-sm flex items-center justify-center p-1.5 flex-shrink-0">
-                            <img src="{{ match.team2.logo.url }}" class="w-full h-full object-contain">
+                            <img src="{{ match.team2.logo.url }}" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         </div>
                     {% endif %}
                     <span class="text-sm font-black text-slate-950 uppercase tracking-wide leading-tight max-w-[180px]">{{ match.team2.name }}</span>
@@ -2872,7 +2872,7 @@
           <!-- Logo Shield -->
           <div style="width: 85px; height: 85px; border-radius: 16px; background: #0c0e14; border: 2px solid #00b84c; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6); padding: 8px; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0;">
             {% if match.team2.logo %}
-              <img src="{{ match.team2.logo.url }}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+              <img src="{{ match.team2.logo.url }}" style="max-width: 100%; max-height: 100%; object-fit: contain;" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
             {% else %}
               <span style="font-size: 38px;">🛡️</span>
             {% endif %}
@@ -2915,7 +2915,7 @@
           <!-- Logo Shield -->
           <div style="width: 85px; height: 85px; border-radius: 16px; background: #0c0e14; border: 2px solid #c5a028; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6); padding: 8px; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0;">
             {% if match.team1.logo %}
-              <img src="{{ match.team1.logo.url }}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+              <img src="{{ match.team1.logo.url }}" style="max-width: 100%; max-height: 100%; object-fit: contain;" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
             {% else %}
               <span style="font-size: 38px;">🛡️</span>
             {% endif %}
@@ -2931,7 +2931,7 @@
           <!-- Subtle logo watermark -->
           {% if match.team2.logo %}
           <div style="position: absolute; right: -30px; bottom: -30px; opacity: 0.05; pointer-events: none;">
-            <img src="{{ match.team2.logo.url }}" style="width: 200px; height: 200px; object-fit: contain; filter: grayscale(100%);">
+            <img src="{{ match.team2.logo.url }}" style="width: 200px; height: 200px; object-fit: contain; filter: grayscale(100%);" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
           </div>
           {% endif %}
           
@@ -3013,7 +3013,7 @@
           <!-- Subtle logo watermark -->
           {% if match.team1.logo %}
           <div style="position: absolute; left: -30px; bottom: -30px; opacity: 0.05; pointer-events: none;">
-            <img src="{{ match.team1.logo.url }}" style="width: 200px; height: 200px; object-fit: contain; filter: grayscale(100%);">
+            <img src="{{ match.team1.logo.url }}" style="width: 200px; height: 200px; object-fit: contain; filter: grayscale(100%);" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
           </div>
           {% endif %}
 

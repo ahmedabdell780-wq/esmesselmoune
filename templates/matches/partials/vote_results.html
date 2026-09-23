@@ -37,7 +37,7 @@
                         <!-- Player Photo/Fallback -->
                         <div class="w-10 h-10 rounded-full overflow-hidden border border-white/10 bg-[#131524] flex items-center justify-center flex-shrink-0 relative">
                             {% if perf.player.photo %}
-                                <img src="{{ perf.player.photo.url }}" class="w-full h-full object-cover">
+                                <img src="{{ perf.player.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                             {% else %}
                                 <span class="text-xs font-black text-white/70">{{ perf.player.jersey_number }}</span>
                             {% endif %}

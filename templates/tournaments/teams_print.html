@@ -496,7 +496,7 @@
                             <td class="col-team" style="border-right: 1px solid #e2e8f0;">
                                 <div class="team-name-cell">
                                     {% if tt.team.logo %}
-                                        <img src="{{ tt.team.logo.url }}" class="team-logo-sm">
+                                        <img src="{{ tt.team.logo.url }}" class="team-logo-sm" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                                     {% else %}
                                         <div class="team-logo-sm fallback">{{ tt.team.name|slice:":1" }}</div>
                                     {% endif %}

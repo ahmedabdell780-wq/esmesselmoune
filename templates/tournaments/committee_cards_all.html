@@ -690,7 +690,7 @@
                     <div class="photo-col">
                         {% if member.photo %}
                             <div class="member-photo">
-                                <img src="{{ member.photo.url }}" alt="{{ member.full_name }}">
+                                <img src="{{ member.photo.url }}" alt="{{ member.full_name }}" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                             </div>
                         {% else %}
                             <div class="photo-placeholder">

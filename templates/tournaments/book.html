@@ -806,7 +806,7 @@
                                             {{ forloop.counter }}
                                         </span>
                                         {% if standing.team.logo %}
-                                        <img src="{{ standing.team.logo.url }}" class="w-4 h-4 rounded-full object-cover border border-slate-300 flex-shrink-0">
+                                        <img src="{{ standing.team.logo.url }}" class="w-4 h-4 rounded-full object-cover border border-slate-300 flex-shrink-0" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                                         {% endif %}
                                         <span class="whitespace-nowrap text-xs">{{ standing.team.name }}</span>
                                         {% if forloop.counter <= tournament.teams_advancing_per_group %}
@@ -886,7 +886,7 @@
                                     <!-- Team 1 -->
                                     <div class="w-[40%] text-left font-bold text-sm flex items-center gap-2 {% if match.winner == match.team1 %}text-[#C5A028]{% else %}text-slate-700{% endif %}">
                                         {% if match.team1.logo %}
-                                        <img src="{{ match.team1.logo.url }}" class="w-5 h-5 rounded-full object-cover">
+                                        <img src="{{ match.team1.logo.url }}" class="w-5 h-5 rounded-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                                         {% endif %}
                                         <span class="whitespace-nowrap">{{ match.team1.name }}</span>
                                     </div>
@@ -908,7 +908,7 @@
                                     <!-- Team 2 -->
                                     <div class="w-[40%] text-right font-bold text-sm flex flex-row-reverse items-center gap-2 {% if match.winner == match.team2 %}text-[#C5A028]{% else %}text-slate-700{% endif %}">
                                         {% if match.team2.logo %}
-                                        <img src="{{ match.team2.logo.url }}" class="w-5 h-5 rounded-full object-cover">
+                                        <img src="{{ match.team2.logo.url }}" class="w-5 h-5 rounded-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                                         {% endif %}
                                         <span class="whitespace-nowrap">{{ match.team2.name }}</span>
                                     </div>
@@ -1009,7 +1009,7 @@
                             <!-- Team 1 -->
                             <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team1 %}text-[#C5A028]{% else %}text-slate-600{% endif %}">
                                 <span class="flex items-center gap-1">
-                                    {% if m.team1.logo %}<img src="{{ m.team1.logo.url }}" class="w-4 h-4 rounded-full object-cover">{% endif %}
+                                    {% if m.team1.logo %}<img src="{{ m.team1.logo.url }}" class="w-4 h-4 rounded-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">{% endif %}
                                     {{ m.team1.name }}
                                 </span>
                                 <span class="font-bebas text-sm">{% if m.is_finished %}{{ m.score_team1 }}{% else %}-{% endif %}</span>
@@ -1017,7 +1017,7 @@
                             <!-- Team 2 -->
                             <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team2 %}text-[#C5A028]{% else %}text-slate-600{% endif %}">
                                 <span class="flex items-center gap-1">
-                                    {% if m.team2.logo %}<img src="{{ m.team2.logo.url }}" class="w-4 h-4 rounded-full object-cover">{% endif %}
+                                    {% if m.team2.logo %}<img src="{{ m.team2.logo.url }}" class="w-4 h-4 rounded-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">{% endif %}
                                     {{ m.team2.name }}
                                 </span>
                                 <span class="font-bebas text-sm">{% if m.is_finished %}{{ m.score_team2 }}{% else %}-{% endif %}</span>
@@ -1035,7 +1035,7 @@
                         <!-- Team 1 -->
                         <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team1 %}text-[#C5A028]{% else %}text-slate-700{% endif %}">
                             <span class="flex items-center gap-1.5">
-                                {% if m.team1.logo %}<img src="{{ m.team1.logo.url }}" class="w-5 h-5 rounded-full object-cover">{% endif %}
+                                {% if m.team1.logo %}<img src="{{ m.team1.logo.url }}" class="w-5 h-5 rounded-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">{% endif %}
                                 {{ m.team1.name }}
                             </span>
                             <span class="font-bebas text-sm">{% if m.is_finished %}{{ m.score_team1 }}{% if m.has_penalties %} <span class="text-[9px] text-slate-400 font-sans">({{ m.penalties_team1 }})</span>{% endif %}{% else %}-{% endif %}</span>
@@ -1043,7 +1043,7 @@
                         <!-- Team 2 -->
                         <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team2 %}text-[#C5A028]{% else %}text-slate-700{% endif %}">
                             <span class="flex items-center gap-1.5">
-                                {% if m.team2.logo %}<img src="{{ m.team2.logo.url }}" class="w-5 h-5 rounded-full object-cover">{% endif %}
+                                {% if m.team2.logo %}<img src="{{ m.team2.logo.url }}" class="w-5 h-5 rounded-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">{% endif %}
                                 {{ m.team2.name }}
                             </span>
                             <span class="font-bebas text-sm">{% if m.is_finished %}{{ m.score_team2 }}{% if m.has_penalties %} <span class="text-[9px] text-slate-400 font-sans">({{ m.penalties_team2 }})</span>{% endif %}{% else %}-{% endif %}</span>
@@ -1067,7 +1067,7 @@
                             <!-- Team 1 -->
                             <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team1 %}text-[#C5A028]{% else %}text-slate-800{% endif %}">
                                 <span class="flex items-center gap-2">
-                                    {% if m.team1.logo %}<img src="{{ m.team1.logo.url }}" class="w-6 h-6 rounded-full object-cover">{% endif %}
+                                    {% if m.team1.logo %}<img src="{{ m.team1.logo.url }}" class="w-6 h-6 rounded-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">{% endif %}
                                     {{ m.team1.name }}
                                 </span>
                                 <span class="font-bebas text-base">{% if m.is_finished %}{{ m.score_team1 }}{% if m.has_penalties %} <span class="text-[10px] text-slate-500 font-sans">({{ m.penalties_team1 }})</span>{% endif %}{% else %}-{% endif %}</span>
@@ -1075,7 +1075,7 @@
                             <!-- Team 2 -->
                             <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team2 %}text-[#C5A028]{% else %}text-slate-800{% endif %}">
                                 <span class="flex items-center gap-2">
-                                    {% if m.team2.logo %}<img src="{{ m.team2.logo.url }}" class="w-6 h-6 rounded-full object-cover">{% endif %}
+                                    {% if m.team2.logo %}<img src="{{ m.team2.logo.url }}" class="w-6 h-6 rounded-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">{% endif %}
                                     {{ m.team2.name }}
                                 </span>
                                 <span class="font-bebas text-base">{% if m.is_finished %}{{ m.score_team2 }}{% if m.has_penalties %} <span class="text-[10px] text-slate-500 font-sans">({{ m.penalties_team2 }})</span>{% endif %}{% else %}-{% endif %}</span>
@@ -1096,7 +1096,7 @@
                             <!-- Team 1 -->
                             <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team1 %}text-[#C5A028]{% else %}text-slate-600{% endif %}">
                                 <span class="flex items-center gap-1.5">
-                                    {% if m.team1.logo %}<img src="{{ m.team1.logo.url }}" class="w-4 h-4 rounded-full object-cover">{% endif %}
+                                    {% if m.team1.logo %}<img src="{{ m.team1.logo.url }}" class="w-4 h-4 rounded-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">{% endif %}
                                     {{ m.team1.name }}
                                 </span>
                                 <span class="font-bebas text-xs">{% if m.is_finished %}{{ m.score_team1 }}{% if m.has_penalties %} <span class="text-[8px] text-slate-400 font-sans">({{ m.penalties_team1 }})</span>{% endif %}{% else %}-{% endif %}</span>
@@ -1104,7 +1104,7 @@
                             <!-- Team 2 -->
                             <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team2 %}text-[#C5A028]{% else %}text-slate-600{% endif %}">
                                 <span class="flex items-center gap-1.5">
-                                    {% if m.team2.logo %}<img src="{{ m.team2.logo.url }}" class="w-4 h-4 rounded-full object-cover">{% endif %}
+                                    {% if m.team2.logo %}<img src="{{ m.team2.logo.url }}" class="w-4 h-4 rounded-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">{% endif %}
                                     {{ m.team2.name }}
                                 </span>
                                 <span class="font-bebas text-xs">{% if m.is_finished %}{{ m.score_team2 }}{% if m.has_penalties %} <span class="text-[8px] text-slate-400 font-sans">({{ m.penalties_team2 }})</span>{% endif %}{% else %}-{% endif %}</span>
@@ -1707,12 +1707,12 @@
                     <div class="absolute top-2 right-2 text-yellow-500 font-black text-lg select-none">★</div>
                     <div class="w-full aspect-[3/4] rounded-xl overflow-hidden mb-4 border border-slate-200 bg-slate-100 flex items-center justify-center">
                         {% if best_goalkeeper_media and best_goalkeeper_media.file %}
-                            <img src="{{ best_goalkeeper_media.file.url }}" class="w-full h-full object-contain">
+                            <img src="{{ best_goalkeeper_media.file.url }}" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         {% elif best_goalkeeper_media and best_goalkeeper_media.url %}
-                            <img src="{{ best_goalkeeper_media.url }}" class="w-full h-full object-contain">
+                            <img src="{{ best_goalkeeper_media.url }}" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         {% elif fallback_gk %}
                             {% if fallback_gk.photo %}
-                                <img src="{{ fallback_gk.photo.url }}" class="w-full h-full object-contain">
+                                <img src="{{ fallback_gk.photo.url }}" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                             {% else %}
                                 <span class="text-6xl">🧤</span>
                             {% endif %}
@@ -1737,9 +1737,9 @@
                     <div class="absolute top-2 right-2 text-yellow-500 font-black text-lg select-none">★</div>
                     <div class="w-full aspect-[3/4] rounded-xl overflow-hidden mb-4 border border-slate-200 bg-slate-100 flex items-center justify-center">
                         {% if best_goal_media and best_goal_media.file %}
-                            <img src="{{ best_goal_media.file.url }}" class="w-full h-full object-contain">
+                            <img src="{{ best_goal_media.file.url }}" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         {% elif best_goal_media and best_goal_media.url %}
-                            <img src="{{ best_goal_media.url }}" class="w-full h-full object-contain">
+                            <img src="{{ best_goal_media.url }}" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         {% else %}
                             <span class="text-6xl">⚽</span>
                         {% endif %}
@@ -1758,9 +1758,9 @@
                     <div class="absolute top-2 right-2 text-yellow-500 font-black text-lg select-none">★</div>
                     <div class="w-full aspect-[3/4] rounded-xl overflow-hidden mb-4 border border-slate-200 bg-slate-100 flex items-center justify-center">
                         {% if best_scorer_media and best_scorer_media.file %}
-                            <img src="{{ best_scorer_media.file.url }}" class="w-full h-full object-contain">
+                            <img src="{{ best_scorer_media.file.url }}" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         {% elif best_scorer_media and best_scorer_media.url %}
-                            <img src="{{ best_scorer_media.url }}" class="w-full h-full object-contain">
+                            <img src="{{ best_scorer_media.url }}" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         {% elif top_scorers %}
                             {% with top_scorer=top_scorers.0 %}
                                 {% if top_scorer.player__photo %}
@@ -1814,7 +1814,7 @@
                 <div class="avoid-break bg-slate-50 rounded-2xl border border-slate-200 p-3.5 flex items-center gap-3.5 shadow-sm">
                     <div class="w-16 h-16 rounded-full overflow-hidden border-2 border-slate-200 bg-white flex-shrink-0 flex items-center justify-center shadow-inner">
                         {% if item.referee.photo %}
-                            <img src="{{ item.referee.photo.url }}" class="w-full h-full object-cover">
+                            <img src="{{ item.referee.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         {% else %}
                             <img src="{{ item.photo_url }}" class="w-full h-full object-cover">
                         {% endif %}
@@ -1997,7 +1997,7 @@
                 <div class="absolute flex flex-col items-center text-center -translate-x-1/2 -translate-y-1/2" style="top: 86%; left: 50%;">
                     <div class="w-12 h-12 rounded-full border-2 border-white/80 bg-slate-950 overflow-hidden flex items-center justify-center shadow-lg relative">
                         {% if player.photo %}
-                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         {% else %}
                             <span class="text-[#C5A028] font-black text-sm font-bebas">{{ player.jersey_number|default:"1" }}</span>
                         {% endif %}
@@ -2014,7 +2014,7 @@
                 <div class="absolute flex flex-col items-center text-center -translate-x-1/2 -translate-y-1/2" style="top: 72%; left: 18%;">
                     <div class="w-12 h-12 rounded-full border-2 border-white/80 bg-slate-950 overflow-hidden flex items-center justify-center shadow-lg relative">
                         {% if player.photo %}
-                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         {% else %}
                             <span class="text-[#C5A028] font-black text-sm font-bebas">{{ player.jersey_number|default:"2" }}</span>
                         {% endif %}
@@ -2030,7 +2030,7 @@
                 <div class="absolute flex flex-col items-center text-center -translate-x-1/2 -translate-y-1/2" style="top: 70%; left: 39%;">
                     <div class="w-12 h-12 rounded-full border-2 border-white/80 bg-slate-950 overflow-hidden flex items-center justify-center shadow-lg relative">
                         {% if player.photo %}
-                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         {% else %}
                             <span class="text-[#C5A028] font-black text-sm font-bebas">{{ player.jersey_number|default:"4" }}</span>
                         {% endif %}
@@ -2046,7 +2046,7 @@
                 <div class="absolute flex flex-col items-center text-center -translate-x-1/2 -translate-y-1/2" style="top: 70%; left: 61%;">
                     <div class="w-12 h-12 rounded-full border-2 border-white/80 bg-slate-950 overflow-hidden flex items-center justify-center shadow-lg relative">
                         {% if player.photo %}
-                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         {% else %}
                             <span class="text-[#C5A028] font-black text-sm font-bebas">{{ player.jersey_number|default:"5" }}</span>
                         {% endif %}
@@ -2062,7 +2062,7 @@
                 <div class="absolute flex flex-col items-center text-center -translate-x-1/2 -translate-y-1/2" style="top: 72%; left: 82%;">
                     <div class="w-12 h-12 rounded-full border-2 border-white/80 bg-slate-950 overflow-hidden flex items-center justify-center shadow-lg relative">
                         {% if player.photo %}
-                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         {% else %}
                             <span class="text-[#C5A028] font-black text-sm font-bebas">{{ player.jersey_number|default:"3" }}</span>
                         {% endif %}
@@ -2079,7 +2079,7 @@
                 <div class="absolute flex flex-col items-center text-center -translate-x-1/2 -translate-y-1/2" style="top: 52%; left: 22%;">
                     <div class="w-12 h-12 rounded-full border-2 border-white/80 bg-slate-950 overflow-hidden flex items-center justify-center shadow-lg relative">
                         {% if player.photo %}
-                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         {% else %}
                             <span class="text-[#C5A028] font-black text-sm font-bebas">{{ player.jersey_number|default:"8" }}</span>
                         {% endif %}
@@ -2095,7 +2095,7 @@
                 <div class="absolute flex flex-col items-center text-center -translate-x-1/2 -translate-y-1/2" style="top: 48%; left: 50%;">
                     <div class="w-12 h-12 rounded-full border-2 border-white/80 bg-slate-950 overflow-hidden flex items-center justify-center shadow-lg relative">
                         {% if player.photo %}
-                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         {% else %}
                             <span class="text-[#C5A028] font-black text-sm font-bebas">{{ player.jersey_number|default:"10" }}</span>
                         {% endif %}
@@ -2111,7 +2111,7 @@
                 <div class="absolute flex flex-col items-center text-center -translate-x-1/2 -translate-y-1/2" style="top: 52%; left: 78%;">
                     <div class="w-12 h-12 rounded-full border-2 border-white/80 bg-slate-950 overflow-hidden flex items-center justify-center shadow-lg relative">
                         {% if player.photo %}
-                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         {% else %}
                             <span class="text-[#C5A028] font-black text-sm font-bebas">{{ player.jersey_number|default:"6" }}</span>
                         {% endif %}
@@ -2128,7 +2128,7 @@
                 <div class="absolute flex flex-col items-center text-center -translate-x-1/2 -translate-y-1/2" style="top: 30%; left: 20%;">
                     <div class="w-12 h-12 rounded-full border-2 border-white/80 bg-slate-950 overflow-hidden flex items-center justify-center shadow-lg relative">
                         {% if player.photo %}
-                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         {% else %}
                             <span class="text-[#C5A028] font-black text-sm font-bebas">{{ player.jersey_number|default:"7" }}</span>
                         {% endif %}
@@ -2144,7 +2144,7 @@
                 <div class="absolute flex flex-col items-center text-center -translate-x-1/2 -translate-y-1/2" style="top: 24%; left: 50%;">
                     <div class="w-12 h-12 rounded-full border-2 border-white/80 bg-slate-950 overflow-hidden flex items-center justify-center shadow-lg relative">
                         {% if player.photo %}
-                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         {% else %}
                             <span class="text-[#C5A028] font-black text-sm font-bebas">{{ player.jersey_number|default:"9" }}</span>
                         {% endif %}
@@ -2160,7 +2160,7 @@
                 <div class="absolute flex flex-col items-center text-center -translate-x-1/2 -translate-y-1/2" style="top: 30%; left: 80%;">
                     <div class="w-12 h-12 rounded-full border-2 border-white/80 bg-slate-950 overflow-hidden flex items-center justify-center shadow-lg relative">
                         {% if player.photo %}
-                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         {% else %}
                             <span class="text-[#C5A028] font-black text-sm font-bebas">{{ player.jersey_number|default:"11" }}</span>
                         {% endif %}
@@ -2202,7 +2202,7 @@
                     <div class="absolute top-2 right-2 text-emerald-500 font-black text-lg select-none">🕊️</div>
                     <div class="w-14 h-14 rounded-full overflow-hidden bg-white border border-slate-200 mb-2 flex items-center justify-center shadow-inner">
                         {% if fair_play_winner.team.logo %}
-                            <img src="{{ fair_play_winner.team.logo.url }}" class="w-full h-full object-cover">
+                            <img src="{{ fair_play_winner.team.logo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         {% else %}
                             <span class="text-2xl">🛡️</span>
                         {% endif %}
@@ -2236,7 +2236,7 @@
                                 <td class="py-2 px-3 text-center font-bebas text-sm font-bold bg-slate-50/30">#{{ forloop.counter }}</td>
                                 <td class="py-2 px-3 font-bold text-slate-900 flex items-center gap-2">
                                     {% if item.team.logo %}
-                                        <img src="{{ item.team.logo.url }}" class="w-4 h-4 rounded-full object-cover">
+                                        <img src="{{ item.team.logo.url }}" class="w-4 h-4 rounded-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                                     {% endif %}
                                     {{ item.team.name }}
                                 </td>
@@ -2311,9 +2311,9 @@
                 <div class="avoid-break bg-slate-50 rounded-2xl border border-slate-200 p-3 shadow-sm flex flex-col justify-between" style="aspect-ratio: 0.95;">
                     <div class="w-full aspect-[4/3] rounded-xl overflow-hidden border border-slate-200/60 bg-slate-100 flex items-center justify-center relative">
                         {% if mm.file %}
-                            <img src="{{ mm.file.url }}" class="max-w-full max-h-full object-contain">
+                            <img src="{{ mm.file.url }}" class="max-w-full max-h-full object-contain" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         {% elif mm.url %}
-                            <img src="{{ mm.url }}" class="max-w-full max-h-full object-contain">
+                            <img src="{{ mm.url }}" class="max-w-full max-h-full object-contain" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                         {% endif %}
                     </div>
                     {% if mm.cleaned_title %}

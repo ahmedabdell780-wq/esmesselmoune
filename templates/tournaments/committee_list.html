@@ -286,7 +286,7 @@
                 <div class="member-num">{{ forloop.counter }}</div>
                 <div class="member-photo-wrap">
                     {% if m.photo %}
-                        <img src="{{ m.photo.url }}" alt="{{ m.full_name }}">
+                        <img src="{{ m.photo.url }}" alt="{{ m.full_name }}" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                     {% else %}
                         <div class="member-photo-icon">👤</div>
                     {% endif %}

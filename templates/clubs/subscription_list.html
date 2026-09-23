@@ -44,7 +44,7 @@
                         <td class="p-4">
                             <div class="flex items-center gap-3">
                                 {% if sub.player.photo %}
-                                    <img src="{{ sub.player.photo.url }}" class="w-10 h-10 rounded-full object-cover border border-white/10" alt="">
+                                    <img src="{{ sub.player.photo.url }}" class="w-10 h-10 rounded-full object-cover border border-white/10" alt="" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                                 {% else %}
                                     <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
                                         <i class="fa-solid fa-user text-gray-400"></i>

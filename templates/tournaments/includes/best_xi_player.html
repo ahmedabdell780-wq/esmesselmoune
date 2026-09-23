@@ -6,7 +6,7 @@
         <!-- Main Avatar Circle -->
         <div class="relative w-20 h-20 md:w-24 md:h-24 rounded-full bg-slate-900 border-2 border-white/20 overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.5)] z-10 flex items-center justify-center">
             {% if player.photo %}
-                <img src="{{ player.photo.url }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                <img src="{{ player.photo.url }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
             {% else %}
                 <div class="w-full h-full flex items-center justify-center font-bebas text-3xl text-white/10">{{ player.first_name|first }}{{ player.last_name|first }}</div>
             {% endif %}

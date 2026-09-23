@@ -63,7 +63,7 @@
         <div class="card overflow-hidden rounded-2xl border border-white/10 group cursor-pointer" style="background:var(--card2)">
             {% if news.image %}
             <div class="h-48 overflow-hidden">
-                <img src="{{ news.image.url }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                <img src="{{ news.image.url }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
             </div>
             {% else %}
             <div class="h-48 bg-gray-800 flex items-center justify-center">

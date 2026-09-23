@@ -11,7 +11,7 @@
         <div class="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent opacity-50"></div>
         <div class="relative z-10 flex items-center gap-6">
             {% if team.logo %}
-            <img src="{{ team.logo.url }}" alt="{{ team.name }}" class="w-16 h-16 rounded-full object-cover ring-2 ring-primary/50 shadow-[0_0_15px_rgba(var(--color-primary),0.3)]">
+            <img src="{{ team.logo.url }}" alt="{{ team.name }}" class="w-16 h-16 rounded-full object-cover ring-2 ring-primary/50 shadow-[0_0_15px_rgba(var(--color-primary),0.3)]" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
             {% else %}
             <div class="w-16 h-16 rounded-full bg-primary/20 border border-primary/50 flex items-center justify-center shadow-lg">
                 <span class="text-2xl font-bebas text-primary">{{ team.name|slice:":2" }}</span>
@@ -120,7 +120,7 @@
                             {% elif player.is_injured %}border-orange-500 ring-2 ring-orange-500/50
                             {% else %}border-white/20{% endif %}">
                             {% if player.photo %}
-                                <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                                <img src="{{ player.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                             {% else %}
                                 <div class="w-full h-full flex items-center justify-center bg-gray-800 text-gray-500"><svg xmlns="http://www.w3.org/2000/svg" class="w-3/4 h-3/4 opacity-50" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
                             {% endif %}
@@ -177,7 +177,7 @@
                         <div class="w-12 h-12 rounded-full border bg-gray-800 flex items-center justify-center font-bebas text-lg shadow-inner overflow-hidden shrink-0 relative
                             {% if player.suspension_status.is_suspended %}border-red-500/80{% elif player.is_injured %}border-orange-500/40{% else %}border-white/10{% endif %}">
                             {% if player.photo %}
-                                <img src="{{ player.photo.url }}" alt="" class="w-full h-full object-cover">
+                                <img src="{{ player.photo.url }}" alt="" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                             {% else %}
                                 <span class="text-white font-bold text-sm">#{{ player.jersey_number }}</span>
                             {% endif %}

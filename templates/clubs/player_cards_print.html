@@ -496,7 +496,7 @@
                                     </div>
                                     <div style="width: 55%; border-bottom: 1.5px dashed var(--primary); position: relative; height: 100%; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 1mm; z-index: 1;">
                                         {% if settings.signature %}
-                                            <img src="{{ settings.signature.url }}" style="height: 12mm; mix-blend-mode: multiply; margin-bottom: -1mm;" alt="Signature">
+                                            <img src="{{ settings.signature.url }}" style="height: 12mm; mix-blend-mode: multiply; margin-bottom: -1mm;" alt="Signature" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                                         {% endif %}
                                     </div>
                                 </div>
@@ -508,7 +508,7 @@
                                     <div class="photo-inner-border">
                                         <div class="player-photo">
                                             {% if player.photo %}
-                                                <img src="{{ player.photo.url }}" alt="{{ player.first_name }}">
+                                                <img src="{{ player.photo.url }}" alt="{{ player.first_name }}" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                                             {% else %}
                                                 <i class="fas fa-user"></i>
                                             {% endif %}

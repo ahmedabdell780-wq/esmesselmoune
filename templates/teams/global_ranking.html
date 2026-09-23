@@ -62,7 +62,7 @@
             <a href="{% url 'teams:detail' team.pk %}" class="flex items-center gap-4 group-hover:-translate-y-0.5 transition-transform">
               <div class="w-12 h-12 rounded-full overflow-hidden bg-slate-800 flex items-center justify-center text-sm font-bold border-2 border-white/10 group-hover:border-yellow-500/50 shadow-lg">
                 {% if team.logo %}
-                <img src="{{ team.logo.url }}" class="w-full h-full object-cover">
+                <img src="{{ team.logo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                 {% else %}
                 {{ team.name|slice:":1" }}
                 {% endif %}

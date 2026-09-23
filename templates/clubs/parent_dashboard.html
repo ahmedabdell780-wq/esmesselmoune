@@ -34,7 +34,7 @@
                 <!-- Header Card -->
                 <div class="p-6 border-b border-white/5 bg-gradient-to-r from-primary/10 to-transparent flex items-start gap-4">
                     {% if kid.photo %}
-                        <img src="{{ kid.photo.url }}" class="w-20 h-20 rounded-xl object-cover shadow-lg border-2 border-primary/30" alt="">
+                        <img src="{{ kid.photo.url }}" class="w-20 h-20 rounded-xl object-cover shadow-lg border-2 border-primary/30" alt="" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                     {% else %}
                         <div class="w-20 h-20 rounded-xl bg-white/5 flex items-center justify-center border-2 border-white/10 shadow-lg">
                             <i class="fa-solid fa-user text-3xl text-gray-400"></i>

@@ -23,7 +23,7 @@
     <div class="px-6 py-4 border-b flex items-center gap-4" style="border-color:var(--border);background:var(--card2)">
       <div class="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center font-bold text-lg flex-shrink-0"
            style="background:{{ team.color_primary }}20;color:{{ team.color_primary }};border:1px solid {{ team.color_primary }}40">
-        {% if team.logo %}<img src="{{ team.logo.url }}" class="w-full h-full object-cover"/>
+        {% if team.logo %}<img src="{{ team.logo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';" />
         {% else %}{{ team.name|slice:":2"|upper }}{% endif %}
       </div>
       <div>
@@ -53,7 +53,7 @@
           <div class="w-20 h-20 rounded-2xl border overflow-hidden flex items-center justify-center text-3xl flex-shrink-0"
                style="border-color:var(--border);background:var(--card2)" id="photo-preview">
             {% if action == 'update' and object.photo %}
-              <img src="{{ object.photo.url }}" class="w-full h-full object-cover"/>
+              <img src="{{ object.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';" />
             {% else %}🧑{% endif %}
           </div>
           <div class="flex-1">

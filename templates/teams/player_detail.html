@@ -30,7 +30,7 @@
         <div class="relative">
             <div class="w-40 h-40 md:w-48 md:h-48 rounded-[2rem] border-4 border-white/10 overflow-hidden shadow-2xl bg-slate-800 flex items-center justify-center">
                 {% if player.photo %}
-                    <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
+                    <img src="{{ player.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                 {% else %}
                     <span class="font-bebas text-7xl text-white/20">{{ player.first_name|first }}{{ player.last_name|first }}</span>
                 {% endif %}

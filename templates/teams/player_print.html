@@ -236,7 +236,7 @@
         <!-- Team Logo (Right) -->
         <div class="header-logo-container" style="text-align: right;">
             {% if team.logo %}
-                <img src="{{ team.logo.url }}" class="header-logo" alt="Team Logo">
+                <img src="{{ team.logo.url }}" class="header-logo" alt="Team Logo" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
             {% else %}
                 <div class="header-logo-placeholder" style="margin-left: auto;">{{ team.name|slice:":1" }}</div>
             {% endif %}

@@ -28,7 +28,7 @@
             <label class="flex items-center justify-between p-4 hover:bg-white/5 cursor-pointer transition-colors">
                 <div class="flex items-center gap-4">
                     {% if player.photo %}
-                        <img src="{{ player.photo.url }}" class="w-10 h-10 rounded-full object-cover" alt="">
+                        <img src="{{ player.photo.url }}" class="w-10 h-10 rounded-full object-cover" alt="" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                     {% else %}
                         <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
                             <i class="fa-solid fa-user text-gray-400"></i>

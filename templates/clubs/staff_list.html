@@ -23,7 +23,7 @@
             <div class="flex items-center gap-4 relative z-10">
                 <div class="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-lg">
                     {% if member.photo %}
-                        <img src="{{ member.photo.url }}" class="w-full h-full object-cover">
+                        <img src="{{ member.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                     {% else %}
                         <i class="fas fa-user text-3xl opacity-30"></i>
                     {% endif %}

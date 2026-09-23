@@ -93,7 +93,7 @@
           <div class="flex items-center gap-4">
             {% if action == 'update' and object.logo %}
             <img src="{{ object.logo.url }}" class="w-16 h-16 rounded-xl object-cover border"
-                 style="border-color:var(--border)" id="logo-preview"/>
+                 style="border-color:var(--border)" id="logo-preview" onerror="this.onerror=null; this.src='/static/img/app_logo.png';" />
             {% else %}
             <div class="w-16 h-16 rounded-xl border flex items-center justify-center text-2xl"
                  style="border-color:var(--border);background:var(--card2)" id="logo-preview">⚽</div>
@@ -112,7 +112,7 @@
             {% if action == 'update' and object.cover_photo %}
             <div class="w-full h-32 rounded-xl border border-white/10 overflow-hidden relative" id="cover-preview">
               <img src="{{ object.cover_photo.url }}" class="w-full h-full object-cover" 
-                   style="object-position: center {{ object.cover_offset_y|default:50 }}%"/>
+                   style="object-position: center {{ object.cover_offset_y|default:50 }}%" onerror="this.onerror=null; this.src='/static/img/app_logo.png';" />
             </div>
             {% else %}
             <div class="w-full h-32 rounded-xl border border-white/10 flex flex-col items-center justify-center text-gray-500 bg-white/5" id="cover-preview">

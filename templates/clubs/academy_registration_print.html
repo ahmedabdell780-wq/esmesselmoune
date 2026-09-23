@@ -39,7 +39,7 @@
         <!-- HEADER -->
         <div class="flex justify-between items-start border-b-2 border-emerald-700 pb-2 mb-2">
             <div class="w-24 h-24 border border-dashed border-gray-400 flex items-center justify-center text-xs text-gray-400">
-                {% if player.photo %}<img src="{{ player.photo.url }}" class="w-full h-full object-cover">{% else %}Photo{% endif %}
+                {% if player.photo %}<img src="{{ player.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">{% else %}Photo{% endif %}
             </div>
             <div class="text-center flex-1 px-4">
                 <h1 class="text-lg font-black text-emerald-800">الوفاق الرياضي مسلمون</h1>

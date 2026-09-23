@@ -297,7 +297,7 @@
                 <td class="py-4 px-4 text-right">
                   <div class="flex items-center gap-3">
                     {% if ts.team.logo %}
-                    <img src="{{ ts.team.logo.url }}" class="w-8 h-8 object-contain">
+                    <img src="{{ ts.team.logo.url }}" class="w-8 h-8 object-contain" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                     {% else %}
                     <div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs">🛡️</div>
                     {% endif %}
@@ -464,7 +464,7 @@
                 <div class="flex items-center gap-4">
                   <div class="w-14 h-14 rounded-full border-2 border-green-500 overflow-hidden bg-slate-900 shrink-0">
                     {% if gk.player.photo %}
-                      <img src="{{ gk.player.photo.url }}" class="w-full h-full object-cover">
+                      <img src="{{ gk.player.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                     {% else %}
                       <div class="w-full h-full flex items-center justify-center font-bold text-green-400 text-sm">{{ gk.player.first_name|first }}</div>
                     {% endif %}
@@ -484,7 +484,7 @@
                 <span class="w-6 h-6 rounded-full bg-white/10 text-gray-400 font-mono text-xs flex items-center justify-center font-bold">{{ forloop.counter }}</span>
                 <div class="w-10 h-10 rounded-full border border-white/10 overflow-hidden bg-slate-800 shrink-0">
                   {% if gk.player.photo %}
-                    <img src="{{ gk.player.photo.url }}" class="w-full h-full object-cover">
+                    <img src="{{ gk.player.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                   {% else %}
                     <div class="w-full h-full flex items-center justify-center text-xs font-bold text-gray-400">{{ gk.player.first_name|first }}</div>
                   {% endif %}

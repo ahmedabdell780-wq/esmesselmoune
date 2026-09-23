@@ -231,8 +231,8 @@
         {% for tt in chunk %}
         <div class="draw-slip">
             {% if tt.team.logo %}
-                <img src="{{ tt.team.logo.url }}" class="slip-watermark" alt="watermark">
-                <img src="{{ tt.team.logo.url }}" class="team-logo" alt="{{ tt.team.name }}">
+                <img src="{{ tt.team.logo.url }}" class="slip-watermark" alt="watermark" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                <img src="{{ tt.team.logo.url }}" class="team-logo" alt="{{ tt.team.name }}" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
             {% else %}
                 <div class="team-logo-placeholder">⚽</div>
             {% endif %}

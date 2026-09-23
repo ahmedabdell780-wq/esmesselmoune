@@ -101,7 +101,7 @@
         <div class="card rounded-2xl p-5 flex flex-col sm:flex-row items-center gap-4 border-l-4 border-yellow-500">
             <div class="w-16 h-16 rounded-xl overflow-hidden border bg-white/5 flex-shrink-0" style="border-color:var(--border)">
                 {% if tt.team.logo %}
-                <img src="{{ tt.team.logo.url }}" class="w-full h-full object-cover"/>
+                <img src="{{ tt.team.logo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';" />
                 {% else %}
                 <div class="w-full h-full flex items-center justify-center text-2xl">⚽</div>
                 {% endif %}
@@ -192,7 +192,7 @@
                         <!-- Team Logo -->
                         <div class="w-10 h-10 rounded-full bg-white/5 border border-white/10 overflow-hidden flex items-center justify-center flex-shrink-0 shadow-sm">
                             {% if team.logo %}
-                            <img src="{{ team.logo.url }}" class="w-full h-full object-cover">
+                            <img src="{{ team.logo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                             {% else %}
                             <span class="text-sm">⚽</span>
                             {% endif %}

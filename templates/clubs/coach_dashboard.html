@@ -9,7 +9,7 @@
     <div class="card p-6 border-l-4 border-l-emerald-500 flex flex-col md:flex-row justify-between items-center gap-4">
         <div class="flex items-center gap-4">
             {% if staff.photo %}
-                <img src="{{ staff.photo.url }}" class="w-16 h-16 rounded-full object-cover border-2 border-emerald-500" alt="">
+                <img src="{{ staff.photo.url }}" class="w-16 h-16 rounded-full object-cover border-2 border-emerald-500" alt="" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
             {% else %}
                 <div class="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-emerald-500">
                     <i class="fa-solid fa-user-tie text-2xl"></i>
@@ -108,7 +108,7 @@
                         {% for player in players %}
                         <div class="flex items-center p-3 rounded-lg bg-white/5 border border-white/5 hover:border-emerald-500/30 transition-colors">
                             {% if player.photo %}
-                                <img src="{{ player.photo.url }}" class="w-12 h-12 rounded-full object-cover mr-3" alt="">
+                                <img src="{{ player.photo.url }}" class="w-12 h-12 rounded-full object-cover mr-3" alt="" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                             {% else %}
                                 <div class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mr-3">
                                     <i class="fa-solid fa-user text-gray-400"></i>

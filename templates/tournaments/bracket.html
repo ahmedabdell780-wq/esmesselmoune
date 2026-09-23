@@ -23,7 +23,7 @@
     <div class="cl-header no-print">
         <div class="cl-logos">
             {% if tournament.logo %}
-                <img src="{{ tournament.logo.url }}" class="t-logo">
+                <img src="{{ tournament.logo.url }}" class="t-logo" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
             {% else %}
                 <span class="text-4xl">🏆</span>
             {% endif %}
@@ -66,7 +66,7 @@
                             <div class="cl-team-info">
                                 <div class="cl-team-logo">
                                     {% if match.team1.logo %}
-                                        <img src="{{ match.team1.logo.url }}">
+                                        <img src="{{ match.team1.logo.url }}" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                                     {% else %}
                                         <div class="cl-shield-placeholder"></div>
                                     {% endif %}
@@ -84,7 +84,7 @@
                             <div class="cl-team-info">
                                 <div class="cl-team-logo">
                                     {% if match.team2.logo %}
-                                        <img src="{{ match.team2.logo.url }}">
+                                        <img src="{{ match.team2.logo.url }}" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                                     {% else %}
                                         <div class="cl-shield-placeholder"></div>
                                     {% endif %}

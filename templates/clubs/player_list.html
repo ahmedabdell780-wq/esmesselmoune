@@ -150,7 +150,7 @@
                                     {% if player.photo %}
                                         <img src="{{ player.photo.url }}" 
                                              class="w-12 h-12 rounded-full object-cover shadow-md border-2 border-amber-400/40 group-hover:border-amber-400 transition-all" 
-                                             alt="{{ player.first_name }}">
+                                             alt="{{ player.first_name }}" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                                     {% else %}
                                         <div class="w-12 h-12 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-slate-400 text-lg shadow-md group-hover:border-amber-400/50 transition-all">
                                             <i class="fas fa-user"></i>

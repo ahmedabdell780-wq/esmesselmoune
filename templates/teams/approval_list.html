@@ -25,7 +25,7 @@
             <div class="w-16 h-16 rounded-2xl border flex items-center justify-center text-3xl overflow-hidden bg-card2"
                  style="border-color:var(--border)">
               {% if team.logo %}
-                <img src="{{ team.logo.url }}" class="w-full h-full object-cover"/>
+                <img src="{{ team.logo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';" />
               {% else %}
                 ⚽
               {% endif %}

@@ -10,7 +10,7 @@
   <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold flex-shrink-0"
        style="background:var(--card2);color:var(--muted)">
     {% if player.photo %}
-      <img src="{{ player.photo.url }}" class="w-full h-full object-cover"/>
+      <img src="{{ player.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';" />
     {% else %}
       {{ player.first_name|first }}{{ player.last_name|first }}
     {% endif %}

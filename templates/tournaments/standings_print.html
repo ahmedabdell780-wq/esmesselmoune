@@ -626,7 +626,7 @@
                                     <td class="team-info-cell">
                                         <div class="rank-num">{{ forloop.counter }}</div>
                                         {% if standing.team.logo %}
-                                            <img src="{{ standing.team.logo.url }}" class="mini-logo">
+                                            <img src="{{ standing.team.logo.url }}" class="mini-logo" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                                         {% endif %}
                                         <span class="team-name-text">{{ standing.team.name }}</span>
                                     </td>
