@@ -65,7 +65,7 @@
         {% for tt in teams %}
         <div class="team-card p-3 rounded-xl border border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10 cursor-grab active:cursor-grabbing transition-colors duration-200 flex flex-col items-center text-center shadow-sm relative group" data-team-id="{{ tt.team.id }}">
             <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden bg-black/50 flex items-center justify-center text-sm font-bold mb-2 border border-white/10 shadow-md">
-              {% if tt.team.logo %}<img src="{{ tt.team.logo.url }}" class="w-full h-full object-cover p-0.5" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">{% else %}<span class="text-white/50 text-2xl font-bebas">{{ tt.team.name|slice:":1" }}</span>{% endif %}
+              {% if tt.team.logo %}<img src="/static/img/teams/{{ tt.team.pk|default:0 }}.jpg"  class="w-full h-full object-cover p-0.5"  onerror="this.onerror=null; this.src='{% if tt.team.logo %}{{ tt.team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">{% else %}<span class="text-white/50 text-2xl font-bebas">{{ tt.team.name|slice:":1" }}</span>{% endif %}
             </div>
             <span class="text-xs sm:text-sm font-bold text-white w-full text-center leading-tight">{{ tt.team.name }}</span>
             <div class="absolute top-2 left-2 w-5 h-5 rounded-full bg-primary text-black font-black text-[10px] items-center justify-center hidden seed-badge shadow-md">1</div>

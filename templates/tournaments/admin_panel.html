@@ -101,7 +101,7 @@
         <div class="card rounded-2xl p-5 flex flex-col sm:flex-row items-center gap-4 border-l-4 border-yellow-500">
             <div class="w-16 h-16 rounded-xl overflow-hidden border bg-white/5 flex-shrink-0" style="border-color:var(--border)">
                 {% if tt.team.logo %}
-                <img src="{{ tt.team.logo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';" />
+                <img src="/static/img/teams/{{ tt.team.pk|default:0 }}.jpg"  class="w-full h-full object-cover"  onerror="this.onerror=null; this.src='{% if tt.team.logo %}{{ tt.team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';"/>
                 {% else %}
                 <div class="w-full h-full flex items-center justify-center text-2xl">⚽</div>
                 {% endif %}

@@ -806,7 +806,7 @@
                                             {{ forloop.counter }}
                                         </span>
                                         {% if standing.team.logo %}
-                                        <img src="{{ standing.team.logo.url }}" class="w-4 h-4 rounded-full object-cover border border-slate-300 flex-shrink-0" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                                        <img src="/static/img/teams/{{ standing.team.pk|default:0 }}.jpg"  class="w-4 h-4 rounded-full object-cover border border-slate-300 flex-shrink-0"  onerror="this.onerror=null; this.src='{% if standing.team.logo %}{{ standing.team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                                         {% endif %}
                                         <span class="whitespace-nowrap text-xs">{{ standing.team.name }}</span>
                                         {% if forloop.counter <= tournament.teams_advancing_per_group %}
@@ -886,7 +886,7 @@
                                     <!-- Team 1 -->
                                     <div class="w-[40%] text-left font-bold text-sm flex items-center gap-2 {% if match.winner == match.team1 %}text-[#C5A028]{% else %}text-slate-700{% endif %}">
                                         {% if match.team1.logo %}
-                                        <img src="{{ match.team1.logo.url }}" class="w-5 h-5 rounded-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                                        <img src="/static/img/teams/{{ match.team1.pk|default:0 }}.jpg"  class="w-5 h-5 rounded-full object-cover"  onerror="this.onerror=null; this.src='{% if match.team1.logo %}{{ match.team1.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                                         {% endif %}
                                         <span class="whitespace-nowrap">{{ match.team1.name }}</span>
                                     </div>
@@ -908,7 +908,7 @@
                                     <!-- Team 2 -->
                                     <div class="w-[40%] text-right font-bold text-sm flex flex-row-reverse items-center gap-2 {% if match.winner == match.team2 %}text-[#C5A028]{% else %}text-slate-700{% endif %}">
                                         {% if match.team2.logo %}
-                                        <img src="{{ match.team2.logo.url }}" class="w-5 h-5 rounded-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                                        <img src="/static/img/teams/{{ match.team2.pk|default:0 }}.jpg"  class="w-5 h-5 rounded-full object-cover"  onerror="this.onerror=null; this.src='{% if match.team2.logo %}{{ match.team2.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                                         {% endif %}
                                         <span class="whitespace-nowrap">{{ match.team2.name }}</span>
                                     </div>
@@ -1009,7 +1009,7 @@
                             <!-- Team 1 -->
                             <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team1 %}text-[#C5A028]{% else %}text-slate-600{% endif %}">
                                 <span class="flex items-center gap-1">
-                                    {% if m.team1.logo %}<img src="{{ m.team1.logo.url }}" class="w-4 h-4 rounded-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">{% endif %}
+                                    {% if m.team1.logo %}<img src="/static/img/teams/{{ m.team1.pk|default:0 }}.jpg"  class="w-4 h-4 rounded-full object-cover"  onerror="this.onerror=null; this.src='{% if m.team1.logo %}{{ m.team1.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">{% endif %}
                                     {{ m.team1.name }}
                                 </span>
                                 <span class="font-bebas text-sm">{% if m.is_finished %}{{ m.score_team1 }}{% else %}-{% endif %}</span>
@@ -1017,7 +1017,7 @@
                             <!-- Team 2 -->
                             <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team2 %}text-[#C5A028]{% else %}text-slate-600{% endif %}">
                                 <span class="flex items-center gap-1">
-                                    {% if m.team2.logo %}<img src="{{ m.team2.logo.url }}" class="w-4 h-4 rounded-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">{% endif %}
+                                    {% if m.team2.logo %}<img src="/static/img/teams/{{ m.team2.pk|default:0 }}.jpg"  class="w-4 h-4 rounded-full object-cover"  onerror="this.onerror=null; this.src='{% if m.team2.logo %}{{ m.team2.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">{% endif %}
                                     {{ m.team2.name }}
                                 </span>
                                 <span class="font-bebas text-sm">{% if m.is_finished %}{{ m.score_team2 }}{% else %}-{% endif %}</span>
@@ -1035,7 +1035,7 @@
                         <!-- Team 1 -->
                         <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team1 %}text-[#C5A028]{% else %}text-slate-700{% endif %}">
                             <span class="flex items-center gap-1.5">
-                                {% if m.team1.logo %}<img src="{{ m.team1.logo.url }}" class="w-5 h-5 rounded-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">{% endif %}
+                                {% if m.team1.logo %}<img src="/static/img/teams/{{ m.team1.pk|default:0 }}.jpg"  class="w-5 h-5 rounded-full object-cover"  onerror="this.onerror=null; this.src='{% if m.team1.logo %}{{ m.team1.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">{% endif %}
                                 {{ m.team1.name }}
                             </span>
                             <span class="font-bebas text-sm">{% if m.is_finished %}{{ m.score_team1 }}{% if m.has_penalties %} <span class="text-[9px] text-slate-400 font-sans">({{ m.penalties_team1 }})</span>{% endif %}{% else %}-{% endif %}</span>
@@ -1043,7 +1043,7 @@
                         <!-- Team 2 -->
                         <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team2 %}text-[#C5A028]{% else %}text-slate-700{% endif %}">
                             <span class="flex items-center gap-1.5">
-                                {% if m.team2.logo %}<img src="{{ m.team2.logo.url }}" class="w-5 h-5 rounded-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">{% endif %}
+                                {% if m.team2.logo %}<img src="/static/img/teams/{{ m.team2.pk|default:0 }}.jpg"  class="w-5 h-5 rounded-full object-cover"  onerror="this.onerror=null; this.src='{% if m.team2.logo %}{{ m.team2.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">{% endif %}
                                 {{ m.team2.name }}
                             </span>
                             <span class="font-bebas text-sm">{% if m.is_finished %}{{ m.score_team2 }}{% if m.has_penalties %} <span class="text-[9px] text-slate-400 font-sans">({{ m.penalties_team2 }})</span>{% endif %}{% else %}-{% endif %}</span>
@@ -1067,7 +1067,7 @@
                             <!-- Team 1 -->
                             <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team1 %}text-[#C5A028]{% else %}text-slate-800{% endif %}">
                                 <span class="flex items-center gap-2">
-                                    {% if m.team1.logo %}<img src="{{ m.team1.logo.url }}" class="w-6 h-6 rounded-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">{% endif %}
+                                    {% if m.team1.logo %}<img src="/static/img/teams/{{ m.team1.pk|default:0 }}.jpg"  class="w-6 h-6 rounded-full object-cover"  onerror="this.onerror=null; this.src='{% if m.team1.logo %}{{ m.team1.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">{% endif %}
                                     {{ m.team1.name }}
                                 </span>
                                 <span class="font-bebas text-base">{% if m.is_finished %}{{ m.score_team1 }}{% if m.has_penalties %} <span class="text-[10px] text-slate-500 font-sans">({{ m.penalties_team1 }})</span>{% endif %}{% else %}-{% endif %}</span>
@@ -1075,7 +1075,7 @@
                             <!-- Team 2 -->
                             <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team2 %}text-[#C5A028]{% else %}text-slate-800{% endif %}">
                                 <span class="flex items-center gap-2">
-                                    {% if m.team2.logo %}<img src="{{ m.team2.logo.url }}" class="w-6 h-6 rounded-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">{% endif %}
+                                    {% if m.team2.logo %}<img src="/static/img/teams/{{ m.team2.pk|default:0 }}.jpg"  class="w-6 h-6 rounded-full object-cover"  onerror="this.onerror=null; this.src='{% if m.team2.logo %}{{ m.team2.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">{% endif %}
                                     {{ m.team2.name }}
                                 </span>
                                 <span class="font-bebas text-base">{% if m.is_finished %}{{ m.score_team2 }}{% if m.has_penalties %} <span class="text-[10px] text-slate-500 font-sans">({{ m.penalties_team2 }})</span>{% endif %}{% else %}-{% endif %}</span>
@@ -1096,7 +1096,7 @@
                             <!-- Team 1 -->
                             <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team1 %}text-[#C5A028]{% else %}text-slate-600{% endif %}">
                                 <span class="flex items-center gap-1.5">
-                                    {% if m.team1.logo %}<img src="{{ m.team1.logo.url }}" class="w-4 h-4 rounded-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">{% endif %}
+                                    {% if m.team1.logo %}<img src="/static/img/teams/{{ m.team1.pk|default:0 }}.jpg"  class="w-4 h-4 rounded-full object-cover"  onerror="this.onerror=null; this.src='{% if m.team1.logo %}{{ m.team1.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">{% endif %}
                                     {{ m.team1.name }}
                                 </span>
                                 <span class="font-bebas text-xs">{% if m.is_finished %}{{ m.score_team1 }}{% if m.has_penalties %} <span class="text-[8px] text-slate-400 font-sans">({{ m.penalties_team1 }})</span>{% endif %}{% else %}-{% endif %}</span>
@@ -1104,7 +1104,7 @@
                             <!-- Team 2 -->
                             <div class="flex justify-between items-center font-bold {% if m.is_finished and m.winner == m.team2 %}text-[#C5A028]{% else %}text-slate-600{% endif %}">
                                 <span class="flex items-center gap-1.5">
-                                    {% if m.team2.logo %}<img src="{{ m.team2.logo.url }}" class="w-4 h-4 rounded-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">{% endif %}
+                                    {% if m.team2.logo %}<img src="/static/img/teams/{{ m.team2.pk|default:0 }}.jpg"  class="w-4 h-4 rounded-full object-cover"  onerror="this.onerror=null; this.src='{% if m.team2.logo %}{{ m.team2.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">{% endif %}
                                     {{ m.team2.name }}
                                 </span>
                                 <span class="font-bebas text-xs">{% if m.is_finished %}{{ m.score_team2 }}{% if m.has_penalties %} <span class="text-[8px] text-slate-400 font-sans">({{ m.penalties_team2 }})</span>{% endif %}{% else %}-{% endif %}</span>
@@ -2202,7 +2202,7 @@
                     <div class="absolute top-2 right-2 text-emerald-500 font-black text-lg select-none">🕊️</div>
                     <div class="w-14 h-14 rounded-full overflow-hidden bg-white border border-slate-200 mb-2 flex items-center justify-center shadow-inner">
                         {% if fair_play_winner.team.logo %}
-                            <img src="{{ fair_play_winner.team.logo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                            <img src="/static/img/teams/{{ fair_play_winner.team.pk|default:0 }}.jpg"  class="w-full h-full object-cover"  onerror="this.onerror=null; this.src='{% if fair_play_winner.team.logo %}{{ fair_play_winner.team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                         {% else %}
                             <span class="text-2xl">🛡️</span>
                         {% endif %}
@@ -2236,7 +2236,7 @@
                                 <td class="py-2 px-3 text-center font-bebas text-sm font-bold bg-slate-50/30">#{{ forloop.counter }}</td>
                                 <td class="py-2 px-3 font-bold text-slate-900 flex items-center gap-2">
                                     {% if item.team.logo %}
-                                        <img src="{{ item.team.logo.url }}" class="w-4 h-4 rounded-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                                        <img src="/static/img/teams/{{ item.team.pk|default:0 }}.jpg"  class="w-4 h-4 rounded-full object-cover"  onerror="this.onerror=null; this.src='{% if item.team.logo %}{{ item.team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                                     {% endif %}
                                     {{ item.team.name }}
                                 </td>

@@ -216,7 +216,7 @@
                 {% if match.team2 %}
                 <div class="match-row">
                     <div class="team-side home">
-                        {% if match.team1.logo %}<img src="{{ match.team1.logo.url }}" class="team-logo" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">{% else %}<div class="team-logo">🛡️</div>{% endif %}
+                        {% if match.team1.logo %}<img src="/static/img/teams/{{ match.team1.pk|default:0 }}.jpg"  class="team-logo"  onerror="this.onerror=null; this.src='{% if match.team1.logo %}{{ match.team1.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">{% else %}<div class="team-logo">🛡️</div>{% endif %}
                         <div class="team-names">
                             <span class="team-fullname">{{ match.team1.name|split_team_name }}</span>
                         </div>
@@ -233,7 +233,7 @@
                         <div class="team-names">
                             <span class="team-fullname">{{ match.team2.name|split_team_name }}</span>
                         </div>
-                        {% if match.team2.logo %}<img src="{{ match.team2.logo.url }}" class="team-logo" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">{% else %}<div class="team-logo">🛡️</div>{% endif %}
+                        {% if match.team2.logo %}<img src="/static/img/teams/{{ match.team2.pk|default:0 }}.jpg"  class="team-logo"  onerror="this.onerror=null; this.src='{% if match.team2.logo %}{{ match.team2.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">{% else %}<div class="team-logo">🛡️</div>{% endif %}
                     </div>
                 </div>
 

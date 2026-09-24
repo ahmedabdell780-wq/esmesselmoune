@@ -542,7 +542,7 @@
             <!-- Left Tournament Logo -->
             <div class="crest-wrapper">
                 {% if tournament.logo %}
-                    <img src="{{ tournament.logo.url }}" class="crest-logo" alt="Logo" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                    <img src="{{ tournament.logo.url }}"  class="crest-logo" alt="Logo"  onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                 {% elif site_settings and site_settings.app_logo %}
                     <img src="{{ site_settings.app_logo.url }}" class="crest-logo" alt="Logo" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
                 {% else %}
@@ -698,7 +698,7 @@
                         <td>
                             <div class="team-cell">
                                 {% if st.team.logo %}
-                                    <img src="{{ st.team.logo.url }}" alt="Logo" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                                    <img src="/static/img/teams/{{ st.team.pk|default:0 }}.jpg"  alt="Logo"  onerror="this.onerror=null; this.src='{% if st.team.logo %}{{ st.team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                                 {% endif %}
                                 <span>{{ st.team.name }}</span>
                             </div>
@@ -731,7 +731,7 @@
                     <div class="match-team-side home">
                         <span>{{ m.team1.name }}</span>
                         {% if m.team1.logo %}
-                            <img src="{{ m.team1.logo.url }}" style="width:24px; height:24px; object-fit:contain; border-radius:50%;" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                            <img src="/static/img/teams/{{ m.team1.pk|default:0 }}.jpg"  style="width:24px; height:24px; object-fit:contain; border-radius:50%;"  onerror="this.onerror=null; this.src='{% if m.team1.logo %}{{ m.team1.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                         {% endif %}
                     </div>
 
@@ -744,7 +744,7 @@
 
                     <div class="match-team-side away">
                         {% if m.team2.logo %}
-                            <img src="{{ m.team2.logo.url }}" style="width:24px; height:24px; object-fit:contain; border-radius:50%;" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                            <img src="/static/img/teams/{{ m.team2.pk|default:0 }}.jpg"  style="width:24px; height:24px; object-fit:contain; border-radius:50%;"  onerror="this.onerror=null; this.src='{% if m.team2.logo %}{{ m.team2.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                         {% endif %}
                         <span>{{ m.team2.name }}</span>
                     </div>
@@ -766,7 +766,7 @@
                 <div class="qualified-card">
                     <div class="qualified-badge-icon">✓</div>
                     {% if q.team.logo %}
-                        <img src="{{ q.team.logo.url }}" style="width:28px; height:28px; object-fit:contain; border-radius:50%;" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                        <img src="/static/img/teams/{{ q.team.pk|default:0 }}.jpg"  style="width:28px; height:28px; object-fit:contain; border-radius:50%;"  onerror="this.onerror=null; this.src='{% if q.team.logo %}{{ q.team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                     {% endif %}
                     <div>
                         <div style="font-size:15px; font-weight:900; color:#064e29;">{{ q.team.name }}</div>

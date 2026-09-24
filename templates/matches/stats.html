@@ -297,7 +297,7 @@
                 <td class="py-4 px-4 text-right">
                   <div class="flex items-center gap-3">
                     {% if ts.team.logo %}
-                    <img src="{{ ts.team.logo.url }}" class="w-8 h-8 object-contain" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                    <img src="/static/img/teams/{{ ts.team.pk|default:0 }}.jpg"  class="w-8 h-8 object-contain"  onerror="this.onerror=null; this.src='{% if ts.team.logo %}{{ ts.team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                     {% else %}
                     <div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs">🛡️</div>
                     {% endif %}

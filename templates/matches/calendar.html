@@ -307,7 +307,7 @@
                     {% if not match.team2 %}
                         <div class="bg-red-500/15 border border-dashed border-red-500 text-red-500 px-4 py-1.5 rounded-full font-bold text-sm flex items-center gap-2">
                             <span>المعفى ({{ match.group.name }}):</span>
-                            {% if match.team1.logo %}<img src="{{ match.team1.logo.url }}" class="w-6 h-6 rounded-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">{% endif %}
+                            {% if match.team1.logo %}<img src="/static/img/teams/{{ match.team1.pk|default:0 }}.jpg"  class="w-6 h-6 rounded-full object-cover"  onerror="this.onerror=null; this.src='{% if match.team1.logo %}{{ match.team1.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">{% endif %}
                             <span class="text-white">{{ match.team1.name }}</span>
                         </div>
                     {% endif %}
@@ -326,7 +326,7 @@
                     <span class="text-[11px] text-white/40 font-bold mt-1" dir="rtl">{{ match.team1.name|default:"" }}</span>
                   </div>
                   {% if match.team1.logo %}
-                    <img src="{{ match.team1.logo.url }}" class="team-logo" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                    <img src="/static/img/teams/{{ match.team1.pk|default:0 }}.jpg"  class="team-logo"  onerror="this.onerror=null; this.src='{% if match.team1.logo %}{{ match.team1.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                   {% else %}
                     <div class="w-[60px] h-[60px] bg-white/5 rounded-full flex items-center justify-center text-2xl">🛡️</div>
                   {% endif %}
@@ -351,7 +351,7 @@
                 <!-- Team 2 -->
                 <div class="team-info right">
                   {% if match.team2.logo %}
-                    <img src="{{ match.team2.logo.url }}" class="team-logo" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                    <img src="/static/img/teams/{{ match.team2.pk|default:0 }}.jpg"  class="team-logo"  onerror="this.onerror=null; this.src='{% if match.team2.logo %}{{ match.team2.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                   {% else %}
                     <div class="w-[60px] h-[60px] bg-white/5 rounded-full flex items-center justify-center text-2xl">🛡️</div>
                   {% endif %}
@@ -430,7 +430,7 @@
                         <div class="flex items-center gap-4">
                           {% if s.team.logo %}
                             <div class="w-10 h-10 p-1 bg-white/5 rounded-lg border border-white/10 shadow-lg">
-                               <img src="{{ s.team.logo.url }}" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                               <img src="/static/img/teams/{{ s.team.pk|default:0 }}.jpg"  class="w-full h-full object-contain"  onerror="this.onerror=null; this.src='{% if s.team.logo %}{{ s.team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                             </div>
                           {% endif %}
                           <span class="font-bold text-lg tracking-tight">{{ s.team.name }}</span>
@@ -462,7 +462,7 @@
               <div class="glass-container p-4 rounded-2xl border border-white/5 flex flex-col items-center gap-3 hover:border-primary/30 transition-colors group">
                 <div class="w-16 h-16 rounded-full overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
                   {% if pt.team.logo %}
-                    <img src="{{ pt.team.logo.url }}" class="w-full h-full object-contain p-1" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                    <img src="/static/img/teams/{{ pt.team.pk|default:0 }}.jpg"  class="w-full h-full object-contain p-1"  onerror="this.onerror=null; this.src='{% if pt.team.logo %}{{ pt.team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                   {% else %}
                     <span class="font-bebas text-2xl text-gray-500">{{ pt.team.name|slice:":2"|upper }}</span>
                   {% endif %}
@@ -502,7 +502,7 @@
                       <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
                           {% if match.team1.logo %}
-                            <img src="{{ match.team1.logo.url }}" class="w-6 h-6 object-contain" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                            <img src="/static/img/teams/{{ match.team1.pk|default:0 }}.jpg"  class="w-6 h-6 object-contain"  onerror="this.onerror=null; this.src='{% if match.team1.logo %}{{ match.team1.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                           {% else %}
                             <div class="w-6 h-6 bg-white/5 rounded-full flex items-center justify-center text-[10px]">🛡️</div>
                           {% endif %}
@@ -514,7 +514,7 @@
                       <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
                           {% if match.team2.logo %}
-                            <img src="{{ match.team2.logo.url }}" class="w-6 h-6 object-contain" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                            <img src="/static/img/teams/{{ match.team2.pk|default:0 }}.jpg"  class="w-6 h-6 object-contain"  onerror="this.onerror=null; this.src='{% if match.team2.logo %}{{ match.team2.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                           {% else %}
                             <div class="w-6 h-6 bg-white/5 rounded-full flex items-center justify-center text-[10px]">🛡️</div>
                           {% endif %}
@@ -570,7 +570,7 @@
                 <div class="flex items-center justify-start gap-4">
                   <div class="w-14 h-14 shrink-0 bg-white rounded-full flex items-center justify-center p-1 border-2 border-primary/50 group-hover:border-primary transition-colors shadow-[0_0_15px_rgba(197,160,40,0.15)]">
                     {% if tt.team.logo %}
-                      <img src="{{ tt.team.logo.url }}" class="w-full h-full object-contain rounded-full" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                      <img src="/static/img/teams/{{ tt.team.pk|default:0 }}.jpg"  class="w-full h-full object-contain rounded-full"  onerror="this.onerror=null; this.src='{% if tt.team.logo %}{{ tt.team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                     {% else %}
                       <div class="font-bebas text-lg text-slate-800">{{ tt.team.name|slice:":1" }}</div>
                     {% endif %}

@@ -92,8 +92,8 @@
           <label class="form-label">🖼️ {% trans "Logo du club" %} / شعار النادي</label>
           <div class="flex items-center gap-4">
             {% if action == 'update' and object.logo %}
-            <img src="{{ object.logo.url }}" class="w-16 h-16 rounded-xl object-cover border"
-                 style="border-color:var(--border)" id="logo-preview" onerror="this.onerror=null; this.src='/static/img/app_logo.png';" />
+            <img src="/static/img/teams/{{ object.pk|default:0 }}.jpg"  class="w-16 h-16 rounded-xl object-cover border"
+                 style="border-color:var(--border)" id="logo-preview"  onerror="this.onerror=null; this.src='{% if object.logo %}{{ object.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';"/>
             {% else %}
             <div class="w-16 h-16 rounded-xl border flex items-center justify-center text-2xl"
                  style="border-color:var(--border);background:var(--card2)" id="logo-preview">⚽</div>

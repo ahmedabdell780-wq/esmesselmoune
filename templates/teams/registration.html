@@ -124,7 +124,7 @@
             <div class="w-24 h-24 rounded-2xl border flex items-center justify-center text-4xl shadow-inner overflow-hidden"
                  style="border-color:var(--border);background:var(--card2)" id="logo-preview">
                  {% if form.instance.logo %}
-                    <img src="{{ form.instance.logo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';" />
+                    <img src="/static/img/teams/{{ form.instance.pk|default:0 }}.jpg"  class="w-full h-full object-cover"  onerror="this.onerror=null; this.src='{% if form.instance.logo %}{{ form.instance.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';"/>
                  {% else %}
                     ⚽
                  {% endif %}
