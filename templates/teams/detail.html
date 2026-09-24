@@ -59,7 +59,7 @@
     <!-- Dynamic Logo with Glowing Effect & Light Float Animation -->
     <div class="w-32 h-32 md:w-48 md:h-48 rounded-full border-[4px] border-white/20 flex items-center justify-center text-4xl font-bold shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden bg-white transition-all duration-500 hover:scale-105 relative shrink-0 animate-float-logo" style="box-shadow: 0 0 40px {{ team.color_primary|default:'#3b82f6' }}60;">
       {% if team.logo %}
-        <img src="{{ team.logo.url }}" class="w-full h-full object-contain p-1" onerror="this.onerror=null; this.src='/static/img/app_logo.png';" />
+        <img src="/static/img/teams/{{ team.pk|default:0 }}.jpg" class="w-full h-full object-contain p-1" onerror="this.onerror=null; this.src='{% if team.logo %}{{ team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';" />
       {% else %}
         <span style="color:{{ team.color_primary|default:'#3b82f6' }}" class="font-bebas text-6xl tracking-widest">{{ team.name|slice:":2"|upper }}</span>
       {% endif %}

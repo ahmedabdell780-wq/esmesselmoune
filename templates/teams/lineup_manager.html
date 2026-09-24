@@ -11,7 +11,7 @@
         <div class="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent opacity-50"></div>
         <div class="relative z-10 flex items-center gap-6">
             {% if team.logo %}
-            <img src="{{ team.logo.url }}" alt="{{ team.name }}" class="w-16 h-16 rounded-full object-cover ring-2 ring-primary/50 shadow-[0_0_15px_rgba(var(--color-primary),0.3)]" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+            <img src="/static/img/teams/{{ team.pk|default:0 }}.jpg" alt="{{ team.name }}" class="w-16 h-16 rounded-full object-cover ring-2 ring-primary/50 shadow-[0_0_15px_rgba(var(--color-primary),0.3)]" onerror="this.onerror=null; this.src='{% if team.logo %}{{ team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
             {% else %}
             <div class="w-16 h-16 rounded-full bg-primary/20 border border-primary/50 flex items-center justify-center shadow-lg">
                 <span class="text-2xl font-bebas text-primary">{{ team.name|slice:":2" }}</span>

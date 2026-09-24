@@ -117,7 +117,7 @@
         <div class="w-16 h-16 rounded-xl bg-white p-1 shadow-xl relative group-hover:scale-105 transition-transform duration-500 flex-shrink-0 z-20 border-2 border-[#0a0f1c]">
           <div class="w-full h-full rounded-lg border border-gray-100 overflow-hidden bg-white flex items-center justify-center relative">
             {% if team.logo %}
-              <img src="{{ team.logo.url }}" class="w-full h-full object-contain p-0.5" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+              <img src="/static/img/teams/{{ team.pk|default:0 }}.jpg" class="w-full h-full object-contain p-0.5" onerror="this.onerror=null; this.src='{% if team.logo %}{{ team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
             {% else %}
               <div class="w-full h-full flex items-center justify-center text-xl bg-gradient-to-br from-slate-100 to-slate-200">🛡️</div>
             {% endif %}

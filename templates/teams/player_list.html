@@ -18,7 +18,7 @@
   <div class="flex items-center gap-4">
     <div class="w-14 h-14 rounded-2xl overflow-hidden flex items-center justify-center font-bold text-xl flex-shrink-0"
          style="background:{{ team.color_primary }}20;color:{{ team.color_primary }};border:2px solid {{ team.color_primary }}40">
-      {% if team.logo %}<img src="{{ team.logo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';" />
+      {% if team.logo %}<img src="/static/img/teams/{{ team.pk|default:0 }}.jpg" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{% if team.logo %}{{ team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';" />
       {% else %}{{ team.name|slice:":2"|upper }}{% endif %}
     </div>
     <div>

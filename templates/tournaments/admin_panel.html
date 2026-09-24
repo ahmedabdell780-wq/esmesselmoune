@@ -192,7 +192,7 @@
                         <!-- Team Logo -->
                         <div class="w-10 h-10 rounded-full bg-white/5 border border-white/10 overflow-hidden flex items-center justify-center flex-shrink-0 shadow-sm">
                             {% if team.logo %}
-                            <img src="{{ team.logo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                            <img src="/static/img/teams/{{ team.pk|default:0 }}.jpg" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{% if team.logo %}{{ team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                             {% else %}
                             <span class="text-sm">⚽</span>
                             {% endif %}
