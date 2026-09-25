@@ -249,24 +249,37 @@
       </div>
     </div>
 
-    <!-- DESKTOP NAV -->
+        <!-- DESKTOP NAV -->
     <div class="hidden md:flex items-center gap-0.5">
-      <a href="{% url 'core:home' %}"                class="nav-link">🏠</a>
-      <a href="{% url 'matches:calendar' %}"         class="nav-link">📅 {% trans "Calendrier" %}</a>
-      <a href="{% url 'tournaments:standings' %}"    class="nav-link">📊 {% trans "Classement" %}</a>
-      <a href="{% url 'tournaments:bracket' %}"      class="nav-link">🏆 {% trans "Bracket" %}</a>
-      <a href="{% url 'teams:list' %}"               class="nav-link">⚽ {% trans "Équipes" %}</a>
-      <a href="{% url 'teams:global_ranking' %}"     class="nav-link">🌍 {% trans "Classement Global" %}</a>
-      <a href="{% url 'clubs:dashboard' %}"          class="nav-link">🛡️ أكاديمية الوفاق</a>
-      <a href="{% url 'clubs:academy_register' %}"   class="nav-link text-emerald-400 font-bold">📝 التسجيل في الأكاديمية</a>
-      <a href="{% url 'matches:stats' %}"            class="nav-link">📈 {% trans "Stats" %}</a>
+      <a href="{% url 'core:home' %}" class="nav-link">🏠</a>
+      
+      <!-- Tournament Dropdown -->
+      <div class="relative group">
+        <button class="nav-link flex items-center gap-1 cursor-pointer">
+          🏆 البطولة
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+        </button>
+        <div class="absolute right-0 mt-2 w-48 bg-[#0a0f1c] border border-white/10 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 overflow-hidden">
+          <a href="{% url 'matches:calendar' %}"      class="block px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white border-b border-white/5">📅 {% trans "Calendrier" %}</a>
+          <a href="{% url 'tournaments:standings' %}" class="block px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white border-b border-white/5">📊 {% trans "Classement" %}</a>
+          <a href="{% url 'tournaments:bracket' %}"   class="block px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white border-b border-white/5">🏆 {% trans "Bracket" %}</a>
+          <a href="{% url 'teams:list' %}"            class="block px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white border-b border-white/5">⚽ {% trans "Équipes" %}</a>
+          <a href="{% url 'teams:global_ranking' %}"  class="block px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white">🌍 {% trans "Classement Global" %}</a>
+        </div>
+      </div>
+      
+      <a href="{% url 'clubs:dashboard' %}" class="nav-link">🎓 أكاديمية الوفاق</a>
+      
       {% if registration_open_tournament %}
-      <a href="{% url 'teams:registration' %}" class="btn btn-primary btn-sm ml-2 animate-pulse">
+      <a href="{% url 'teams:registration' %}" class="btn btn-primary btn-sm ml-2 mr-1 animate-pulse" style="white-space: nowrap;">
         🚀 {% trans "S'inscrire" %}
       </a>
       {% endif %}
+      <a href="{% url 'clubs:academy_register' %}" class="nav-link text-emerald-400 font-bold" style="white-space: nowrap;">👤 التسجيل في الأكاديمية</a>
+      
+      <a href="{% url 'matches:stats' %}" class="nav-link">📈 {% trans "Stats" %}</a>
+      
     </div>
-
     <!-- RIGHT CONTROLS -->
     <div class="flex items-center gap-1.5 flex-shrink-0">
 
@@ -416,31 +429,45 @@
   </div>
 
   <!-- MOBILE NAV -->
-  <div id="mobile-nav" class="hidden md:hidden border-t px-4 py-3 grid grid-cols-3 gap-2 no-print"
-       style="border-color:var(--border)">
-    <a href="{% url 'core:home' %}"             class="nav-link justify-center text-center flex-col text-xs gap-0.5">🏠<span>{% trans "Accueil" %}</span></a>
-    <a href="{% url 'matches:calendar' %}"      class="nav-link justify-center text-center flex-col text-xs gap-0.5">📅<span>{% trans "Calendrier" %}</span></a>
-    <a href="{% url 'tournaments:standings' %}" class="nav-link justify-center text-center flex-col text-xs gap-0.5">📊<span>{% trans "Classement" %}</span></a>
-    <a href="{% url 'tournaments:bracket' %}"   class="nav-link justify-center text-center flex-col text-xs gap-0.5">🏆<span>{% trans "Bracket" %}</span></a>
-    <a href="{% url 'teams:list' %}"            class="nav-link justify-center text-center flex-col text-xs gap-0.5">⚽<span>{% trans "Équipes" %}</span></a>
-    <a href="{% url 'teams:global_ranking' %}"  class="nav-link justify-center text-center flex-col text-xs gap-0.5">🌍<span>{% trans "Class. Global" %}</span></a>
-    <a href="{% url 'clubs:dashboard' %}"  class="nav-link justify-center text-center flex-col text-xs gap-0.5">🛡️<span>أكاديمية الوفاق</span></a>
-    <a href="{% url 'clubs:academy_register' %}" class="nav-link justify-center text-center flex-col text-xs gap-0.5" style="color: #34d399;">📝<span class="font-bold">تسجيل</span></a>
-    <a href="{% url 'matches:stats' %}"         class="nav-link justify-center text-center flex-col text-xs gap-0.5">📈<span>{% trans "Stats" %}</span></a>
-    {% if registration_open_tournament %}
-    <a href="{% url 'teams:registration' %}" class="nav-link justify-center text-center flex-col text-xs gap-0.5" style="color:var(--primary)">🚀<span>{% trans "S'inscrire" %}</span></a>
-    {% endif %}
-    <!-- Mobile search -->
-    <div class="col-span-3 mt-1 relative">
-      <form onsubmit="handleMobileSearchSubmit(event)" class="relative flex items-center">
-        <input type="text" id="mobile-search-input" placeholder="{% trans 'Rechercher... / ابحث عن فريق، لاعب، بطولة' %}"
-               class="form-input py-2 ps-9 pe-4 text-xs font-bold rounded-xl w-full border border-white/10"
-               style="background:var(--card2); color: var(--text-light);"/>
-        <span class="absolute inset-y-0 start-3 flex items-center text-xs pointer-events-none" style="color:var(--muted)">🔍</span>
-      </form>
+    <div id="mobile-nav" class="hidden md:hidden border-t px-4 py-3 grid grid-cols-3 gap-2 no-print"
+         style="border-color:var(--border)">
+      <a href="{% url 'core:home' %}" class="nav-link justify-center text-center flex-col text-xs gap-0.5">🏠<span>{% trans "Accueil" %}</span></a>
+      
+      <!-- Tournaments Menu Toggle -->
+      <button onclick="document.getElementById('mobile-tournaments-menu').classList.toggle('hidden')" class="nav-link justify-center text-center flex-col text-xs gap-0.5">
+        🏆<span>البطولة</span>
+      </button>
+
+      <!-- Dashboard -->
+      <a href="{% url 'clubs:dashboard' %}" class="nav-link justify-center text-center flex-col text-xs gap-0.5">🎓<span>أكاديمية</span></a>
+      
+      <!-- Tournament Menu (Hidden by default) -->
+      <div id="mobile-tournaments-menu" class="hidden col-span-3 grid grid-cols-3 gap-2 p-2 rounded-xl bg-black/20 border border-white/5 mb-2 mt-1">
+        <a href="{% url 'matches:calendar' %}"      class="nav-link justify-center text-center flex-col text-xs gap-0.5">📅<span>{% trans "Calendrier" %}</span></a>
+        <a href="{% url 'tournaments:standings' %}" class="nav-link justify-center text-center flex-col text-xs gap-0.5">📊<span>{% trans "Classement" %}</span></a>
+        <a href="{% url 'tournaments:bracket' %}"   class="nav-link justify-center text-center flex-col text-xs gap-0.5">🏆<span>{% trans "Bracket" %}</span></a>
+        <a href="{% url 'teams:list' %}"            class="nav-link justify-center text-center flex-col text-xs gap-0.5">⚽<span>{% trans "Équipes" %}</span></a>
+        <a href="{% url 'teams:global_ranking' %}"  class="nav-link justify-center text-center flex-col text-xs gap-0.5">🌍<span>{% trans "Class. Global" %}</span></a>
+        <a href="{% url 'matches:stats' %}"         class="nav-link justify-center text-center flex-col text-xs gap-0.5">📈<span>{% trans "Stats" %}</span></a>
+      </div>
+
+      {% if registration_open_tournament %}
+      <a href="{% url 'teams:registration' %}" class="nav-link justify-center text-center flex-col text-xs gap-0.5" style="color:var(--primary)">🚀<span>{% trans "S'inscrire" %}</span></a>
+      {% endif %}
+      
+      <a href="{% url 'clubs:academy_register' %}" class="nav-link justify-center text-center flex-col text-xs gap-0.5" style="color: #34d399;">👤<span class="font-bold">التسجيل</span></a>
+      
+      <!-- Mobile search -->
+      <div class="col-span-3 mt-1 relative">
+        <form onsubmit="handleMobileSearchSubmit(event)" class="relative flex items-center">
+          <input type="text" id="mobile-search-input" placeholder="{% trans 'Rechercher... / بحث' %}"
+                 class="form-input py-2 ps-9 pe-4 text-xs font-bold rounded-xl w-full border border-white/10"
+                 style="background:var(--card2); color: var(--text-light);"/>
+          <span class="absolute inset-y-0 start-3 flex items-center text-xs pointer-events-none" style="color:var(--muted)">🔍</span>
+        </form>
+      </div>
     </div>
-  </div>
-</nav>
+  </nav>
 
 <!-- DJANGO MESSAGES → auto toast -->
 {% if messages %}
