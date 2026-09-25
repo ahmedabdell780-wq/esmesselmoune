@@ -13,7 +13,7 @@
     <a href="{% url 'clubs:news_detail' news.slug|default:news.id %}" class="card overflow-hidden rounded-2xl border border-white/10 group cursor-pointer" style="background:var(--card2)">
         
         <div class="h-48 overflow-hidden">
-            <img src="/static/img/news/{{ news.slug }}.jpg" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" onerror="this.onerror=null; this.src='{{ news.image.url|escapejs }}';">
+            <img src="/static/img/news/{{ news.slug }}.jpg" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" onerror="this.onerror=null; this.src='{% if news.image %}{{ news.image.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
         </div>
         
         

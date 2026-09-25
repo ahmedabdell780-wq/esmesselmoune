@@ -11,7 +11,7 @@
     <div class="card rounded-3xl overflow-hidden border border-white/10" style="background:var(--card2)">
         
         <div class="w-full max-h-[500px] overflow-hidden">
-            <img src="/static/img/news/{{ news.slug }}.jpg" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{{ news.image.url|escapejs }}';">
+            <img src="/static/img/news/{{ news.slug }}.jpg" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{% if news.image %}{{ news.image.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
         </div>
         
         
