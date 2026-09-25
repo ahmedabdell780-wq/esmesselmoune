@@ -61,15 +61,9 @@
         <!-- News items will be loaded here, for now it's static or from a context variable -->
         {% for news in recent_news %}
         <div class="card overflow-hidden rounded-2xl border border-white/10 group cursor-pointer" style="background:var(--card2)">
-            {% if news.image %}
             <div class="h-48 overflow-hidden">
-                <img src="{{ news.image.url }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                <img src="/static/img/news/{{ news.slug }}.jpg" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" onerror="this.onerror=null; this.src='{% if news.image %}{{ news.image.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
             </div>
-            {% else %}
-            <div class="h-48 bg-gray-800 flex items-center justify-center">
-                <i class="fa-solid fa-futbol text-4xl text-gray-600"></i>
-            </div>
-            {% endif %}
             <div class="p-5">
                 <p class="text-xs text-emerald-400 font-bold mb-2">{{ news.created_at|date:"d M Y" }}</p>
                 <h3 class="text-lg font-bold text-white mb-2 line-clamp-2">{{ news.title }}</h3>
