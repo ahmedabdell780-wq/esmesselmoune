@@ -9,11 +9,11 @@
     </a>
     
     <div class="card rounded-3xl overflow-hidden border border-white/10" style="background:var(--card2)">
-        {% if news.image %}
+        
         <div class="w-full max-h-[500px] overflow-hidden">
-            <img src="{{ news.image.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+            <img src="/static/img/news/{{ news.slug }}.jpg" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{{ news.image.url|escapejs }}';">
         </div>
-        {% endif %}
+        
         
         <div class="p-8 md:p-12">
             <p class="text-sm text-emerald-400 font-bold mb-4">{{ news.created_at|date:"d M Y" }}</p>
