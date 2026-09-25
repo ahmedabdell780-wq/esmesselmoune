@@ -236,7 +236,7 @@
         <!-- Team Logo (Right) -->
         <div class="header-logo-container" style="text-align: right;">
             {% if team.logo %}
-                <img src="/static/img/teams/{{ team.pk|default:0 }}.jpg" class="header-logo" alt="Team Logo" onerror="this.onerror=null; this.src='{% if team.logo %}{{ team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
+                <img style="border-radius: 50% !important; aspect-ratio: 1/1;" src="/static/img/teams/{{ team.pk|default:0 }}.jpg" class="header-logo rounded-full object-cover" alt="Team Logo" onerror="this.onerror=null; this.src='{% if team.logo %}{{ team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
             {% else %}
                 <div class="header-logo-placeholder" style="margin-left: auto;">{{ team.name|slice:":1" }}</div>
             {% endif %}

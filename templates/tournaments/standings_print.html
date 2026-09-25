@@ -626,7 +626,7 @@
                                     <td class="team-info-cell">
                                         <div class="rank-num">{{ forloop.counter }}</div>
                                         {% if standing.team.logo %}
-                                            <img src="/static/img/teams/{{ standing.team.pk|default:0 }}.jpg"  class="mini-logo"  onerror="this.onerror=null; this.src='{% if standing.team.logo %}{{ standing.team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
+                                            <img style="border-radius: 50% !important; aspect-ratio: 1/1;" src="/static/img/teams/{{ standing.team.pk|default:0 }}.jpg"  class="mini-logo rounded-full object-cover"  onerror="this.onerror=null; this.src='{% if standing.team.logo %}{{ standing.team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                                         {% endif %}
                                         <span class="team-name-text">{{ standing.team.name }}</span>
                                     </td>

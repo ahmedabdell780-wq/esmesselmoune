@@ -231,8 +231,8 @@
         {% for tt in chunk %}
         <div class="draw-slip">
             {% if tt.team.logo %}
-                <img src="/static/img/teams/{{ tt.team.pk|default:0 }}.jpg"  class="slip-watermark" alt="watermark"  onerror="this.onerror=null; this.src='{% if tt.team.logo %}{{ tt.team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
-                <img src="/static/img/teams/{{ tt.team.pk|default:0 }}.jpg"  class="team-logo" alt="{{ tt.team.name }}"  onerror="this.onerror=null; this.src='{% if tt.team.logo %}{{ tt.team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
+                <img style="border-radius: 50% !important; aspect-ratio: 1/1;" src="/static/img/teams/{{ tt.team.pk|default:0 }}.jpg"  class="slip-watermark rounded-full object-cover" alt="watermark"  onerror="this.onerror=null; this.src='{% if tt.team.logo %}{{ tt.team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
+                <img style="border-radius: 50% !important; aspect-ratio: 1/1;" src="/static/img/teams/{{ tt.team.pk|default:0 }}.jpg"  class="team-logo rounded-full object-cover" alt="{{ tt.team.name }}"  onerror="this.onerror=null; this.src='{% if tt.team.logo %}{{ tt.team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
             {% else %}
                 <div class="team-logo-placeholder">⚽</div>
             {% endif %}

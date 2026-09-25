@@ -669,7 +669,7 @@
                             <td class="team-name-cell">
                                 <div style="display:flex; align-items:center; gap:10px; justify-content:flex-start;">
                                     {% if st.team.logo %}
-                                        <img src="/static/img/teams/{{ st.team.pk|default:0 }}.jpg"  style="width:30px; height:30px; object-fit:contain; border-radius:50%; border:1px solid #cbd5e1; flex-shrink:0;"  onerror="this.onerror=null; this.src='{% if st.team.logo %}{{ st.team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
+                                        <img src="/static/img/teams/{{ st.team.pk|default:0 }}.jpg"  style="width:30px; height:30px; object-fit:contain; border-radius:50%; border:1px solid #cbd5e1; flex-shrink:0;; border-radius: 50% !important; aspect-ratio: 1/1;"  onerror="this.onerror=null; this.src='{% if st.team.logo %}{{ st.team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                                     {% endif %}
                                     <span style="font-size:15px; font-weight:800; color:#064e29; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ st.team.name }}">{{ st.team.name }}</span>
                                 </div>

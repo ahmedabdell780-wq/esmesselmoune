@@ -66,7 +66,7 @@
                             <div class="cl-team-info">
                                 <div class="cl-team-logo">
                                     {% if match.team1.logo %}
-                                        <img src="/static/img/teams/{{ match.team1.pk|default:0 }}.jpg"   onerror="this.onerror=null; this.src='{% if match.team1.logo %}{{ match.team1.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
+                                        <img style="border-radius: 50% !important; aspect-ratio: 1/1;" src="/static/img/teams/{{ match.team1.pk|default:0 }}.jpg"   onerror="this.onerror=null; this.src='{% if match.team1.logo %}{{ match.team1.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                                     {% else %}
                                         <div class="cl-shield-placeholder"></div>
                                     {% endif %}
@@ -84,7 +84,7 @@
                             <div class="cl-team-info">
                                 <div class="cl-team-logo">
                                     {% if match.team2.logo %}
-                                        <img src="/static/img/teams/{{ match.team2.pk|default:0 }}.jpg"   onerror="this.onerror=null; this.src='{% if match.team2.logo %}{{ match.team2.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
+                                        <img style="border-radius: 50% !important; aspect-ratio: 1/1;" src="/static/img/teams/{{ match.team2.pk|default:0 }}.jpg"   onerror="this.onerror=null; this.src='{% if match.team2.logo %}{{ match.team2.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                                     {% else %}
                                         <div class="cl-shield-placeholder"></div>
                                     {% endif %}

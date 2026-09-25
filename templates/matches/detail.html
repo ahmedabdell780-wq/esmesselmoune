@@ -62,7 +62,7 @@
                     <div class="relative w-14 h-14 md:w-20 md:h-20 rounded-full flex items-center justify-center overflow-hidden bg-[#161826] border-2 border-primary/45 shadow-[0_0_15px_rgba(197,160,40,0.15)] group-hover:scale-105 transition-transform duration-300">
                         <div class="absolute inset-0 bg-gradient-to-tr from-primary/10 to-transparent"></div>
                         {% if match.team1.logo %}
-                            <img src="/static/img/teams/{{ match.team1.pk|default:0 }}.jpg"  class="w-[85%] h-[85%] object-contain rounded-full"  onerror="this.onerror=null; this.src='{% if match.team1.logo %}{{ match.team1.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
+                            <img style="border-radius: 50% !important; aspect-ratio: 1/1;" src="/static/img/teams/{{ match.team1.pk|default:0 }}.jpg"  class="w-[85%] h-[85%] object-cover rounded-full"  onerror="this.onerror=null; this.src='{% if match.team1.logo %}{{ match.team1.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                         {% else %}
                             <div class="text-2xl md:text-3xl">🛡️</div>
                         {% endif %}
@@ -82,7 +82,7 @@
                     <div class="relative w-14 h-14 md:w-20 md:h-20 rounded-full flex items-center justify-center overflow-hidden bg-[#161826] border-2 border-[#00b84c]/45 shadow-[0_0_15px_rgba(0,184,76,0.15)] group-hover:scale-105 transition-transform duration-300">
                         <div class="absolute inset-0 bg-gradient-to-tr from-[#00b84c]/10 to-transparent"></div>
                         {% if match.team2.logo %}
-                            <img src="/static/img/teams/{{ match.team2.pk|default:0 }}.jpg"  class="w-[85%] h-[85%] object-contain rounded-full"  onerror="this.onerror=null; this.src='{% if match.team2.logo %}{{ match.team2.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
+                            <img style="border-radius: 50% !important; aspect-ratio: 1/1;" src="/static/img/teams/{{ match.team2.pk|default:0 }}.jpg"  class="w-[85%] h-[85%] object-cover rounded-full"  onerror="this.onerror=null; this.src='{% if match.team2.logo %}{{ match.team2.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                         {% else %}
                             <div class="text-2xl md:text-3xl">🛡️</div>
                         {% endif %}
@@ -699,7 +699,7 @@
                             {% if event.team %}
                             <div class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-inner group-hover:border-white/30 transition-colors">
                                 {% if event.team.logo %}
-                                    <img src="/static/img/teams/{{ event.team.pk|default:0 }}.jpg"  class="w-full h-full object-cover"  onerror="this.onerror=null; this.src='{% if event.team.logo %}{{ event.team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
+                                    <img style="border-radius: 50% !important; aspect-ratio: 1/1;" src="/static/img/teams/{{ event.team.pk|default:0 }}.jpg"  class="w-full h-full object-cover rounded-full"  onerror="this.onerror=null; this.src='{% if event.team.logo %}{{ event.team.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                                 {% else %}
                                     <span class="text-xs font-bold text-white">{{ event.team.name|slice:":1"|upper }}</span>
                                 {% endif %}
@@ -2628,7 +2628,7 @@
                     <span class="text-sm font-black text-slate-950 uppercase tracking-wide leading-tight max-w-[180px]">{{ match.team1.name }}</span>
                     {% if match.team1.logo %}
                         <div class="w-14 h-14 rounded-full bg-white border-2 border-slate-955 shadow-sm flex items-center justify-center p-1.5 flex-shrink-0">
-                            <img src="/static/img/teams/{{ match.team1.pk|default:0 }}.jpg"  class="w-full h-full object-contain"  onerror="this.onerror=null; this.src='{% if match.team1.logo %}{{ match.team1.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
+                            <img style="border-radius: 50% !important; aspect-ratio: 1/1;" src="/static/img/teams/{{ match.team1.pk|default:0 }}.jpg"  class="w-full h-full object-cover rounded-full"  onerror="this.onerror=null; this.src='{% if match.team1.logo %}{{ match.team1.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                         </div>
                     {% endif %}
                 </div>
@@ -2651,7 +2651,7 @@
                 <div class="flex items-center gap-4 w-5/12 pl-4 text-left">
                     {% if match.team2.logo %}
                         <div class="w-14 h-14 rounded-full bg-white border-2 border-slate-955 shadow-sm flex items-center justify-center p-1.5 flex-shrink-0">
-                            <img src="/static/img/teams/{{ match.team2.pk|default:0 }}.jpg"  class="w-full h-full object-contain"  onerror="this.onerror=null; this.src='{% if match.team2.logo %}{{ match.team2.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
+                            <img style="border-radius: 50% !important; aspect-ratio: 1/1;" src="/static/img/teams/{{ match.team2.pk|default:0 }}.jpg"  class="w-full h-full object-cover rounded-full"  onerror="this.onerror=null; this.src='{% if match.team2.logo %}{{ match.team2.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
                         </div>
                     {% endif %}
                     <span class="text-sm font-black text-slate-950 uppercase tracking-wide leading-tight max-w-[180px]">{{ match.team2.name }}</span>
@@ -2872,7 +2872,7 @@
           <!-- Logo Shield -->
           <div style="width: 85px; height: 85px; border-radius: 16px; background: #0c0e14; border: 2px solid #00b84c; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6); padding: 8px; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0;">
             {% if match.team2.logo %}
-              <img src="/static/img/teams/{{ match.team2.pk|default:0 }}.jpg"  style="max-width: 100%; max-height: 100%; object-fit: contain;"  onerror="this.onerror=null; this.src='{% if match.team2.logo %}{{ match.team2.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
+              <img src="/static/img/teams/{{ match.team2.pk|default:0 }}.jpg"  style="max-width: 100%; max-height: 100%; object-fit: contain;; border-radius: 50% !important; aspect-ratio: 1/1;"  onerror="this.onerror=null; this.src='{% if match.team2.logo %}{{ match.team2.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
             {% else %}
               <span style="font-size: 38px;">🛡️</span>
             {% endif %}
@@ -2915,7 +2915,7 @@
           <!-- Logo Shield -->
           <div style="width: 85px; height: 85px; border-radius: 16px; background: #0c0e14; border: 2px solid #c5a028; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6); padding: 8px; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0;">
             {% if match.team1.logo %}
-              <img src="/static/img/teams/{{ match.team1.pk|default:0 }}.jpg"  style="max-width: 100%; max-height: 100%; object-fit: contain;"  onerror="this.onerror=null; this.src='{% if match.team1.logo %}{{ match.team1.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
+              <img src="/static/img/teams/{{ match.team1.pk|default:0 }}.jpg"  style="max-width: 100%; max-height: 100%; object-fit: contain;; border-radius: 50% !important; aspect-ratio: 1/1;"  onerror="this.onerror=null; this.src='{% if match.team1.logo %}{{ match.team1.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
             {% else %}
               <span style="font-size: 38px;">🛡️</span>
             {% endif %}
@@ -2931,7 +2931,7 @@
           <!-- Subtle logo watermark -->
           {% if match.team2.logo %}
           <div style="position: absolute; right: -30px; bottom: -30px; opacity: 0.05; pointer-events: none;">
-            <img src="/static/img/teams/{{ match.team2.pk|default:0 }}.jpg"  style="width: 200px; height: 200px; object-fit: contain; filter: grayscale(100%);"  onerror="this.onerror=null; this.src='{% if match.team2.logo %}{{ match.team2.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
+            <img src="/static/img/teams/{{ match.team2.pk|default:0 }}.jpg"  style="width: 200px; height: 200px; object-fit: contain; filter: grayscale(100%);; border-radius: 50% !important; aspect-ratio: 1/1;"  onerror="this.onerror=null; this.src='{% if match.team2.logo %}{{ match.team2.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
           </div>
           {% endif %}
           
@@ -3013,7 +3013,7 @@
           <!-- Subtle logo watermark -->
           {% if match.team1.logo %}
           <div style="position: absolute; left: -30px; bottom: -30px; opacity: 0.05; pointer-events: none;">
-            <img src="/static/img/teams/{{ match.team1.pk|default:0 }}.jpg"  style="width: 200px; height: 200px; object-fit: contain; filter: grayscale(100%);"  onerror="this.onerror=null; this.src='{% if match.team1.logo %}{{ match.team1.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
+            <img src="/static/img/teams/{{ match.team1.pk|default:0 }}.jpg"  style="width: 200px; height: 200px; object-fit: contain; filter: grayscale(100%);; border-radius: 50% !important; aspect-ratio: 1/1;"  onerror="this.onerror=null; this.src='{% if match.team1.logo %}{{ match.team1.logo.url|escapejs }}{% else %}/static/img/app_logo.png{% endif %}';">
           </div>
           {% endif %}
 
