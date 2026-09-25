@@ -519,21 +519,15 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- FOOTER -->
 <footer class="mt-12 border-t py-8 no-print" style="border-color:var(--border)">
   <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-6">
-    <div class="text-center md:text-start">
+    
+    <!-- Left: App Name -->
+    <div class="text-center md:text-start flex-1">
       <p class="font-bebas text-2xl tracking-widest text-white">{{ site_settings.app_name|upper }}</p>
       <p class="text-xs mt-1" style="color:var(--muted)">{% trans "Tournoi Inter-Quartiers" %} - دورة الوفاء و الإخاء</p>
     </div>
     
-    <!-- Developer Credit -->
-    <div class="flex items-center gap-4 bg-white/5 px-6 py-3 rounded-full border border-white/10 shadow-lg hover:bg-white/10 transition-colors cursor-default">
-      <img src="/static/img/developer.jpg" alt="المبرمج عبداللاوي-ح" class="w-12 h-12 rounded-full object-cover border-2 border-primary shadow-[0_0_15px_rgba(197,160,40,0.3)]">
-      <div class="flex flex-col text-start">
-        <span class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-0.5">Developed & Designed By</span>
-        <span class="text-white font-bebas text-xl tracking-wide">المبرمج عبداللاوي-ح</span>
-      </div>
-    </div>
-
-    <div class="flex items-center gap-4 text-xs" style="color:var(--muted)">
+    <!-- Middle: Links -->
+    <div class="flex items-center justify-center gap-6 text-xs flex-1" style="color:var(--muted)">
       <a href="{% url 'tournaments:standings' %}" class="hover:text-primary transition-colors">{% trans "Classement" %}</a>
       <a href="{% url 'matches:calendar' %}"      class="hover:text-primary transition-colors">{% trans "Calendrier" %}</a>
       <a href="{% url 'matches:stats' %}"         class="hover:text-primary transition-colors">{% trans "Stats" %}</a>
@@ -541,6 +535,27 @@ document.addEventListener('DOMContentLoaded', function() {
       <a href="{% url 'accounts:appearance' %}"   class="hover:text-primary transition-colors">🎨</a>
       {% endif %}
     </div>
+
+    <!-- Right: Developer Credit (New Design) -->
+    <div class="flex justify-end flex-1">
+      <div class="group relative cursor-default" dir="rtl">
+        <!-- Glow effect -->
+        <div class="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/30 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
+        
+        <div class="relative flex items-center gap-3 bg-black/40 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/5 shadow-lg overflow-hidden transition-all duration-300 group-hover:border-primary/30 group-hover:bg-black/60">
+          <!-- Animated border accent -->
+          <div class="absolute bottom-0 right-0 h-[2px] bg-gradient-to-l from-primary via-primary/50 to-transparent w-full scale-x-0 group-hover:scale-x-100 transition-transform duration-700 origin-right"></div>
+          
+          <img src="/static/img/developer.jpg" alt="المبرمج عبداللاوي-ح" class="w-10 h-10 rounded-[10px] object-cover border border-white/10 shadow-sm transform group-hover:scale-105 transition-transform duration-500 filter group-hover:brightness-110">
+          
+          <div class="flex flex-col text-right pe-1">
+            <span class="text-[9px] uppercase tracking-[0.1em] text-primary font-bold mb-0.5 opacity-80">Developed By</span>
+            <span class="text-gray-200 font-bold text-[13px] tracking-wide group-hover:text-white transition-colors">المبرمج عبداللاوي-ح</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </footer>
 
