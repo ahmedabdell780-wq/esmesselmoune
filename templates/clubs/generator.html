@@ -167,6 +167,30 @@ S.teams.forEach(t => {
 S.league.badgeImg = "{% static 'img/league_badge.jpg' %}";
 S.colors = Object.assign({}, SEED.colors, S.colors);
 let LEAGUE = S.league;
+
+const staticLogos = {
+  "WBM": "{% static 'img/teams/wbm.jpg' %}",
+  "ESM": "{% static 'img/teams/esm.jpg' %}",
+  "WH": "{% static 'img/teams/wh.jpg' %}",
+  "MBSA": "{% static 'img/teams/mbsa.jpg' %}",
+  "USJK": "{% static 'img/teams/usjk.jpg' %}",
+  "RCBL": "{% static 'img/teams/rcbl.jpg' %}",
+  "GBSR": "{% static 'img/teams/gbsr.jpg' %}",
+  "ESA": "{% static 'img/teams/esa.jpg' %}",
+  "ESMS": "{% static 'img/teams/esms.jpg' %}",
+  "EBH": "{% static 'img/teams/ebh.jpg' %}"
+};
+S.teams.forEach(t => {
+  if (staticLogos[t.code]) {
+    t.logo = staticLogos[t.code];
+  }
+});
+SEED.teams.forEach(t => {
+  if (staticLogos[t.code]) {
+    t.logo = staticLogos[t.code];
+  }
+});
+
 const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(S)) }catch(e){} };
 
 /* ================= المساعدات ================= */
