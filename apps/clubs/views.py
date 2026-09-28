@@ -766,3 +766,7 @@ class MatchSquadUpdateView(LoginRequiredMixin, UpdateView):
     def get_success_url(self):
         messages.success(self.request, 'تم تحديث قائمة المستدعين للمباراة.')
         return reverse('clubs:coach_dashboard')
+
+
+class GeneratorView(LoginRequiredMixin, TemplateView):
+    template_name = 'clubs/generator.html'

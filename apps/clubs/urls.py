@@ -4,6 +4,7 @@ from . import views
 app_name = 'clubs'
 
 urlpatterns = [
+    path('generator/', views.GeneratorView.as_view(), name='generator'),
     path('', views.ClubDashboardView.as_view(), name='dashboard'),
     path('players/', views.PlayerListView.as_view(), name='player_list'),
     path('players/<int:pk>/', views.PlayerDetailView.as_view(), name='player_detail'),
