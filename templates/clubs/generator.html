@@ -132,6 +132,19 @@
 const CATS = ["U15","U17","U20"];
 const KEY = "lfwt_west_v2";
 const clone = o => JSON.parse(JSON.stringify(o));
+
+const LOGOS = {
+  "WH": "{% static 'img/teams/wh.jpg' %}",
+  "WBM": "{% static 'img/teams/wbm.jpg' %}",
+  "ESA": "{% static 'img/teams/esa.jpg' %}",
+  "ESMS": "{% static 'img/teams/esms.jpg' %}",
+  "EBH": "{% static 'img/teams/ebh.jpg' %}",
+  "GBSR": "{% static 'img/teams/gbsr.jpg' %}",
+  "ESM": "{% static 'img/teams/esm.jpg' %}",
+  "USJK": "{% static 'img/teams/usjk.jpg' %}",
+  "MBSA": "{% static 'img/teams/mbsa.jpg' %}",
+  "RCBL": "{% static 'img/teams/rcbl.jpg' %}"
+};
 const SEED = {cat:"U17", round:1, matches:[], adj:{},
   league:{name:"رابطة كرة القدم لولاية تيبازة", en:"L.F.W.T - Tipasa", division:"جهة غرب", s1:2026, s2:2027,
     badgeImg:"{% static 'img/league_badge.jpg' %}", site:"", fb:"", t1:"الترتيب", t2:"نتائج الجولة", outLabel:"غير منخرط",
@@ -140,10 +153,17 @@ const SEED = {cat:"U17", round:1, matches:[], adj:{},
   teams:[["وفاق حجوط","WH"],["ونام وجبرون","WBM"],["اتحاد القليعة","USJK"],["غالي سيدي راشد","GBSR"],
    ["أمل سيدي عمر","ESA"],["الوفاق مسلمون","ESMS"],["أمل مناصر","ESM"],["نجمة حجوط","EBH"],
    ["التحدي الداموس","THD"],["مشعل سيدي عمر","MBSA"],["رائد شباب الارهاط","RCBL"]
-  ].map(([name,code],i)=>({id:i+1,name,code,logo:"",cats:{U15:1,U17:1,U20:1}}))};
+  ].map(([name,code],i)=>({id:i+1,name,code,logo:LOGOS[code]||"",cats:{U15:1,U17:1,U20:1}}))};
 let S; try{ S=JSON.parse(localStorage.getItem(KEY)) }catch(e){}
 S = Object.assign(clone(SEED), S||{});
 S.league = Object.assign(clone(SEED.league), S.league);
+
+// Force apply logos from static if they exist and team has no custom logo
+S.teams.forEach(t => {
+    if (!t.logo || t.logo.startsWith("data:")) {
+        if (LOGOS[t.code]) t.logo = LOGOS[t.code];
+    }
+});
 S.league.badgeImg = "{% static 'img/league_badge.jpg' %}";
 S.colors = Object.assign({}, SEED.colors, S.colors);
 let LEAGUE = S.league;
