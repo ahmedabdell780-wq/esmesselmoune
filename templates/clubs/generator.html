@@ -134,7 +134,7 @@ const KEY = "lfwt_west_v2";
 const clone = o => JSON.parse(JSON.stringify(o));
 const SEED = {cat:"U17", round:1, matches:[], adj:{},
   league:{name:"رابطة كرة القدم لولاية تيبازة", en:"L.F.W.T - Tipasa", division:"جهة غرب", s1:2026, s2:2027,
-    badgeImg:"/static/img/league_badge.jpg", site:"", fb:"", t1:"الترتيب", t2:"نتائج الجولة", outLabel:"غير منخرط",
+    badgeImg:"{% static 'img/league_badge.jpg' %}", site:"", fb:"", t1:"الترتيب", t2:"نتائج الجولة", outLabel:"غير منخرط",
     cols:["الترتيب","الفريق","لعب","فوز","تعادل","خسارة","نقاط"]},
   colors:{g:"#12793b", gb:"#3db54a", navy:"#1c1a6c", red:"#ef1c25"},
   teams:[["وفاق حجوط","WH"],["ونام وجبرون","WBM"],["اتحاد القليعة","USJK"],["غالي سيدي راشد","GBSR"],
@@ -144,6 +144,7 @@ const SEED = {cat:"U17", round:1, matches:[], adj:{},
 let S; try{ S=JSON.parse(localStorage.getItem(KEY)) }catch(e){}
 S = Object.assign(clone(SEED), S||{});
 S.league = Object.assign(clone(SEED.league), S.league);
+S.league.badgeImg = "{% static 'img/league_badge.jpg' %}";
 S.colors = Object.assign({}, SEED.colors, S.colors);
 let LEAGUE = S.league;
 const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(S)) }catch(e){} };
