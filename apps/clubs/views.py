@@ -3,6 +3,7 @@ from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from .mixins import ClubWriteAccessMixin
 from django.contrib import messages
 from .models import Category, ClubPlayer, TrainingSession, ClubMatch
 
@@ -186,7 +187,7 @@ class DateInputMixin:
                 form.fields[field].widget = forms.TimeInput(format='%H:%M', attrs={'type': 'time'})
         return form
 
-class CategoryCreateView(LoginRequiredMixin, CreateView):
+class CategoryCreateView(ClubWriteAccessMixin, CreateView):
     model = Category
     fields = ['name', 'min_age', 'max_age', 'coach_name', 'coach_phone', 'description']
     template_name = 'clubs/generic_form.html'
@@ -202,7 +203,7 @@ class CategoryCreateView(LoginRequiredMixin, CreateView):
         messages.success(self.request, "Catégorie ajoutée avec succès / تم إضافة الفئة بنجاح!")
         return super().form_valid(form)
 
-class CategoryUpdateView(LoginRequiredMixin, UpdateView):
+class CategoryUpdateView(ClubWriteAccessMixin, UpdateView):
     model = Category
     fields = ['name', 'min_age', 'max_age', 'coach_name', 'coach_phone', 'description']
     template_name = 'clubs/generic_form.html'
@@ -218,7 +219,7 @@ class CategoryUpdateView(LoginRequiredMixin, UpdateView):
         messages.success(self.request, "Catégorie mise à jour / تم تحديث بيانات الفئة بنجاح!")
         return super().form_valid(form)
 
-class CategoryDeleteView(LoginRequiredMixin, DeleteView):
+class CategoryDeleteView(ClubWriteAccessMixin, DeleteView):
     model = Category
     template_name = 'clubs/confirm_delete.html'
     success_url = reverse_lazy('clubs:dashboard')
@@ -258,7 +259,7 @@ class ClubPlayerForm(forms.ModelForm):
             ]),
         }
 
-class ClubPlayerCreateView(LoginRequiredMixin, DateInputMixin, CreateView):
+class ClubPlayerCreateView(ClubWriteAccessMixin, DateInputMixin, CreateView):
     model = ClubPlayer
     form_class = ClubPlayerForm
     template_name = 'clubs/generic_form.html'
@@ -276,7 +277,7 @@ class ClubPlayerCreateView(LoginRequiredMixin, DateInputMixin, CreateView):
 
 from django.views.generic import UpdateView, DeleteView
 
-class ClubPlayerUpdateView(LoginRequiredMixin, DateInputMixin, UpdateView):
+class ClubPlayerUpdateView(ClubWriteAccessMixin, DateInputMixin, UpdateView):
     model = ClubPlayer
     form_class = ClubPlayerForm
     template_name = 'clubs/generic_form.html'
@@ -292,7 +293,7 @@ class ClubPlayerUpdateView(LoginRequiredMixin, DateInputMixin, UpdateView):
         messages.success(self.request, "Données mises à jour / تم تحديث بيانات اللاعب بنجاح!")
         return super().form_valid(form)
 
-class ClubPlayerDeleteView(LoginRequiredMixin, DeleteView):
+class ClubPlayerDeleteView(ClubWriteAccessMixin, DeleteView):
     model = ClubPlayer
     template_name = 'clubs/confirm_delete.html'
     success_url = reverse_lazy('clubs:player_list')
@@ -303,7 +304,7 @@ class ClubPlayerDeleteView(LoginRequiredMixin, DeleteView):
         context['message'] = f"Êtes-vous sûr de vouloir supprimer le joueur {self.object.first_name} {self.object.last_name} ? هل أنت متأكد من حذف اللاعب؟"
         return context
 
-class TrainingSessionCreateView(LoginRequiredMixin, DateInputMixin, CreateView):
+class TrainingSessionCreateView(ClubWriteAccessMixin, DateInputMixin, CreateView):
     model = TrainingSession
     fields = ['category', 'date', 'start_time', 'end_time', 'location', 'notes']
     template_name = 'clubs/generic_form.html'
@@ -319,7 +320,7 @@ class TrainingSessionCreateView(LoginRequiredMixin, DateInputMixin, CreateView):
         messages.success(self.request, "Séance programmée / تم برمجة الحصة بنجاح!")
         return super().form_valid(form)
 
-class ClubMatchCreateView(LoginRequiredMixin, DateInputMixin, CreateView):
+class ClubMatchCreateView(ClubWriteAccessMixin, DateInputMixin, CreateView):
     model = ClubMatch
     fields = ['category', 'date', 'time', 'opponent', 'location', 'is_home', 'our_score', 'their_score', 'notes']
     template_name = 'clubs/generic_form.html'
@@ -336,7 +337,7 @@ class ClubMatchCreateView(LoginRequiredMixin, DateInputMixin, CreateView):
         return super().form_valid(form)
 
 from django.views.generic import UpdateView
-class ClubSettingsUpdateView(LoginRequiredMixin, UpdateView):
+class ClubSettingsUpdateView(ClubWriteAccessMixin, UpdateView):
     from .models import ClubSettings
     model = ClubSettings
     fields = ['academy_registration_open', 'club_name', 'club_subtitle', 'club_abbreviation', 'president_name', 'logo', 'cover_image', 'gradient_start', 'gradient_end']
@@ -363,7 +364,7 @@ class StaffListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         return super().get_queryset().filter(is_active=True)
 
-class StaffCreateView(LoginRequiredMixin, CreateView):
+class StaffCreateView(ClubWriteAccessMixin, CreateView):
     model = StaffMember
     fields = ['first_name', 'last_name', 'role', 'phone', 'photo', 'category_assigned']
     template_name = 'clubs/generic_form.html'
@@ -379,7 +380,7 @@ class StaffCreateView(LoginRequiredMixin, CreateView):
         messages.success(self.request, "Membre du staff ajouté / تم الإضافة بنجاح!")
         return super().form_valid(form)
 
-class SubscriptionCreateView(LoginRequiredMixin, DateInputMixin, CreateView):
+class SubscriptionCreateView(ClubWriteAccessMixin, DateInputMixin, CreateView):
     model = Subscription
     fields = ['player', 'month', 'amount', 'is_paid', 'paid_date', 'notes']
     template_name = 'clubs/generic_form.html'
@@ -411,7 +412,7 @@ class SubscriptionCreateView(LoginRequiredMixin, DateInputMixin, CreateView):
         messages.success(self.request, "Paiement enregistré / تم تسجيل الدفع بنجاح!")
         return super().form_valid(form)
 
-class SubscriptionUpdateView(LoginRequiredMixin, DateInputMixin, UpdateView):
+class SubscriptionUpdateView(ClubWriteAccessMixin, DateInputMixin, UpdateView):
     model = Subscription
     fields = ['month', 'amount', 'is_paid', 'paid_date', 'notes']
     template_name = 'clubs/generic_form.html'
@@ -429,7 +430,7 @@ class SubscriptionUpdateView(LoginRequiredMixin, DateInputMixin, UpdateView):
         messages.success(self.request, "تم تعديل الاشتراك بنجاح!")
         return super().form_valid(form)
 
-class SubscriptionDeleteView(LoginRequiredMixin, DeleteView):
+class SubscriptionDeleteView(ClubWriteAccessMixin, DeleteView):
     model = Subscription
     template_name = 'clubs/generic_confirm_delete.html'
     
@@ -446,7 +447,7 @@ class SubscriptionDeleteView(LoginRequiredMixin, DeleteView):
         messages.success(request, "تم حذف الاشتراك بنجاح!")
         return super().delete(request, *args, **kwargs)
 
-class MedicalRecordCreateView(LoginRequiredMixin, DateInputMixin, CreateView):
+class MedicalRecordCreateView(ClubWriteAccessMixin, DateInputMixin, CreateView):
     model = MedicalRecord
     fields = ['player', 'injury_type', 'date_of_injury', 'expected_return', 'is_recovered', 'notes']
     template_name = 'clubs/generic_form.html'
@@ -471,7 +472,7 @@ class MedicalRecordCreateView(LoginRequiredMixin, DateInputMixin, CreateView):
         messages.success(self.request, "Dossier médical mis à jour / تم تحديث السجل الطبي!")
         return super().form_valid(form)
 
-class PlayerEvaluationCreateView(LoginRequiredMixin, CreateView):
+class PlayerEvaluationCreateView(ClubWriteAccessMixin, CreateView):
     model = PlayerEvaluation
     fields = ['player', 'evaluator', 'physical_fitness', 'speed', 'passing', 'tactical_awareness', 'discipline', 'coach_remarks']
     template_name = 'clubs/generic_form.html'
@@ -496,7 +497,7 @@ class PlayerEvaluationCreateView(LoginRequiredMixin, CreateView):
         messages.success(self.request, "تم إضافة التقييم بنجاح!")
         return super().form_valid(form)
 
-class PlayerEquipmentUpdateView(LoginRequiredMixin, DateInputMixin, UpdateView):
+class PlayerEquipmentUpdateView(ClubWriteAccessMixin, DateInputMixin, UpdateView):
     model = PlayerEquipment
     fields = ['received_training_kit', 'training_kit_date', 'received_tracksuit', 'tracksuit_date', 'received_bag', 'bag_date', 'notes']
     template_name = 'clubs/generic_form.html'
@@ -746,7 +747,7 @@ class FinancialDashboardView(LoginRequiredMixin, TemplateView):
         context['unpaid_players'] = unpaid_players
         return context
 
-class SendNotificationView(LoginRequiredMixin, CreateView):
+class SendNotificationView(ClubWriteAccessMixin, CreateView):
     model = ClubNotification
     fields = ['recipient', 'title', 'message']
     template_name = 'clubs/send_notification.html'
@@ -758,7 +759,7 @@ class SendNotificationView(LoginRequiredMixin, CreateView):
     def get_success_url(self):
         return reverse('clubs:dashboard')
 
-class MatchSquadUpdateView(LoginRequiredMixin, UpdateView):
+class MatchSquadUpdateView(ClubWriteAccessMixin, UpdateView):
     model = ClubMatch
     fields = ['squad']
     template_name = 'clubs/match_squad_form.html'

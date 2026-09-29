@@ -31,6 +31,7 @@ class User(AbstractUser):
         ADMIN        = 'admin',    _('Administrateur / مدير')
         ORGANIZER    = 'organizer',_('Organisateur / منظم')
         TEAM_MANAGER = 'manager',  _('Responsable d\'équipe / مسؤول فريق')
+        COACH        = 'coach',    _('Entraîneur / مدرب')
         VIEWER       = 'viewer',   _('Spectateur / متفرج')
 
     role         = models.CharField(max_length=20, choices=Role.choices,
@@ -40,6 +41,7 @@ class User(AbstractUser):
     neighborhood = models.CharField(max_length=120, blank=True)
     bio          = models.TextField(blank=True)
     created_at   = models.DateTimeField(auto_now_add=True)
+    coach_category = models.ForeignKey('clubs.Category', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('Catégorie (Entraîneur) / الفئة (للمدرب)'), help_text=_('Si sélectionné, ce coach ne pourra gérer que cette catégorie.'))
     updated_at   = models.DateTimeField(auto_now=True)
 
     class Meta:
