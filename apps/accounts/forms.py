@@ -12,6 +12,7 @@ class RegisterForm(UserCreationForm):
     
     ROLE_CHOICES = [
         (User.Role.TEAM_MANAGER, _('Responsable d\'équipe / مسؤول فريق')),
+        (User.Role.COACH, _('Entraîneur / مدرب')),
         (User.Role.ORGANIZER, _('Organisateur / منظم')),
         (User.Role.VIEWER, _('Spectateur / متفرج')),
     ]
