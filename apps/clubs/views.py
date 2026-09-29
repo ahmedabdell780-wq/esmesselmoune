@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView
-from django.contrib.auth.mixins import ClubReadAccessMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
 from .mixins import ClubWriteAccessMixin, ClubReadAccessMixin
 from django.contrib import messages
 from .models import Category, ClubPlayer, TrainingSession, ClubMatch
