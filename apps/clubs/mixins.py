@@ -37,3 +37,22 @@ class ClubWriteAccessMixin(LoginRequiredMixin):
                     raise PermissionDenied("Vous ne pouvez grer que votre catgorie.")
         return super().form_valid(form)
 
+
+
+from django.contrib import messages
+from django.shortcuts import redirect
+
+class ClubReadAccessMixin(LoginRequiredMixin):
+    """
+    Mixin that restricts READ access.
+    Viewers (Spectateur) cannot access the academy at all.
+    """
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        
+        if request.user.role == getattr(request.user.Role, 'VIEWER', 'viewer'):
+            messages.error(request, "Accs refus. Les spectateurs n'ont pas accs  l'acadmie. / عذراً، المتفرج لا يملك صلاحية الدخول للأكاديمية.")
+            return redirect('core:home')
+            
+        return super().dispatch(request, *args, **kwargs)

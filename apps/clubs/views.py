@@ -2,12 +2,12 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView
-from django.contrib.auth.mixins import LoginRequiredMixin
-from .mixins import ClubWriteAccessMixin
+from django.contrib.auth.mixins import ClubReadAccessMixin
+from .mixins import ClubWriteAccessMixin, ClubReadAccessMixin
 from django.contrib import messages
 from .models import Category, ClubPlayer, TrainingSession, ClubMatch
 
-class ClubDashboardView(LoginRequiredMixin, TemplateView):
+class ClubDashboardView(ClubReadAccessMixin, TemplateView):
     template_name = 'clubs/dashboard.html'
 
     def get_context_data(self, **kwargs):
@@ -43,7 +43,7 @@ def sort_players_by_position(players):
     ))
     return players_list
 
-class PlayerListView(LoginRequiredMixin, ListView):
+class PlayerListView(ClubReadAccessMixin, ListView):
     model = ClubPlayer
     template_name = 'clubs/player_list.html'
     context_object_name = 'players'
@@ -103,12 +103,12 @@ class PlayerListView(LoginRequiredMixin, ListView):
         context['positions'] = ClubPlayer.POSITION_CHOICES
         return context
 
-class PlayerDetailView(LoginRequiredMixin, DetailView):
+class PlayerDetailView(ClubReadAccessMixin, DetailView):
     model = ClubPlayer
     template_name = 'clubs/player_detail.html'
     context_object_name = 'player'
 
-class PlayerCardsPrintView(LoginRequiredMixin, ListView):
+class PlayerCardsPrintView(ClubReadAccessMixin, ListView):
     model = ClubPlayer
     template_name = 'clubs/player_cards_print.html'
     context_object_name = 'players'
@@ -134,7 +134,7 @@ class PlayerCardsPrintView(LoginRequiredMixin, ListView):
         context['player_pages'] = player_pages
         return context
 
-class PlayerListPrintView(LoginRequiredMixin, ListView):
+class PlayerListPrintView(ClubReadAccessMixin, ListView):
     model = ClubPlayer
     template_name = 'clubs/player_list_print.html'
     context_object_name = 'players'
@@ -356,7 +356,7 @@ class ClubSettingsUpdateView(ClubWriteAccessMixin, UpdateView):
 
 from .models import StaffMember, Subscription, MedicalRecord, PlayerEvaluation, PlayerEquipment, TrainingAttendance
 
-class StaffListView(LoginRequiredMixin, ListView):
+class StaffListView(ClubReadAccessMixin, ListView):
     model = StaffMember
     template_name = 'clubs/staff_list.html'
     context_object_name = 'staff_members'
@@ -567,7 +567,7 @@ class NewsDetailView(DetailView):
         return super().get_queryset().filter(is_published=True)
 
 
-class SubscriptionListView(LoginRequiredMixin, ListView):
+class SubscriptionListView(ClubReadAccessMixin, ListView):
     model = Subscription
     template_name = 'clubs/subscription_list.html'
     context_object_name = 'subscriptions'
@@ -576,7 +576,7 @@ class SubscriptionListView(LoginRequiredMixin, ListView):
         # Admin can see all subscriptions, others can't see this view (or only see their kids, but this is admin view)
         return Subscription.objects.select_related('player').all().order_by('-month', 'player__last_name')
 
-class ParentDashboardView(LoginRequiredMixin, TemplateView):
+class ParentDashboardView(ClubReadAccessMixin, TemplateView):
     template_name = 'clubs/parent_dashboard.html'
 
     def get_context_data(self, **kwargs):
@@ -589,7 +589,7 @@ class ParentDashboardView(LoginRequiredMixin, TemplateView):
         return context
 
 
-class MedicalRecordListView(LoginRequiredMixin, ListView):
+class MedicalRecordListView(ClubReadAccessMixin, ListView):
     model = MedicalRecord
     template_name = 'clubs/medical_list.html'
     context_object_name = 'records'
@@ -597,7 +597,7 @@ class MedicalRecordListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         return MedicalRecord.objects.select_related('player').order_by('-date_of_injury')
 
-class PlayerEvaluationListView(LoginRequiredMixin, ListView):
+class PlayerEvaluationListView(ClubReadAccessMixin, ListView):
     model = PlayerEvaluation
     template_name = 'clubs/evaluation_list.html'
     context_object_name = 'evaluations'
@@ -605,7 +605,7 @@ class PlayerEvaluationListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         return PlayerEvaluation.objects.select_related('player', 'evaluator').order_by('-date_evaluated')
 
-class PlayerEquipmentListView(LoginRequiredMixin, ListView):
+class PlayerEquipmentListView(ClubReadAccessMixin, ListView):
     model = PlayerEquipment
     template_name = 'clubs/equipment_list.html'
     context_object_name = 'equipments'
@@ -613,7 +613,7 @@ class PlayerEquipmentListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         return PlayerEquipment.objects.select_related('player').order_by('player__last_name')
 
-class TrainingAttendanceListView(LoginRequiredMixin, ListView):
+class TrainingAttendanceListView(ClubReadAccessMixin, ListView):
     model = TrainingSession
     template_name = 'clubs/attendance_list.html'
     context_object_name = 'sessions'
@@ -623,7 +623,7 @@ class TrainingAttendanceListView(LoginRequiredMixin, ListView):
 
 
 
-class CoachDashboardView(LoginRequiredMixin, TemplateView):
+class CoachDashboardView(ClubReadAccessMixin, TemplateView):
     template_name = 'clubs/coach_dashboard.html'
 
     def get_context_data(self, **kwargs):
@@ -650,7 +650,7 @@ class CoachDashboardView(LoginRequiredMixin, TemplateView):
                 context['losses'] = losses
         return context
 
-class TakeAttendanceView(LoginRequiredMixin, TemplateView):
+class TakeAttendanceView(ClubReadAccessMixin, TemplateView):
     template_name = 'clubs/take_attendance.html'
 
     def get_context_data(self, **kwargs):
@@ -723,7 +723,7 @@ from django.db.models import Sum, Count
 from django.utils import timezone
 from .models import ClubNotification
 
-class FinancialDashboardView(LoginRequiredMixin, TemplateView):
+class FinancialDashboardView(ClubReadAccessMixin, TemplateView):
     template_name = 'clubs/financial_dashboard.html'
     
     def get_context_data(self, **kwargs):
@@ -769,5 +769,5 @@ class MatchSquadUpdateView(ClubWriteAccessMixin, UpdateView):
         return reverse('clubs:coach_dashboard')
 
 
-class GeneratorView(LoginRequiredMixin, TemplateView):
+class GeneratorView(ClubReadAccessMixin, TemplateView):
     template_name = 'clubs/generator.html'
