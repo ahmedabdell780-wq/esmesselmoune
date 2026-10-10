@@ -3,6 +3,7 @@
 
 {% block title %}{% trans "Gestion des Abonnements / إدارة الاشتراكات" %}{% endblock %}
 
+{% load club_permissions %}
 {% block content %}
 <div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 animate-fade-in">
     <!-- Header -->
@@ -72,12 +73,14 @@
                         <td class="p-4 text-gray-400 text-sm">{{ sub.paid_date|date:"Y-m-d"|default:"-" }}</td>
                         <td class="p-4">
                             <div class="flex justify-center gap-2">
+                                {% if request.user|can_manage_object:sub %}
                                 <a href="{% url 'clubs:subscription_edit' sub.pk %}" class="btn btn-ghost btn-xs btn-circle text-blue-400 hover:text-blue-300" title="تعديل">
                                     <i class="fa-solid fa-pen"></i>
                                 </a>
                                 <a href="{% url 'clubs:subscription_delete' sub.pk %}" class="btn btn-ghost btn-xs btn-circle text-red-400 hover:text-red-300" title="حذف">
                                     <i class="fa-solid fa-trash"></i>
                                 </a>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>
