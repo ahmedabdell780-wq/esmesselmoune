@@ -170,7 +170,7 @@
                 <div class="match-side">
                     <div class="score-box left-score">-</div>
                     <div class="team-name flex items-center justify-between">
-                        <span class="text-left w-full pl-1 sm:pl-2">{% if match.is_home %}الوفاق{% else %}{{ match.opponent }}{% endif %}</span>
+                        <span class="text-center w-full font-black text-[0.8rem] sm:text-lg">{% if match.is_home %}الوفاق مسلمون{% else %}{{ match.opponent }}{% endif %}</span>
                         <!-- Added mr-8 sm:mr-10 to push logo away from center overlap -->
                         <img src="{% if match.is_home %}{% static 'img/logo.png' %}{% else %}/static/img/teams/{{ match.opponent_code }}.jpg{% endif %}" 
                              onerror="this.onerror=null; this.src='{% static 'img/app_logo.png' %}';"
@@ -190,7 +190,7 @@
                         <img src="{% if not match.is_home %}{% static 'img/logo.png' %}{% else %}/static/img/teams/{{ match.opponent_code }}.jpg{% endif %}" 
                              onerror="this.onerror=null; this.src='{% static 'img/app_logo.png' %}';"
                              class="w-7 h-7 sm:w-10 sm:h-10 rounded-full object-contain mr-1 sm:mr-2 ml-8 sm:ml-10 bg-white/10 p-0.5 border border-white/20 shrink-0">
-                        <span class="text-right w-full pr-1 sm:pr-2">{% if not match.is_home %}الوفاق{% else %}{{ match.opponent }}{% endif %}</span>
+                        <span class="text-center w-full font-black text-[0.8rem] sm:text-lg">{% if not match.is_home %}الوفاق مسلمون{% else %}{{ match.opponent }}{% endif %}</span>
                     </div>
                     <div class="score-box right-score">-</div>
                 </div>
