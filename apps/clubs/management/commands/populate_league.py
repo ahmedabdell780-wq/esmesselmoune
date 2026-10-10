@@ -1,55 +1,59 @@
 from django.core.management.base import BaseCommand
-from apps.clubs.models import LeagueTeam, LeagueMatch, LeagueStanding
+from apps.clubs.models import ClubMatch, Category
+from datetime import date, timedelta
 
 class Command(BaseCommand):
-    help = 'Populates the league'
+    help = 'Populates ONLY Wifak matches into ClubMatch'
 
     def handle(self, *args, **kwargs):
-        teams_data = {
-            "وفاق حجوط": "WH", "أمل سيدي عمر": "ESA", "ونام بوجبرون": "WBM",
-            "مولودية مراد": "MCM", "اتحاد مناصر": "USM", "الوفاق مسلمون": "ESMS",
-            "تحدي الداموس": "THD", "مولودية قوراية": "MCG", "شبيبة حجوط": "JSH",
-            "اتحاد القليعة": "USJK", "نخبة فجانة": "NF", "نجمة حجوط": "EBH"
-        }
+        # Order of opponents for Wifak in the 11 rounds
+        # According to the previous schedule:
+        # 1. Away vs THD (تحدي الداموس)
+        # 2. Home vs USM (اتحاد مناصر)
+        # 3. Away vs WBM (ونام بوجبرون)
+        # 4. Home vs EBH (نجمة حجوط)
+        # 5. Away vs USJK (اتحاد القليعة)
+        # 6. Home vs MCG (مولودية قوراية)
+        # 7. Away vs WH (وفاق حجوط)
+        # 8. Away vs MCM (مولودية مراد)
+        # 9. Home vs ESA (أمل سيدي عمر)
+        # 10. Away vs NF (نخبة فجانة)
+        # 11. Home vs JSH (شبيبة حجوط)
         
-        rounds_data = [
-            [["نجمة حجوط", "وفاق حجوط"], ["تحدي الداموس", "الوفاق مسلمون"], ["اتحاد مناصر", "مولودية قوراية"], ["شبيبة حجوط", "مولودية مراد"], ["ونام بوجبرون", "اتحاد القليعة"], ["نخبة فجانة", "أمل سيدي عمر"]],
-            [["وفاق حجوط", "نخبة فجانة"], ["أمل سيدي عمر", "شبيبة حجوط"], ["مولودية قوراية", "ونام بوجبرون"], ["مولودية مراد", "تحدي الداموس"], ["الوفاق مسلمون", "اتحاد مناصر"], ["اتحاد القليعة", "نجمة حجوط"]],
-            [["وفاق حجوط", "اتحاد القليعة"], ["شبيبة حجوط", "نخبة فجانة"], ["تحدي الداموس", "أمل سيدي عمر"], ["ونام بوجبرون", "الوفاق مسلمون"], ["اتحاد مناصر", "مولودية مراد"], ["نجمة حجوط", "مولودية قوراية"]],
-            [["شبيبة حجوط", "وفاق حجوط"], ["مولودية قوراية", "اتحاد القليعة"], ["نخبة فجانة", "تحدي الداموس"], ["أمل سيدي عمر", "اتحاد مناصر"], ["مولودية مراد", "ونام بوجبرون"], ["الوفاق مسلمون", "نجمة حجوط"]],
-            [["وفاق حجوط", "مولودية قوراية"], ["تحدي الداموس", "شبيبة حجوط"], ["اتحاد القليعة", "الوفاق مسلمون"], ["اتحاد مناصر", "نخبة فجانة"], ["ونام بوجبرون", "أمل سيدي عمر"], ["نجمة حجوط", "مولودية مراد"]],
-            [["تحدي الداموس", "وفاق حجوط"], ["الوفاق مسلمون", "مولودية قوراية"], ["شبيبة حجوط", "اتحاد مناصر"], ["اتحاد القليعة", "نخبة فجانة"], ["مولودية مراد", "ونام بوجبرون"], ["أمل سيدي عمر", "نجمة حجوط"]],
-            [["وفاق حجوط", "الوفاق مسلمون"], ["مولودية قوراية", "مولودية مراد"], ["اتحاد مناصر", "تحدي الداموس"], ["ونام بوجبرون", "شبيبة حجوط"], ["اتحاد القليعة", "أمل سيدي عمر"], ["نجمة حجوط", "نخبة فجانة"]],
-            [["اتحاد مناصر", "وفاق حجوط"], ["مولودية مراد", "الوفاق مسلمون"], ["تحدي الداموس", "ونام بوجبرون"], ["أمل سيدي عمر", "مولودية قوراية"], ["نخبة فجانة", "اتحاد القليعة"], ["شبيبة حجوط", "نجمة حجوط"]],
-            [["وفاق حجوط", "مولودية مراد"], ["ونام بوجبرون", "اتحاد مناصر"], ["الوفاق مسلمون", "أمل سيدي عمر"], ["مولودية قوراية", "نخبة فجانة"], ["اتحاد القليعة", "شبيبة حجوط"], ["نجمة حجوط", "تحدي الداموس"]],
-            [["ونام بوجبرون", "وفاق حجوط"], ["أمل سيدي عمر", "مولودية مراد"], ["نخبة فجانة", "الوفاق مسلمون"], ["تحدي الداموس", "اتحاد القليعة"], ["شبيبة حجوط", "مولودية قوراية"], ["اتحاد مناصر", "نجمة حجوط"]],
-            [["وفاق حجوط", "أمل سيدي عمر"], ["مولودية مراد", "نخبة فجانة"], ["اتحاد القليعة", "اتحاد مناصر"], ["الوفاق مسلمون", "شبيبة حجوط"], ["مولودية قوراية", "تحدي الداموس"], ["نجمة حجوط", "ونام بوجبرون"]]
+        wifak_schedule = [
+            {"opponent": "تحدي الداموس", "is_home": False},
+            {"opponent": "اتحاد مناصر", "is_home": True},
+            {"opponent": "ونام بوجبرون", "is_home": False},
+            {"opponent": "نجمة حجوط", "is_home": True},
+            {"opponent": "اتحاد القليعة", "is_home": False},
+            {"opponent": "مولودية قوراية", "is_home": True},
+            {"opponent": "وفاق حجوط", "is_home": False},
+            {"opponent": "مولودية مراد", "is_home": False},
+            {"opponent": "أمل سيدي عمر", "is_home": True},
+            {"opponent": "نخبة فجانة", "is_home": False},
+            {"opponent": "شبيبة حجوط", "is_home": True},
         ]
-
-        team_objs = {}
-        for name, code in teams_data.items():
-            logo_path = f"league_teams/{code.lower()}.jpg" if code != "USM" else "league_teams/esm.jpg"
-            team, _ = LeagueTeam.objects.get_or_create(name=name, defaults={"code": code})
-            team_objs[name] = team
-            
-            for cat in ["U15", "U17", "U20"]:
-                LeagueStanding.objects.get_or_create(team=team, category=cat)
-
-        matches_to_create = []
-        for cat in ["U15", "U17", "U20"]:
-            for i, round_matches in enumerate(rounds_data):
-                round_num = i + 1
-                for m in round_matches:
-                    home_team = team_objs[m[0]]
-                    away_team = team_objs[m[1]]
-                    matches_to_create.append(LeagueMatch(
-                        category=cat,
-                        round_number=round_num,
-                        home_team=home_team,
-                        away_team=away_team
-                    ))
         
-        # Delete existing matches to avoid duplicates if it partially succeeded before
-        LeagueMatch.objects.all().delete()
-        LeagueMatch.objects.bulk_create(matches_to_create)
+        # Clear existing ClubMatches if any (to avoid duplicates if run multiple times)
+        ClubMatch.objects.filter(notes="Auto-generated Wifak Match").delete()
+        
+        start_date = date.today()
+        
+        matches_to_create = []
+        for cat_name in ["U15", "U17", "U20"]:
+            cat, _ = Category.objects.get_or_create(name=cat_name)
+            
+            for i, match_data in enumerate(wifak_schedule):
+                match_date = start_date + timedelta(days=i*7) # One match per week roughly
+                
+                matches_to_create.append(ClubMatch(
+                    category=cat,
+                    opponent=match_data["opponent"],
+                    is_home=match_data["is_home"],
+                    location="الملعب البلدي" if match_data["is_home"] else "ملعب الخصم",
+                    date=match_date,
+                    notes="Auto-generated Wifak Match"
+                ))
+                
+        ClubMatch.objects.bulk_create(matches_to_create)
         self.stdout.write("Success")
