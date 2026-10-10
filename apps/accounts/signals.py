@@ -6,5 +6,6 @@ from .models import User, AppearanceSettings
 @receiver(post_save, sender=User)
 def create_appearance_settings(sender, instance, created, **kwargs):
     """Automatically create AppearanceSettings for every new user."""
+    if kwargs.get('raw'): return
     if created:
         AppearanceSettings.objects.get_or_create(user=instance)

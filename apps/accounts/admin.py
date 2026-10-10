@@ -24,12 +24,12 @@ class UserAdmin(BaseUserAdmin):
 
     fieldsets = BaseUserAdmin.fieldsets + (
         ('Profil TurniQ', {
-            'fields': ('role', 'phone', 'avatar', 'neighborhood', 'bio')
+            'fields': ('role', 'coach_category', 'phone', 'avatar', 'neighborhood', 'bio')
         }),
     )
     add_fieldsets = BaseUserAdmin.add_fieldsets + (
         ('Profil TurniQ', {
-            'fields': ('role', 'phone', 'neighborhood')
+            'fields': ('role', 'coach_category', 'phone', 'neighborhood')
         }),
     )
 
