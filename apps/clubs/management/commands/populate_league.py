@@ -2,22 +2,14 @@ from django.core.management.base import BaseCommand
 from apps.clubs.models import LeagueTeam, LeagueMatch, LeagueStanding
 
 class Command(BaseCommand):
-    help = 'Populates the league teams and matches for the 2026/2027 season'
+    help = 'Populates the league'
 
     def handle(self, *args, **kwargs):
         teams_data = {
-            "وفاق حجوط": "WH",
-            "أمل سيدي عمر": "ESA",
-            "ونام بوجبرون": "WBM",
-            "مولودية مراد": "MCM",
-            "اتحاد مناصر": "USM",
-            "الوفاق مسلمون": "ESMS",
-            "تحدي الداموس": "THD",
-            "مولودية قوراية": "MCG",
-            "شبيبة حجوط": "JSH",
-            "اتحاد القليعة": "USJK",
-            "نخبة فجانة": "NF",
-            "نجمة حجوط": "EBH"
+            "وفاق حجوط": "WH", "أمل سيدي عمر": "ESA", "ونام بوجبرون": "WBM",
+            "مولودية مراد": "MCM", "اتحاد مناصر": "USM", "الوفاق مسلمون": "ESMS",
+            "تحدي الداموس": "THD", "مولودية قوراية": "MCG", "شبيبة حجوط": "JSH",
+            "اتحاد القليعة": "USJK", "نخبة فجانة": "NF", "نجمة حجوط": "EBH"
         }
         
         rounds_data = [
@@ -34,30 +26,30 @@ class Command(BaseCommand):
             [["وفاق حجوط", "أمل سيدي عمر"], ["مولودية مراد", "نخبة فجانة"], ["اتحاد القليعة", "اتحاد مناصر"], ["الوفاق مسلمون", "شبيبة حجوط"], ["مولودية قوراية", "تحدي الداموس"], ["نجمة حجوط", "ونام بوجبرون"]]
         ]
 
-        self.stdout.write("Creating Teams...")
         team_objs = {}
         for name, code in teams_data.items():
-            # For simplicity, map some logos directly
             logo_path = f"league_teams/{code.lower()}.jpg" if code != "USM" else "league_teams/esm.jpg"
-            team, created = LeagueTeam.objects.get_or_create(name=name, defaults={"code": code})
+            team, _ = LeagueTeam.objects.get_or_create(name=name, defaults={"code": code})
             team_objs[name] = team
             
-            # Create standings for U15, U17, U20
             for cat in ["U15", "U17", "U20"]:
                 LeagueStanding.objects.get_or_create(team=team, category=cat)
 
-        self.stdout.write("Creating Matches...")
+        matches_to_create = []
         for cat in ["U15", "U17", "U20"]:
             for i, round_matches in enumerate(rounds_data):
                 round_num = i + 1
                 for m in round_matches:
                     home_team = team_objs[m[0]]
                     away_team = team_objs[m[1]]
-                    LeagueMatch.objects.get_or_create(
+                    matches_to_create.append(LeagueMatch(
                         category=cat,
                         round_number=round_num,
                         home_team=home_team,
                         away_team=away_team
-                    )
+                    ))
         
-        self.stdout.write(self.style.SUCCESS('Successfully populated the league!'))
+        # Delete existing matches to avoid duplicates if it partially succeeded before
+        LeagueMatch.objects.all().delete()
+        LeagueMatch.objects.bulk_create(matches_to_create)
+        self.stdout.write("Success")
