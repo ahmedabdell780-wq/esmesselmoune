@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}رزنامة البطولة - الوفاق الرياضي مسلمون{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto py-8 px-4" dir="rtl">
+    <div class="text-center mb-10">
+        <h1 class="text-3xl font-black text-white mb-2">الرابطة الولائية لكرة القدم تيبازة</h1>
+        <p class="text-emerald-400 font-bold">رزنامة بطولة الفئات الشبانية للموسم الرياضي 2026/2027</p>
+        <p class="text-gray-400 text-sm mt-1">مجموعة وسط غرب — مرحلة الذهاب</p>
+    </div>
+
+    <!-- Toggle for Wifak matches -->
+    <div class="flex justify-center mb-8">
+        <label class="flex items-center gap-3 cursor-pointer p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+            <input type="checkbox" id="wifak-filter" class="form-checkbox h-5 w-5 text-emerald-500 rounded bg-black/50 border-white/20 focus:ring-emerald-500 focus:ring-offset-0">
+            <span class="text-white font-bold select-none">إظهار مباريات <span class="text-emerald-400">الوفاق الرياضي مسلمون</span> فقط</span>
+        </label>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for round in rounds %}
+        <div class="card rounded-2xl border border-white/10 overflow-hidden match-round">
+            <div class="bg-emerald-600/20 border-b border-emerald-500/20 py-3 px-4 flex justify-between items-center">
+                <h3 class="font-bold text-emerald-400">الجولة {{ forloop.counter }}</h3>
+                <span class="text-xs bg-black/30 px-2 py-1 rounded text-gray-300">6 مباريات</span>
+            </div>
+            <div class="p-0">
+                {% for match in round %}
+                <div class="flex items-center justify-between p-3 border-b border-white/5 hover:bg-white/5 transition-colors text-sm match-item {% if 'الوفاق مسلمون' in match.0 or 'الوفاق مسلمون' in match.1 %}is-wifak{% endif %}">
+                    <div class="flex-1 text-left font-bold {% if 'الوفاق مسلمون' in match.0 %}text-emerald-400{% else %}text-gray-200{% endif %}">
+                        {{ match.0 }}
+                    </div>
+                    <div class="px-3 text-gray-500 text-xs font-black">ضد</div>
+                    <div class="flex-1 text-right font-bold {% if 'الوفاق مسلمون' in match.1 %}text-emerald-400{% else %}text-gray-200{% endif %}">
+                        {{ match.1 }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    document.getElementById('wifak-filter').addEventListener('change', function(e) {
+        const isChecked = e.target.checked;
+        const allMatches = document.querySelectorAll('.match-item');
+        const allRounds = document.querySelectorAll('.match-round');
+        
+        allMatches.forEach(match => {
+            if (isChecked) {
+                if (!match.classList.contains('is-wifak')) {
+                    match.style.display = 'none';
+                } else {
+                    match.style.display = 'flex';
+                }
+            } else {
+                match.style.display = 'flex';
+            }
+        });
+        
+        // Hide rounds that have no visible matches
+        if (isChecked) {
+            allRounds.forEach(round => {
+                const visibleMatches = round.querySelectorAll('.is-wifak');
+                if (visibleMatches.length === 0) {
+                    round.style.display = 'none';
+                } else {
+                    round.style.display = 'block';
+                }
+            });
+        } else {
+            allRounds.forEach(round => round.style.display = 'block');
+        }
+    });
+</script>
+{% endblock %}

@@ -5,6 +5,7 @@ app_name = 'clubs'
 
 urlpatterns = [
     path('generator/', views.GeneratorView.as_view(), name='generator'),
+    path('schedule/', views.LeagueScheduleView.as_view(), name='league_schedule'),
     path('', views.ClubDashboardView.as_view(), name='dashboard'),
     path('players/', views.PlayerListView.as_view(), name='player_list'),
     path('players/<int:pk>/', views.PlayerDetailView.as_view(), name='player_detail'),
