@@ -4,7 +4,7 @@ from . import views
 app_name = 'clubs'
 
 urlpatterns = [
-    path('setup-league/', views.PopulateLeagueView.as_view(), name='setup_league'),
+    path('setup-league/', views.populate_league_view, name='setup_league'),
 
     path('generator/', views.GeneratorView.as_view(), name='generator'),
     path('schedule/', views.LeagueScheduleView.as_view(), name='league_schedule'),

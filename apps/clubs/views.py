@@ -824,15 +824,17 @@ class LeagueScheduleView(TemplateView):
 from django.core.management import call_command
 from django.http import HttpResponse
 
-class PopulateLeagueView(ClubWriteAccessMixin, TemplateView):
-    def get(self, request, *args, **kwargs):
-        from django.core.management import call_command
-        from django.http import HttpResponse
-        if not request.user.is_superuser and request.user.role != 'admin':
-            return HttpResponse("Non autorise", status=403)
-        try:
-            call_command('migrate')
-            call_command('populate_league')
-            return HttpResponse("نجاح! تم التحديث. يمكنك العودة للموقع.", status=200)
-        except Exception as e:
-            return HttpResponse(f"ERROR: {str(e)}", status=200)
+from django.core.management import call_command
+from django.http import HttpResponse
+
+def populate_league_view(request):
+    if not request.user.is_authenticated:
+        return HttpResponse("يرجى تسجيل الدخول أولا", status=401)
+        
+    try:
+        call_command('migrate')
+        call_command('populate_league')
+        return HttpResponse("نجاح! تمت العملية. يمكنك إغلاق هذه الصفحة.", status=200)
+    except Exception as e:
+        import traceback
+        return HttpResponse(f"ERROR: {str(e)}<br><pre>{traceback.format_exc()}</pre>", status=200)
