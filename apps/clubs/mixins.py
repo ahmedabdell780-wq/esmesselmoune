@@ -37,6 +37,25 @@ class ClubWriteAccessMixin(LoginRequiredMixin):
                     raise PermissionDenied("Vous ne pouvez grer que votre catgorie.")
         return super().form_valid(form)
 
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+        # Prevent accessing edit/delete pages of objects outside coach's category
+        if self.request.user.role == self.request.user.Role.COACH and self.request.user.coach_category_id:
+            category_id = None
+            if hasattr(obj, 'category_id'):
+                category_id = obj.category_id
+            elif hasattr(obj, 'player') and hasattr(obj.player, 'category_id'):
+                category_id = obj.player.category_id
+            elif hasattr(obj, 'session') and hasattr(obj.session, 'category_id'):
+                category_id = obj.session.category_id
+            elif obj.__class__.__name__ == 'Category':
+                category_id = obj.id
+                
+            if category_id and self.request.user.coach_category_id != category_id:
+                raise PermissionDenied("ليس لديك الصلاحية لتعديل أو مسح بيانات فئة أخرى.")
+        return obj
+
+
 
 
 from django.contrib import messages
