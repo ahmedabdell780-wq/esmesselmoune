@@ -380,3 +380,58 @@ class ClubNotification(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.recipient}"
+
+
+class LeagueTeam(models.Model):
+    name = models.CharField(max_length=100, verbose_name=_('Nom de l\'équipe / اسم الفريق'))
+    code = models.CharField(max_length=10, blank=True)
+    logo = models.ImageField(upload_to='league_teams/', blank=True, null=True)
+
+    class Meta:
+        verbose_name = _('Equipe de Ligue')
+        verbose_name_plural = _('Equipes de Ligue')
+
+    def __str__(self):
+        return self.name
+
+class LeagueStanding(models.Model):
+    CATEGORY_CHOICES = [('U15','U15'), ('U17','U17'), ('U20','U20')]
+    team = models.ForeignKey(LeagueTeam, on_delete=models.CASCADE, related_name='standings')
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='U17')
+    played = models.IntegerField(default=0)
+    won = models.IntegerField(default=0)
+    drawn = models.IntegerField(default=0)
+    lost = models.IntegerField(default=0)
+    goals_for = models.IntegerField(default=0)
+    goals_against = models.IntegerField(default=0)
+    points = models.IntegerField(default=0)
+
+    class Meta:
+        unique_together = ('team', 'category')
+        ordering = ['-points', '-goals_for']
+
+    def __str__(self):
+        return f"{self.team.name} ({self.category}) - {self.points} pts"
+
+class LeagueMatch(models.Model):
+    CATEGORY_CHOICES = [('U15','U15'), ('U17','U17'), ('U20','U20')]
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='U17')
+    round_number = models.IntegerField(default=1, verbose_name=_('Journée / الجولة'))
+    home_team = models.ForeignKey(LeagueTeam, on_delete=models.CASCADE, related_name='home_matches')
+    away_team = models.ForeignKey(LeagueTeam, on_delete=models.CASCADE, related_name='away_matches')
+    home_score = models.IntegerField(null=True, blank=True)
+    away_score = models.IntegerField(null=True, blank=True)
+    is_played = models.BooleanField(default=False)
+    date = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = _('Match de Ligue')
+        verbose_name_plural = _('Matchs de Ligue')
+        ordering = ['round_number', 'date']
+
+    def __str__(self):
+        return f"J{self.round_number} {self.category}: {self.home_team.name} vs {self.away_team.name}"
+
+    def update_standings(self):
+        # We will trigger this manually or on save
+        pass

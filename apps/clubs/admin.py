@@ -65,3 +65,23 @@ class ClubNewsAdmin(admin.ModelAdmin):
     list_filter = ('is_published', 'created_at')
     search_fields = ('title', 'content')
     prepopulated_fields = {'slug': ('title',)}
+
+
+from .models import LeagueTeam, LeagueMatch, LeagueStanding
+
+@admin.register(LeagueTeam)
+class LeagueTeamAdmin(admin.ModelAdmin):
+    list_display = ('name', 'code')
+
+@admin.register(LeagueMatch)
+class LeagueMatchAdmin(admin.ModelAdmin):
+    list_display = ('category', 'round_number', 'home_team', 'home_score', 'away_score', 'away_team', 'is_played', 'date')
+    list_filter = ('category', 'round_number', 'is_played')
+    search_fields = ('home_team__name', 'away_team__name')
+    list_editable = ('home_score', 'away_score', 'is_played')
+
+@admin.register(LeagueStanding)
+class LeagueStandingAdmin(admin.ModelAdmin):
+    list_display = ('team', 'category', 'points', 'played', 'won', 'drawn', 'lost', 'goals_for', 'goals_against')
+    list_filter = ('category',)
+    ordering = ('-points', '-goals_for')
