@@ -208,7 +208,93 @@
 </div>
 {% endif %}
 
+
+<!-- FULL SCHEDULE & STATS (Premier League Style) -->
+<div class="mb-14">
+    <div class="flex items-center justify-between mb-8">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-list-ol text-emerald-400"></i> الإحصائيات ورزنامة الفريق
+        </h2>
+    </div>
+    
+    <!-- Category Toggles -->
+    <div class="flex justify-center gap-4 mb-8" dir="ltr">
+        <button onclick="showSchedule('U15')" id="btn-sch-U15" class="sch-btn px-6 py-2 rounded-full font-black text-sm transition-all bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)]">U15</button>
+        <button onclick="showSchedule('U17')" id="btn-sch-U17" class="sch-btn px-6 py-2 rounded-full font-black text-sm transition-all border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20">U17</button>
+        <button onclick="showSchedule('U20')" id="btn-sch-U20" class="sch-btn px-6 py-2 rounded-full font-black text-sm transition-all border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20">U20</button>
+    </div>
+    
+    {% for data in schedule_data %}
+    <div id="sch-{{ data.category }}" class="sch-content {% if not forloop.first %}hidden{% endif %}">
+        
+        <!-- Stats Bar -->
+        <div class="grid grid-cols-4 sm:grid-cols-8 gap-2 mb-10 text-center text-white font-bold bg-gradient-to-br from-[#1e293b] to-[#0f172a] rounded-3xl p-4 sm:p-6 border border-white/10 shadow-2xl relative overflow-hidden" dir="rtl">
+            <div class="absolute -right-10 -top-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl"></div>
+            <div class="flex flex-col relative z-10"><span class="text-[0.65rem] sm:text-xs text-gray-400 mb-1">لعب</span><span class="text-lg sm:text-2xl">{{ data.stats.played }}</span></div>
+            <div class="flex flex-col relative z-10"><span class="text-[0.65rem] sm:text-xs text-gray-400 mb-1">فاز</span><span class="text-lg sm:text-2xl text-emerald-400">{{ data.stats.won }}</span></div>
+            <div class="flex flex-col relative z-10"><span class="text-[0.65rem] sm:text-xs text-gray-400 mb-1">تعادل</span><span class="text-lg sm:text-2xl text-yellow-400">{{ data.stats.drawn }}</span></div>
+            <div class="flex flex-col relative z-10"><span class="text-[0.65rem] sm:text-xs text-gray-400 mb-1">خسر</span><span class="text-lg sm:text-2xl text-red-400">{{ data.stats.lost }}</span></div>
+            <div class="flex flex-col relative z-10"><span class="text-[0.65rem] sm:text-xs text-gray-400 mb-1">له</span><span class="text-lg sm:text-2xl">{{ data.stats.gf }}</span></div>
+            <div class="flex flex-col relative z-10"><span class="text-[0.65rem] sm:text-xs text-gray-400 mb-1">عليه</span><span class="text-lg sm:text-2xl">{{ data.stats.ga }}</span></div>
+            <div class="flex flex-col relative z-10"><span class="text-[0.65rem] sm:text-xs text-gray-400 mb-1">الفرق</span><span class="text-lg sm:text-2xl" dir="ltr">{% if data.stats.gd > 0 %}+{{ data.stats.gd }}{% else %}{{ data.stats.gd }}{% endif %}</span></div>
+            <div class="flex flex-col bg-emerald-500/20 rounded-xl justify-center relative z-10 border border-emerald-500/30 p-2"><span class="text-[0.65rem] sm:text-xs text-emerald-400 mb-1">النقاط</span><span class="text-xl sm:text-3xl text-white">{{ data.stats.pts }}</span></div>
+        </div>
+        
+        <!-- Premier League Style Fixtures -->
+        <div class="space-y-5 max-w-4xl mx-auto" dir="ltr">
+            {% for m in data.matches %}
+            <div class="pl-fixture relative group transition-transform hover:scale-[1.02]">
+                <!-- White Bar -->
+                <div class="flex items-stretch bg-white rounded-full h-14 sm:h-20 shadow-[0_10px_20px_rgba(0,0,0,0.4)] overflow-hidden relative z-10 border-b-4 border-gray-300">
+                    
+                    <!-- Right Team (Home) -->
+                    <div class="flex-1 flex items-center justify-start pl-3 sm:pl-6 bg-gradient-to-r from-white to-gray-100">
+                        <img src="{% if m.is_home %}{% static 'img/logo.png' %}{% else %}/static/img/teams/{{ m.opponent_code }}.jpg{% endif %}" onerror="this.onerror=null; this.src='{% static 'img/app_logo.png' %}';" class="w-9 h-9 sm:w-14 sm:h-14 object-contain drop-shadow-md">
+                        <span class="font-black text-gray-800 text-[0.7rem] sm:text-[1.1rem] ml-3 sm:ml-6 uppercase tracking-tight sm:tracking-wider truncate" style="font-family: 'Cairo', sans-serif;">{% if m.is_home %}الوفاق مسلمون{% else %}{{ m.opponent }}{% endif %}</span>
+                    </div>
+                    
+                    <!-- Center VS -->
+                    <div class="w-14 sm:w-20 bg-gradient-to-br from-red-600 to-red-800 text-white font-black flex flex-col items-center justify-center relative z-20 shadow-[0_0_20px_rgba(220,38,38,0.4)] transform -skew-x-12 border-x border-red-900">
+                        <span class="transform skew-x-12 text-sm sm:text-2xl drop-shadow-md tracking-widest font-sans">VS</span>
+                        {% if m.our_score is not None %}
+                        <div class="absolute -bottom-3 sm:-bottom-4 transform skew-x-12 bg-gray-900 text-white text-[0.65rem] sm:text-sm px-3 py-1 rounded-full border border-gray-700 shadow-lg font-bold">
+                            {% if m.is_home %}{{ m.our_score }} - {{ m.opponent_score }}{% else %}{{ m.opponent_score }} - {{ m.our_score }}{% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Left Team (Away) -->
+                    <div class="flex-1 flex items-center justify-end pr-3 sm:pr-6 bg-gradient-to-l from-white to-gray-100">
+                        <span class="font-black text-gray-800 text-[0.7rem] sm:text-[1.1rem] mr-3 sm:mr-6 uppercase tracking-tight sm:tracking-wider truncate" style="font-family: 'Cairo', sans-serif;">{% if not m.is_home %}الوفاق مسلمون{% else %}{{ m.opponent }}{% endif %}</span>
+                        <img src="{% if not m.is_home %}{% static 'img/logo.png' %}{% else %}/static/img/teams/{{ m.opponent_code }}.jpg{% endif %}" onerror="this.onerror=null; this.src='{% static 'img/app_logo.png' %}';" class="w-9 h-9 sm:w-14 sm:h-14 object-contain drop-shadow-md">
+                    </div>
+                </div>
+                
+                <!-- Date Bar -->
+                <div class="bg-[#111827] text-center text-[0.55rem] sm:text-[0.7rem] text-blue-200 font-bold py-1.5 mx-6 sm:mx-12 rounded-b-2xl relative -top-3 pt-4 z-0 shadow-inner border border-[#1f2937] border-t-0 tracking-widest uppercase" style="font-family: 'Montserrat', sans-serif;">
+                    {{ m.date|date:"l, d F Y" }} KICK-OFF AT {{ m.time|default:"00:00" }} | {{ m.location|default:"الملعب البلدي مسلمون" }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+    
+    <script>
+    function showSchedule(cat) {
+        document.querySelectorAll('.sch-content').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.sch-btn').forEach(btn => {
+            btn.className = 'sch-btn px-6 py-2 rounded-full font-black text-sm transition-all border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20';
+        });
+        
+        document.getElementById('sch-' + cat).classList.remove('hidden');
+        let activeBtn = document.getElementById('btn-sch-' + cat);
+        activeBtn.className = 'sch-btn px-6 py-2 rounded-full font-black text-sm transition-all bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)]';
+    }
+    </script>
+</div>
 <!-- LATEST NEWS -->
+
 
 <div class="mb-10">
     <div class="flex items-center justify-between mb-6">
