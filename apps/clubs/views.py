@@ -826,10 +826,13 @@ from django.http import HttpResponse
 
 class PopulateLeagueView(ClubWriteAccessMixin, TemplateView):
     def get(self, request, *args, **kwargs):
+        from django.core.management import call_command
+        from django.http import HttpResponse
         if not request.user.is_superuser and request.user.role != 'admin':
-            return HttpResponse("Non autoris", status=403)
+            return HttpResponse("Non autorise", status=403)
         try:
+            call_command('migrate')
             call_command('populate_league')
-            return HttpResponse("نجاح! تم توليد 12 فريق و 11 جولة لكل الفئات في قاعدة البيانات. يمكنك الآن إغلاق هذه الصفحة.")
+            return HttpResponse("نجاح! تم التحديث. يمكنك العودة للموقع.", status=200)
         except Exception as e:
-            return HttpResponse(f"خطأ: {str(e)}")
+            return HttpResponse(str(e), status=500)
