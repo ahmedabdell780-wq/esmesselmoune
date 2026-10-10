@@ -10,14 +10,21 @@ class HomeView(TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        
-        from apps.clubs.models import ClubNews, ClubPlayer
+        from apps.clubs.models import ClubNews, ClubPlayer, ClubMatch
         
         ctx['recent_news'] = ClubNews.objects.filter(is_published=True).order_by('-created_at')[:3]
         ctx['stats'] = {
             'total_players': ClubPlayer.objects.filter(is_active=True).count()
         }
         
+        # Get next match for Wifak
+        next_matches = []
+        for cat in ["U15", "U17", "U20"]:
+            match = ClubMatch.objects.filter(category__name__icontains=cat, our_score__isnull=True).order_by('date').first()
+            if match:
+                next_matches.append(match)
+                
+        ctx['next_matches'] = next_matches
         return ctx
 
 

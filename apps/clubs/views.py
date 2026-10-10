@@ -838,3 +838,26 @@ def populate_league_view(request):
     except Exception as e:
         import traceback
         return HttpResponse(f"ERROR: {str(e)}<br><pre>{traceback.format_exc()}</pre>", status=200)
+
+
+from django.http import JsonResponse
+from apps.clubs.models import ClubMatch, Category
+
+def debug_matches(request):
+    data = {}
+    data['categories'] = list(Category.objects.values_list('name', flat=True))
+    data['all_club_matches'] = ClubMatch.objects.count()
+    data['unplayed_club_matches'] = ClubMatch.objects.filter(our_score__isnull=True).count()
+    data['matches'] = []
+    
+    for m in ClubMatch.objects.all().order_by('-id')[:20]:
+        data['matches'].append({
+            'id': m.id,
+            'cat': m.category.name if m.category else None,
+            'opponent': m.opponent,
+            'is_home': m.is_home,
+            'our_score': m.our_score,
+            'date': m.date,
+        })
+        
+    return JsonResponse(data)
