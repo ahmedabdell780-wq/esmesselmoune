@@ -124,7 +124,15 @@
     <div class="text-center mb-10">
         <h1 class="text-2xl sm:text-3xl font-black text-white mb-2">الرابطة الولائية لكرة القدم تيبازة</h1>
         <p class="text-emerald-400 font-bold text-sm sm:text-base">رزنامة بطولة الفئات الشبانية للموسم الرياضي 2026/2027</p>
-        <p class="text-gray-400 text-xs sm:text-sm mt-1">مجموعة وسط غرب — مرحلة الذهاب</p>
+        <p class="text-gray-400 text-xs sm:text-sm mt-1">مجموعة وسط غرب — مرحلة الذهاب <br><span id='cat-title' class='inline-block mt-3 px-4 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full font-black text-lg'>فئة U17</span></p>
+    </div>
+
+    
+    <!-- Category Tabs -->
+    <div class="flex justify-center gap-3 sm:gap-6 mb-8" dir="ltr">
+        <button onclick="setCategory('U15')" class="cat-btn px-6 py-2 rounded-full font-black text-sm transition-all border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20" id="btn-u15">U15</button>
+        <button onclick="setCategory('U17')" class="cat-btn px-6 py-2 rounded-full font-black text-sm transition-all bg-emerald-500 text-white border border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]" id="btn-u17">U17</button>
+        <button onclick="setCategory('U20')" class="cat-btn px-6 py-2 rounded-full font-black text-sm transition-all border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20" id="btn-u20">U20</button>
     </div>
 
     <!-- Toggle for Wifak matches -->
@@ -210,5 +218,14 @@
             allRounds.forEach(round => round.style.display = 'block');
         }
     });
+
+    function setCategory(cat) {
+        document.querySelectorAll('.cat-btn').forEach(btn => {
+            btn.className = "cat-btn px-6 py-2 rounded-full font-black text-sm transition-all border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20";
+        });
+        const activeBtn = document.getElementById('btn-' + cat.toLowerCase());
+        activeBtn.className = "cat-btn px-6 py-2 rounded-full font-black text-sm transition-all bg-emerald-500 text-white border border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]";
+        document.getElementById('cat-title').innerText = "فئة " + cat;
+    }
 </script>
 {% endblock %}
