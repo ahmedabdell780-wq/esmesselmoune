@@ -835,4 +835,4 @@ class PopulateLeagueView(ClubWriteAccessMixin, TemplateView):
             call_command('populate_league')
             return HttpResponse("نجاح! تم التحديث. يمكنك العودة للموقع.", status=200)
         except Exception as e:
-            return HttpResponse(str(e), status=500)
+            return HttpResponse(f"ERROR: {str(e)}", status=200)
