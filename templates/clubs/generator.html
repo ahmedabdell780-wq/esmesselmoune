@@ -150,10 +150,7 @@ const SEED = {cat:"U17", round:1, matches:[], adj:{},
     badgeImg:"{% static 'img/league_badge.jpg' %}", site:"", fb:"", t1:"الترتيب", t2:"نتائج الجولة", outLabel:"غير منخرط",
     cols:["الترتيب","الفريق","لعب","فوز","تعادل","خسارة","نقاط"]},
   colors:{g:"#12793b", gb:"#3db54a", navy:"#1c1a6c", red:"#ef1c25"},
-  teams:[["وفاق حجوط","WH"],["ونام وجبرون","WBM"],["اتحاد القليعة","USJK"],["غالي سيدي راشد","GBSR"],
-   ["أمل سيدي عمر","ESA"],["الوفاق مسلمون","ESMS"],["أمل مناصر","ESM"],["نجمة حجوط","EBH"],
-   ["التحدي الداموس","THD"],["مشعل سيدي عمر","MBSA"],["رائد شباب الارهاط","RCBL"]
-  ].map(([name,code],i)=>({id:i+1,name,code,logo:LOGOS[code]||"",cats:{U15:1,U17:1,U20:1}}))};
+  teams:[["وفاق حجوط","WH"],["أمل سيدي عمر","ESA"],["ونام بوجبرون","WBM"],["مولودية مراد","MCM"],["اتحاد مناصر","USM"],["الوفاق مسلمون","ESMS"],["تحدي الداموس","THD"],["مولودية قوراية","MCG"],["شبيبة حجوط","JSH"],["اتحاد القليعة","USJK"],["نخبة فجانة","NF"],["نجمة حجوط","EBH"]].map(([name,code],i)=>({id:i+1,name,code,logo:LOGOS[code]||"",cats:{U15:1,U17:1,U20:1}}))};
 let S; try{ S=JSON.parse(localStorage.getItem(KEY)) }catch(e){}
 S = Object.assign(clone(SEED), S||{});
 S.league = Object.assign(clone(SEED.league), S.league);
