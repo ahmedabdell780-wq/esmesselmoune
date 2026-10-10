@@ -819,3 +819,17 @@ class LeagueScheduleView(TemplateView):
             
         context['rounds'] = formatted_rounds
         return context
+
+
+from django.core.management import call_command
+from django.http import HttpResponse
+
+class PopulateLeagueView(ClubWriteAccessMixin, TemplateView):
+    def get(self, request, *args, **kwargs):
+        if not request.user.is_superuser and request.user.role != 'admin':
+            return HttpResponse("Non autoris", status=403)
+        try:
+            call_command('populate_league')
+            return HttpResponse("نجاح! تم توليد 12 فريق و 11 جولة لكل الفئات في قاعدة البيانات. يمكنك الآن إغلاق هذه الصفحة.")
+        except Exception as e:
+            return HttpResponse(f"خطأ: {str(e)}")
