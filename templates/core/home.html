@@ -56,7 +56,7 @@
     position: relative;
     margin: 1.5rem auto 3.5rem auto;
     width: 100%;
-    max-width: 700px; /* limits width on large screens */
+    max-width: 700px;
 }
 .match-side {
     flex: 1;
@@ -93,13 +93,20 @@
     align-items: center;
     color: white;
     font-weight: 900;
-    font-size: 1rem;
+    font-size: 0.7rem; /* Small for mobile */
     font-family: 'Cairo', sans-serif;
-    padding: 0 10px;
+    padding: 0 2px; /* reduced padding on mobile */
+}
+@media (min-width: 640px) {
+    .team-name {
+        font-size: 1rem;
+        padding: 0 10px;
+    }
 }
 .team-name span {
     display: inline-block;
     word-break: break-word;
+    line-height: 1.2;
 }
 .match-center {
     position: absolute;
@@ -153,46 +160,43 @@
     
     <div class="grid grid-cols-1 gap-10">
         {% for match in next_matches %}
-        <div class="card p-6 rounded-3xl border border-white/5 backdrop-blur-md relative" style="background:var(--card2)">
+        <div class="card p-2 sm:p-6 rounded-3xl border border-white/5 backdrop-blur-md relative" style="background:var(--card2)">
             
-            <div class="text-center mb-8">
+            <div class="text-center mb-6 sm:mb-8">
                 <span class="badge bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 px-6 py-2 font-bold text-xl">{{ match.category.name }}</span>
             </div>
             
             <div class="match-board" dir="ltr">
-                <!-- Left side (Home Team if match.is_home, otherwise Away Team) -->
-                <!-- We will put Opponent on Left and Wifak on Right, or vice versa? 
-                     Usually Home is Left, Away is Right in LTR -->
                 <div class="match-side">
                     <div class="score-box left-score">-</div>
                     <div class="team-name flex items-center justify-between">
-                        <span class="text-left w-full pl-2">{% if match.is_home %}الوفاق{% else %}{{ match.opponent }}{% endif %}</span>
+                        <span class="text-left w-full pl-1 sm:pl-2">{% if match.is_home %}الوفاق{% else %}{{ match.opponent }}{% endif %}</span>
+                        <!-- Added mr-8 sm:mr-10 to push logo away from center overlap -->
                         <img src="{% if match.is_home %}{% static 'img/logo.png' %}{% else %}/static/img/teams/{{ match.opponent_code }}.jpg{% endif %}" 
                              onerror="this.onerror=null; this.src='{% static 'img/app_logo.png' %}';"
-                             class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-contain ml-2 sm:ml-4 bg-white/10 p-1 border border-white/20 shrink-0">
+                             class="w-7 h-7 sm:w-10 sm:h-10 rounded-full object-contain ml-1 sm:ml-2 mr-8 sm:mr-10 bg-white/10 p-0.5 border border-white/20 shrink-0">
                     </div>
                 </div>
                 
-                <!-- Center -->
                 <div class="match-center">
                     <div class="center-badge">{{ match.date|date:"d M" }}</div>
                     <div class="center-time">{{ match.time|default:"00:00" }}</div>
                     <img src="https://cdn-icons-png.flaticon.com/512/861/861512.png" class="center-ball">
                 </div>
                 
-                <!-- Right side -->
                 <div class="match-side">
                     <div class="team-name flex items-center justify-between">
+                        <!-- Added ml-8 sm:ml-10 to push logo away from center overlap -->
                         <img src="{% if not match.is_home %}{% static 'img/logo.png' %}{% else %}/static/img/teams/{{ match.opponent_code }}.jpg{% endif %}" 
                              onerror="this.onerror=null; this.src='{% static 'img/app_logo.png' %}';"
-                             class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-contain mr-2 sm:mr-4 bg-white/10 p-1 border border-white/20 shrink-0">
-                        <span class="text-right w-full pr-2">{% if not match.is_home %}الوفاق{% else %}{{ match.opponent }}{% endif %}</span>
+                             class="w-7 h-7 sm:w-10 sm:h-10 rounded-full object-contain mr-1 sm:mr-2 ml-8 sm:ml-10 bg-white/10 p-0.5 border border-white/20 shrink-0">
+                        <span class="text-right w-full pr-1 sm:pr-2">{% if not match.is_home %}الوفاق{% else %}{{ match.opponent }}{% endif %}</span>
                     </div>
                     <div class="score-box right-score">-</div>
                 </div>
             </div>
             
-            <div class="text-center mt-6">
+            <div class="text-center mt-8 sm:mt-6">
                 <p class="text-gray-400 text-sm flex items-center justify-center gap-2 font-bold" dir="rtl">
                     <i class="fa-solid fa-location-dot text-emerald-400"></i>
                     {{ match.location|default:"الملعب البلدي مسلمون" }}
