@@ -861,3 +861,25 @@ def debug_matches(request):
         })
         
     return JsonResponse(data)
+
+
+def test_matches_view(request):
+    from django.http import HttpResponse
+    from apps.clubs.models import ClubMatch, Category
+    
+    cats = list(Category.objects.values_list('name', flat=True))
+    matches = list(ClubMatch.objects.values('id', 'category__name', 'opponent', 'our_score', 'date'))
+    
+    html = f"<h3>Categories:</h3><p>{cats}</p>"
+    html += f"<h3>Matches ({len(matches)}):</h3><pre>"
+    for m in matches:
+        html += str(m) + "\n"
+    html += "</pre>"
+    
+    html += "<h3>Next Matches calculation:</h3><pre>"
+    for cat in ["U15", "U17", "U20"]:
+        match = ClubMatch.objects.filter(category__name__icontains=cat, our_score__isnull=True).order_by('date').first()
+        html += f"{cat}: {match}\n"
+    html += "</pre>"
+        
+    return HttpResponse(html)

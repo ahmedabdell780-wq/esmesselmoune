@@ -18,10 +18,19 @@ class HomeView(TemplateView):
         }
         
         # Get next match for Wifak
+        teams_data = {
+            "وفاق حجوط": "wh", "أمل سيدي عمر": "esa", "ونام بوجبرون": "wbm",
+            "مولودية مراد": "mcm", "اتحاد مناصر": "usm", "الوفاق مسلمون": "esms",
+            "تحدي الداموس": "thd", "مولودية قوراية": "mcg", "شبيبة حجوط": "jsh",
+            "اتحاد القليعة": "usjk", "نخبة فجانة": "nf", "نجمة حجوط": "ebh"
+        }
         next_matches = []
         for cat in ["U15", "U17", "U20"]:
             match = ClubMatch.objects.filter(category__name__icontains=cat, our_score__isnull=True).order_by('date').first()
             if match:
+                match.opponent_code = teams_data.get(match.opponent, "thd") # default to thd if not found
+                if match.opponent == "اتحاد مناصر":
+                    match.opponent_code = "esm" # exception handled in generator
                 next_matches.append(match)
                 
         ctx['next_matches'] = next_matches
