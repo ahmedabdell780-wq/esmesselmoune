@@ -8,14 +8,14 @@
     display: flex;
     align-items: center;
     position: relative;
-    margin: 2.5rem auto;
+    margin: 1.5rem auto 3.5rem auto; /* Big bottom margin for the ball */
     width: 100%;
 }
 .match-side {
     flex: 1;
     display: flex;
     align-items: stretch;
-    height: 42px;
+    min-height: 46px; /* slightly taller to fit wrapping text */
     background: #1e293b; /* Dark bar */
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
@@ -24,7 +24,7 @@
     color: white;
     font-weight: 900;
     font-size: 1.2rem;
-    width: 40px;
+    width: 35px; /* slightly narrower */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -34,11 +34,11 @@
 }
 .left-score {
     clip-path: polygon(0 0, 100% 0, 75% 100%, 0 100%);
-    margin-right: -15px; 
+    margin-right: -10px; 
 }
 .right-score {
     clip-path: polygon(0 0, 100% 0, 100% 100%, 25% 100%);
-    margin-left: -15px; 
+    margin-left: -10px; 
 }
 .team-name {
     flex: 1;
@@ -46,22 +46,30 @@
     align-items: center;
     color: white;
     font-weight: 900;
-    font-size: 0.8rem;
+    font-size: 0.75rem; /* smaller for mobile */
     font-family: 'Cairo', sans-serif;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.1;
+}
+@media (min-width: 640px) {
+    .team-name { font-size: 0.85rem; }
+    .score-box { width: 40px; }
+    .left-team { padding-right: 45px; }
+    .right-team { padding-left: 45px; }
 }
 .left-team {
     justify-content: flex-start;
-    padding-left: 20px;
-    padding-right: 45px; 
+    padding-left: 10px;
+    padding-right: 30px; 
 }
 .right-team {
     justify-content: flex-end;
-    padding-right: 20px;
-    padding-left: 45px; 
+    padding-right: 10px;
+    padding-left: 30px; 
+}
+.team-name span {
+    display: inline-block;
+    word-break: break-word;
+    text-align: center;
 }
 .match-center {
     position: absolute;
@@ -89,17 +97,17 @@
     font-size: 1.1rem;
     font-weight: 900;
     font-family: 'Bebas Neue', monospace;
-    padding: 4px 22px;
+    padding: 4px 18px;
     clip-path: polygon(0 0, 100% 0, 80% 100%, 20% 100%);
     border-bottom: 2px solid #10b981;
     text-align: center;
-    min-width: 80px;
+    min-width: 70px;
 }
 .center-ball {
-    width: 38px;
-    height: 38px;
+    width: 32px;
+    height: 32px;
     position: absolute;
-    bottom: -36px;
+    bottom: -30px;
     filter: drop-shadow(0 4px 3px rgba(0,0,0,0.6));
     animation: spin 10s linear infinite;
 }
@@ -112,29 +120,29 @@
 .match-board.is-wifak .team-name { color: #fcd34d; }
 </style>
 
-<div class="max-w-6xl mx-auto py-8 px-4" dir="rtl">
+<div class="max-w-6xl mx-auto py-8 px-2 sm:px-4" dir="rtl">
     <div class="text-center mb-10">
-        <h1 class="text-3xl font-black text-white mb-2">الرابطة الولائية لكرة القدم تيبازة</h1>
-        <p class="text-emerald-400 font-bold">رزنامة بطولة الفئات الشبانية للموسم الرياضي 2026/2027</p>
-        <p class="text-gray-400 text-sm mt-1">مجموعة وسط غرب — مرحلة الذهاب</p>
+        <h1 class="text-2xl sm:text-3xl font-black text-white mb-2">الرابطة الولائية لكرة القدم تيبازة</h1>
+        <p class="text-emerald-400 font-bold text-sm sm:text-base">رزنامة بطولة الفئات الشبانية للموسم الرياضي 2026/2027</p>
+        <p class="text-gray-400 text-xs sm:text-sm mt-1">مجموعة وسط غرب — مرحلة الذهاب</p>
     </div>
 
     <!-- Toggle for Wifak matches -->
     <div class="flex justify-center mb-12">
         <label class="flex items-center gap-3 cursor-pointer p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
             <input type="checkbox" id="wifak-filter" class="form-checkbox h-5 w-5 text-emerald-500 rounded bg-black/50 border-white/20 focus:ring-emerald-500 focus:ring-offset-0">
-            <span class="text-white font-bold select-none">إظهار مباريات <span class="text-emerald-400">الوفاق الرياضي مسلمون</span> فقط</span>
+            <span class="text-white font-bold select-none text-sm sm:text-base">إظهار مباريات <span class="text-emerald-400">الوفاق الرياضي مسلمون</span> فقط</span>
         </label>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-x-10 gap-y-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-10">
         {% for round in rounds %}
-        <div class="bg-black/20 rounded-3xl border border-white/10 overflow-visible match-round p-6 pb-8">
-            <div class="text-center mb-6">
+        <div class="bg-black/20 rounded-3xl border border-white/10 overflow-visible match-round p-4 sm:p-6 pb-10">
+            <div class="text-center mb-8">
                 <h3 class="text-xl font-black text-emerald-400 border-b border-white/10 pb-2 inline-block px-8">الجولة {{ forloop.counter }}</h3>
             </div>
             
-            <div class="space-y-4">
+            <div class="pt-2">
                 {% for match in round %}
                 <!-- Match Scoreboard UI -->
                 <div class="match-board {% if 'الوفاق مسلمون' in match.team1.name or 'الوفاق مسلمون' in match.team2.name %}is-wifak match-item{% else %}match-item{% endif %}" dir="ltr">
@@ -143,8 +151,8 @@
                     <div class="match-side">
                         <div class="score-box left-score">0</div>
                         <div class="team-name left-team flex items-center justify-between">
-                            <span class="truncate">{{ match.team2.name }}</span>
-                            <img src="{{ match.team2.logo }}" class="w-8 h-8 rounded-full object-contain ml-2 bg-white/10 p-0.5 border border-white/20" onerror="this.style.display='none'">
+                            <span class="text-left w-full pl-1">{{ match.team2.name }}</span>
+                            <img src="{{ match.team2.logo }}" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-contain ml-1 sm:ml-2 bg-white/10 p-0.5 border border-white/20 shrink-0" onerror="this.style.display='none'">
                         </div>
                     </div>
                     
@@ -158,8 +166,8 @@
                     <!-- Right side (Team 1) -->
                     <div class="match-side">
                         <div class="team-name right-team flex items-center justify-between">
-                            <img src="{{ match.team1.logo }}" class="w-8 h-8 rounded-full object-contain mr-2 bg-white/10 p-0.5 border border-white/20" onerror="this.style.display='none'">
-                            <span class="truncate">{{ match.team1.name }}</span>
+                            <img src="{{ match.team1.logo }}" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-contain mr-1 sm:mr-2 bg-white/10 p-0.5 border border-white/20 shrink-0" onerror="this.style.display='none'">
+                            <span class="text-right w-full pr-1">{{ match.team1.name }}</span>
                         </div>
                         <div class="score-box right-score">0</div>
                     </div>
