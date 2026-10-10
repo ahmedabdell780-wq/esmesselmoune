@@ -137,12 +137,15 @@
             <div class="space-y-4">
                 {% for match in round %}
                 <!-- Match Scoreboard UI -->
-                <div class="match-board {% if 'الوفاق مسلمون' in match.0 or 'الوفاق مسلمون' in match.1 %}is-wifak match-item{% else %}match-item{% endif %}" dir="ltr">
+                <div class="match-board {% if 'الوفاق مسلمون' in match.team1.name or 'الوفاق مسلمون' in match.team2.name %}is-wifak match-item{% else %}match-item{% endif %}" dir="ltr">
                     
                     <!-- Left side (Team 2) -->
                     <div class="match-side">
                         <div class="score-box left-score">0</div>
-                        <div class="team-name left-team">{{ match.1 }}</div>
+                        <div class="team-name left-team flex items-center justify-between">
+                            <span class="truncate">{{ match.team2.name }}</span>
+                            <img src="{{ match.team2.logo }}" class="w-8 h-8 rounded-full object-contain ml-2 bg-white/10 p-0.5 border border-white/20" onerror="this.style.display='none'">
+                        </div>
                     </div>
                     
                     <!-- Center -->
@@ -154,7 +157,10 @@
                     
                     <!-- Right side (Team 1) -->
                     <div class="match-side">
-                        <div class="team-name right-team">{{ match.0 }}</div>
+                        <div class="team-name right-team flex items-center justify-between">
+                            <img src="{{ match.team1.logo }}" class="w-8 h-8 rounded-full object-contain mr-2 bg-white/10 p-0.5 border border-white/20" onerror="this.style.display='none'">
+                            <span class="truncate">{{ match.team1.name }}</span>
+                        </div>
                         <div class="score-box right-score">0</div>
                     </div>
                 </div>
