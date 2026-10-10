@@ -46,7 +46,64 @@
     </div>
 </div>
 
+
+<!-- NEXT MATCHES (Wifak Schedule) -->
+{% if next_matches %}
+<div class="mb-10">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-calendar-alt text-emerald-400"></i> المباراة القادمة
+        </h2>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {% for match in next_matches %}
+        <div class="card p-6 rounded-3xl border border-white/5 backdrop-blur-md relative overflow-hidden group" style="background:var(--card2)">
+            <!-- Decorative Background -->
+            <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-futbol text-8xl text-white"></i>
+            </div>
+            
+            <div class="relative z-10">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="badge bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 font-bold">{{ match.category.name }}</span>
+                    <span class="text-gray-400 text-sm"><i class="fa-regular fa-clock text-emerald-400"></i> {{ match.date|date:"d M Y" }}</span>
+                </div>
+                
+                <div class="flex items-center justify-between gap-4 mb-4 mt-6">
+                    <div class="text-center w-2/5">
+                        <div class="w-16 h-16 mx-auto bg-white rounded-full p-1 mb-2 flex items-center justify-center border-2 {% if match.is_home %}border-emerald-500{% else %}border-gray-500{% endif %}">
+                            <img src="{% static 'img/logo.png' %}" class="w-full h-full object-contain">
+                        </div>
+                        <h4 class="font-bold text-white text-sm line-clamp-1">الوفاق</h4>
+                    </div>
+                    
+                    <div class="w-1/5 text-center flex flex-col items-center">
+                        <span class="text-xs text-gray-500 font-bold mb-1">VS</span>
+                    </div>
+                    
+                    <div class="text-center w-2/5">
+                        <div class="w-16 h-16 mx-auto bg-white rounded-full p-1 mb-2 flex items-center justify-center border-2 {% if not match.is_home %}border-emerald-500{% else %}border-gray-500{% endif %}">
+                            <img src="{% static 'img/app_logo.png' %}" class="w-full h-full object-contain">
+                        </div>
+                        <h4 class="font-bold text-white text-sm line-clamp-1">{{ match.opponent }}</h4>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-6 pt-4 border-t border-white/10">
+                    <p class="text-gray-400 text-sm flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-location-dot text-emerald-400"></i>
+                        {{ match.location|default:"الملعب البلدي مسلمون" }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 <!-- LATEST NEWS -->
+
 <div class="mb-10">
     <div class="flex items-center justify-between mb-6">
         <h2 class="text-2xl font-bold text-white flex items-center gap-2">
