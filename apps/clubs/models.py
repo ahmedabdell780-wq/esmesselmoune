@@ -60,8 +60,10 @@ class ClubPlayer(models.Model):
     parent_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='kids', verbose_name=_('Compte Parent (Lien)'))
     
     # Informations Personnelles
-    first_name = models.CharField(max_length=50, verbose_name=_('Prénom'))
-    last_name = models.CharField(max_length=50, verbose_name=_('Nom'))
+    first_name = models.CharField(max_length=50, verbose_name=_('Prénom (الاسم بالعربية)'))
+    last_name = models.CharField(max_length=50, verbose_name=_('Nom (اللقب بالعربية)'))
+    first_name_fr = models.CharField(max_length=50, blank=True, default='', verbose_name=_('Prénom en français (الاسم بالفرنسية)'))
+    last_name_fr = models.CharField(max_length=50, blank=True, default='', verbose_name=_('Nom en français (اللقب بالفرنسية)'))
     date_of_birth = models.DateField(verbose_name=_('Date de naissance'))
     place_of_birth = models.CharField(max_length=100, blank=True, verbose_name=_('Lieu de naissance'))
     photo = models.ImageField(upload_to='clubs/players/', blank=True, null=True, verbose_name=_('Photo'))
@@ -78,6 +80,7 @@ class ClubPlayer(models.Model):
     ]
     blood_type = models.CharField(max_length=5, choices=BLOOD_TYPE_CHOICES, blank=True, verbose_name=_('Groupe sanguin'))
     medical_certificate = models.FileField(upload_to='clubs/medical/', blank=True, null=True, verbose_name=_('Certificat médical'))
+    id_card = models.FileField(upload_to='clubs/id_cards/', blank=True, null=True, verbose_name=_('Carte d\'identité (بطاقة التعريف الوطنية)'))
     school_level = models.CharField(max_length=100, blank=True, verbose_name=_('Niveau Scolaire (المستوى الدراسي)'))
     
     # Contact (Parents pour les mineurs)
@@ -119,6 +122,7 @@ class ClubPlayer(models.Model):
     height = models.PositiveIntegerField(null=True, blank=True, verbose_name=_('Taille en cm (القامة)'))
     weight = models.PositiveIntegerField(null=True, blank=True, verbose_name=_('Poids en kg (الوزن)'))
     medical_history = models.TextField(blank=True, verbose_name=_('Antécédents médicaux (الأمراض المزمنة أو السوابق الجراحية)'))
+    notes = models.CharField(max_length=255, blank=True, verbose_name=_('Remarques (ملاحظات)'))
     
     # Système
     is_active = models.BooleanField(default=True, verbose_name=_('Actif'))
@@ -128,10 +132,87 @@ class ClubPlayer(models.Model):
         verbose_name = _('Joueur du Club')
         verbose_name_plural = _('Joueurs du Club')
         ordering = ['category', 'last_name', 'first_name']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['first_name', 'last_name', 'date_of_birth'],
+                name='unique_club_player_identity'
+            )
+        ]
+
+    def clean(self):
+        super().clean()
+        from .normalization import get_category_for_dob, find_duplicate_player
+        
+        # 1. Automatic category assignment based on date of birth if not set
+        if not self.category and self.date_of_birth:
+            self.category = get_category_for_dob(self.date_of_birth)
+            
+        # 2. Automatic jersey number assignment for U9, U11, U13 if not set (<= 100)
+        cat_name = (self.category.name if self.category else '').upper().strip()
+        if cat_name in ['U9', 'U11', 'U13']:
+            if not self.jersey_number:
+                from .normalization import get_next_available_jersey_number
+                self.jersey_number = get_next_available_jersey_number(
+                    self.category,
+                    exclude_player_id=self.pk,
+                    max_num=100
+                )
+            elif self.jersey_number > 100:
+                from django.core.exceptions import ValidationError
+                raise ValidationError({
+                    'jersey_number': _('رقم القميص للفئات U9 و U11 و U13 لا يجب أن يتجاوز 100.')
+                })
+
+        # 3. Resilient duplicate detection (handles hamza variations, spaces, swapped names)
+        if self.first_name and self.last_name and self.date_of_birth:
+            duplicate = find_duplicate_player(
+                self.first_name,
+                self.last_name,
+                self.date_of_birth,
+                exclude_id=self.pk
+            )
+            if duplicate:
+                from django.core.exceptions import ValidationError
+                cat_str = duplicate.category.name if duplicate.category else 'بدون فئة'
+                raise ValidationError(_(
+                    'يوجد لاعب مسجل بالفعل بنفس الهوية: ({} {} - تاريخ الميلاد: {} - فئة {})! '
+                    'تم كشف التطابق لتفادي التكرار والخلط (رغم اختلاف الهمزة، الفراغات، أو التشكيل).'
+                ).format(duplicate.first_name, duplicate.last_name, duplicate.date_of_birth, cat_str))
+
+    def save(self, *args, **kwargs):
+        # Automatically assign category based on date of birth if missing
+        if not self.category and self.date_of_birth:
+            from .normalization import get_category_for_dob
+            self.category = get_category_for_dob(self.date_of_birth)
+            
+        # Automatically assign jersey number for U9, U11, U13 if not set (<= 100)
+        cat_name = (self.category.name if self.category else '').upper().strip()
+        if cat_name in ['U9', 'U11', 'U13'] and not self.jersey_number:
+            from .normalization import get_next_available_jersey_number
+            self.jersey_number = get_next_available_jersey_number(
+                self.category,
+                exclude_player_id=self.pk,
+                max_num=100
+            )
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.category})"
         
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}".strip()
+
+    @property
+    def full_name_fr(self):
+        if self.last_name_fr or self.first_name_fr:
+            return f"{self.last_name_fr} {self.first_name_fr}".strip()
+        from .transliteration import transliterate_text
+        ln = transliterate_text(self.last_name)
+        fn = transliterate_text(self.first_name)
+        return f"{ln} {fn}".strip()
+
     @property
     def generated_card_number(self):
         cat_name = self.category.name if self.category else "U0"
@@ -151,6 +232,20 @@ class ClubPlayer(models.Model):
     @property
     def absent_count(self):
         return self.attendances.filter(is_present=False).count()
+
+    @property
+    def is_passport_eligible(self):
+        return bool(self.category and self.category.name in ['U15', 'U17', 'U20'])
+
+    def get_passport(self):
+        if hasattr(self, 'passport') and self.passport:
+            self.passport.ensure_rows_populated()
+            return self.passport
+        from .transliteration import get_player_passport_defaults
+        defaults = get_player_passport_defaults(self)
+        passport, _ = PlayerPassport.objects.get_or_create(player=self, defaults=defaults)
+        passport.ensure_rows_populated()
+        return passport
 
 class TrainingSession(models.Model):
     """حصة تدريبية"""
@@ -236,9 +331,15 @@ class StaffMember(models.Model):
     first_name = models.CharField(max_length=50, verbose_name=_('Prénom'))
     last_name = models.CharField(max_length=50, verbose_name=_('Nom'))
     role = models.CharField(max_length=10, choices=Role.choices, default=Role.COACH, verbose_name=_('Rôle'))
+    function_title = models.CharField(max_length=100, blank=True, verbose_name=_('Fonction / المهمة المحددة'))
+    date_of_birth = models.DateField(null=True, blank=True, verbose_name=_('Date de naissance (تاريخ الميلاد)'))
+    place_of_birth = models.CharField(max_length=100, blank=True, verbose_name=_('Lieu de naissance (مكان الميلاد)'))
+    notes = models.CharField(max_length=255, blank=True, verbose_name=_('Observation (ملاحظة)'))
     phone = models.CharField(max_length=20, blank=True, verbose_name=_('Téléphone'))
     photo = models.ImageField(upload_to='clubs/staff/', blank=True, null=True, verbose_name=_('Photo'))
     category_assigned = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='staff', verbose_name=_('Catégorie Assignée (Optionnel)'))
+    id_card = models.CharField(max_length=50, blank=True, verbose_name=_('N° CNI / Passeport'))
+    forms_data = models.JSONField(default=dict, blank=True, verbose_name=_('Données formulaires'))
     is_active = models.BooleanField(default=True, verbose_name=_('Actif'))
 
     class Meta:
@@ -348,6 +449,48 @@ class PlayerEquipment(models.Model):
     def __str__(self):
         return f"Équipements de {self.player}"
 
+
+class PlayerPassport(models.Model):
+    """جواز اللاعب - Passeport du Joueur (Ligue Wilaya de Football - Tipaza)"""
+    player = models.OneToOneField(ClubPlayer, on_delete=models.CASCADE, related_name='passport', verbose_name=_('Joueur'))
+    
+    full_name_fr = models.CharField(max_length=200, blank=True, verbose_name=_('Nom et Prénom du Joueur'))
+    license_number = models.CharField(max_length=100, blank=True, verbose_name=_('Numéro de Licence'))
+    date_of_birth = models.DateField(null=True, blank=True, verbose_name=_('Date de Naissance'))
+    place_of_birth_fr = models.CharField(max_length=150, blank=True, verbose_name=_('Lieu de Naissance'))
+    nationality = models.CharField(max_length=100, default='Algérienne', verbose_name=_('Nationalité'))
+    club_name = models.CharField(max_length=150, default='ES Messelmoun', verbose_name=_('Nom du Club'))
+    ligue_name = models.CharField(max_length=150, default='Ligue Wilaya de Football - Tipaza', verbose_name=_('Nom de la Ligue'))
+    declaration_text = models.TextField(
+        blank=True,
+        verbose_name=_('Déclaration'),
+        default="Je soussigné, président du club ES Messelmoun, me suis efforcé dans la mesure du possible de produire une histoire chronologique aussi complète que possible de l'histoire d'enregistrement du joueur susmentionné depuis la saison de son 12ème anniversaire et déclare, au nom du club ES Messelmoun que les détails fournis dans ce document sont à ma connaissance fiable et exactes."
+    )
+    rows_data = models.JSONField(default=list, blank=True, verbose_name=_('Lignes du passeport'))
+    forms_data = models.JSONField(default=dict, blank=True, verbose_name=_('بيانات استمارات الرابطة'))
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _('Passeport du Joueur')
+        verbose_name_plural = _('Passeports des Joueurs')
+
+    def __str__(self):
+        return f"Passeport: {self.full_name_fr or self.player}"
+
+    def ensure_rows_populated(self):
+        if not self.rows_data:
+            from .transliteration import get_player_passport_defaults
+            defaults = get_player_passport_defaults(self.player)
+            self.rows_data = defaults['rows_data']
+            if not self.full_name_fr:
+                self.full_name_fr = defaults['full_name_fr']
+            if not self.place_of_birth_fr:
+                self.place_of_birth_fr = defaults['place_of_birth_fr']
+            if not self.date_of_birth:
+                self.date_of_birth = defaults['date_of_birth']
+            self.save()
 
 class ClubNews(models.Model):
     title = models.CharField(max_length=200, verbose_name=_('Titre / العنوان'))
