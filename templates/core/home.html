@@ -201,6 +201,13 @@
                     <i class="fa-solid fa-location-dot text-emerald-400"></i>
                     {{ match.location|default:"الملعب البلدي مسلمون" }}
                 </p>
+                {% if match.notes %}
+                <div class="mt-2 flex justify-center">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold {% if 'مؤجل' in match.notes or 'تأجيل' in match.notes or 'report' in match.notes|lower %}bg-amber-500/20 text-amber-300 border border-amber-500/30{% elif 'ملغ' in match.notes or 'إلغاء' in match.notes or 'annul' in match.notes|lower %}bg-rose-500/20 text-rose-300 border border-rose-500/30{% elif 'غياب' in match.notes or 'بساط' in match.notes or 'forfait' in match.notes|lower %}bg-emerald-500/20 text-emerald-300 border border-emerald-500/30{% else %}bg-blue-500/20 text-blue-300 border border-blue-500/30{% endif %}">
+                        <i class="fas fa-info-circle text-xs"></i> {{ match.notes }}
+                    </span>
+                </div>
+                {% endif %}
             </div>
         </div>
         {% endfor %}
@@ -260,6 +267,14 @@
                         <div class="absolute -bottom-3 sm:-bottom-4 transform skew-x-12 bg-gray-900 text-white text-[0.65rem] sm:text-sm px-3 py-1 rounded-full border border-gray-700 shadow-lg font-bold">
                             {% if m.is_home %}{{ m.our_score }} - {{ m.their_score }}{% else %}{{ m.their_score }} - {{ m.our_score }}{% endif %}
                         </div>
+                        {% elif m.notes and 'مؤجل' in m.notes or 'تأجيل' in m.notes or 'report' in m.notes|lower %}
+                        <div class="absolute -bottom-3 sm:-bottom-4 transform skew-x-12 bg-amber-600 text-white text-[0.6rem] sm:text-xs px-2.5 py-0.5 rounded-full border border-amber-400 shadow-lg font-bold">
+                            مؤجلة
+                        </div>
+                        {% elif m.notes and 'ملغ' in m.notes or 'إلغاء' in m.notes or 'annul' in m.notes|lower %}
+                        <div class="absolute -bottom-3 sm:-bottom-4 transform skew-x-12 bg-rose-600 text-white text-[0.6rem] sm:text-xs px-2.5 py-0.5 rounded-full border border-rose-400 shadow-lg font-bold">
+                            ملغاة
+                        </div>
                         {% endif %}
                     </div>
                     
@@ -271,8 +286,13 @@
                 </div>
                 
                 <!-- Date Bar -->
-                <div class="bg-[#111827] text-center text-[0.55rem] sm:text-[0.7rem] text-blue-200 font-bold py-1.5 mx-6 sm:mx-12 rounded-b-2xl relative -top-3 pt-4 z-0 shadow-inner border border-[#1f2937] border-t-0 tracking-widest uppercase" style="font-family: 'Montserrat', sans-serif;">
-                    {{ m.date|date:"l, d F Y" }} KICK-OFF AT {{ m.time|default:"00:00" }} | {{ m.location|default:"الملعب البلدي مسلمون" }}
+                <div class="bg-[#111827] text-center text-[0.55rem] sm:text-[0.7rem] text-blue-200 font-bold py-1.5 mx-6 sm:mx-12 rounded-b-2xl relative -top-3 pt-4 z-0 shadow-inner border border-[#1f2937] border-t-0 tracking-widest uppercase flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3" style="font-family: 'Montserrat', sans-serif;">
+                    <span>{{ m.date|date:"l, d F Y" }} KICK-OFF AT {{ m.time|default:"00:00" }} | {{ m.location|default:"الملعب البلدي مسلمون" }}</span>
+                    {% if m.notes %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[0.6rem] font-bold normal-case {% if 'مؤجل' in m.notes or 'تأجيل' in m.notes or 'report' in m.notes|lower %}bg-amber-500/20 text-amber-300 border border-amber-500/30{% elif 'ملغ' in m.notes or 'إلغاء' in m.notes or 'annul' in m.notes|lower %}bg-rose-500/20 text-rose-300 border border-rose-500/30{% elif 'غياب' in m.notes or 'بساط' in m.notes or 'forfait' in m.notes|lower %}bg-emerald-500/20 text-emerald-300 border border-emerald-500/30{% else %}bg-blue-500/20 text-blue-300 border border-blue-500/30{% endif %}">
+                        <i class="fas fa-info-circle mr-1"></i> {{ m.notes }}
+                    </span>
+                    {% endif %}
                 </div>
             </div>
             {% endfor %}
