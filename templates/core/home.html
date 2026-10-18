@@ -1,4 +1,4 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 {% load static %}
 {% load i18n static %}
 {% block title %}{% trans "Accueil" %} / الرئيسية{% endblock %}
@@ -168,7 +168,7 @@
             
             <div class="match-board" dir="ltr">
                 <div class="match-side">
-                    <div class="score-box left-score">-</div>
+                    <div class="score-box left-score">{% if match.our_score is not None and match.their_score is not None %}{% if match.is_home %}{{ match.our_score }}{% else %}{{ match.their_score }}{% endif %}{% else %}-{% endif %}</div>
                     <div class="team-name flex items-center justify-between">
                         <span class="text-center w-full font-black text-[0.8rem] sm:text-lg">{% if match.is_home %}الوفاق مسلمون{% else %}{{ match.opponent }}{% endif %}</span>
                         <!-- Added mr-8 sm:mr-10 to push logo away from center overlap -->
@@ -192,7 +192,7 @@
                              class="w-7 h-7 sm:w-10 sm:h-10 rounded-full object-contain mr-1 sm:mr-2 ml-8 sm:ml-10 bg-white/10 p-0.5 border border-white/20 shrink-0">
                         <span class="text-center w-full font-black text-[0.8rem] sm:text-lg">{% if not match.is_home %}الوفاق مسلمون{% else %}{{ match.opponent }}{% endif %}</span>
                     </div>
-                    <div class="score-box right-score">-</div>
+                    <div class="score-box right-score">{% if match.our_score is not None and match.their_score is not None %}{% if not match.is_home %}{{ match.our_score }}{% else %}{{ match.their_score }}{% endif %}{% else %}-{% endif %}</div>
                 </div>
             </div>
             
@@ -256,9 +256,9 @@
                     <!-- Center VS -->
                     <div class="w-14 sm:w-20 bg-gradient-to-br from-red-600 to-red-800 text-white font-black flex flex-col items-center justify-center relative z-20 shadow-[0_0_20px_rgba(220,38,38,0.4)] transform -skew-x-12 border-x border-red-900">
                         <span class="transform skew-x-12 text-sm sm:text-2xl drop-shadow-md tracking-widest font-sans">VS</span>
-                        {% if m.our_score is not None %}
+                        {% if m.our_score is not None and m.their_score is not None %}
                         <div class="absolute -bottom-3 sm:-bottom-4 transform skew-x-12 bg-gray-900 text-white text-[0.65rem] sm:text-sm px-3 py-1 rounded-full border border-gray-700 shadow-lg font-bold">
-                            {% if m.is_home %}{{ m.our_score }} - {{ m.opponent_score }}{% else %}{{ m.opponent_score }} - {{ m.our_score }}{% endif %}
+                            {% if m.is_home %}{{ m.our_score }} - {{ m.their_score }}{% else %}{{ m.their_score }} - {{ m.our_score }}{% endif %}
                         </div>
                         {% endif %}
                     </div>
