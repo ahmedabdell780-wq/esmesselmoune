@@ -46,14 +46,14 @@ class HomeView(TemplateView):
                 if match.opponent == "اتحاد مناصر":
                     match.opponent_code = "esm"
                 cat_matches.append(match)
-                if match.our_score is not None and match.opponent_score is not None:
+                if match.our_score is not None and match.their_score is not None:
                     stats['played'] += 1
                     stats['gf'] += match.our_score
-                    stats['ga'] += match.opponent_score
-                    if match.our_score > match.opponent_score:
+                    stats['ga'] += match.their_score
+                    if match.our_score > match.their_score:
                         stats['won'] += 1
                         stats['pts'] += 3
-                    elif match.our_score == match.opponent_score:
+                    elif match.our_score == match.their_score:
                         stats['drawn'] += 1
                         stats['pts'] += 1
                     else:
