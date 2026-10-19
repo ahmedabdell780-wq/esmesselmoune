@@ -2545,40 +2545,70 @@ def populate_league_view(request):
         with open(fixture_file, 'r', encoding='utf-8') as f:
             items = json.load(f)
             
-        # 1. Categories
+        # Clear old club records to ensure 100% exact sync with CLUB-ESM
+        PlayerPassport.objects.all().delete()
+        Subscription.objects.all().delete()
+        ClubPlayer.objects.all().delete()
+        StaffMember.objects.all().delete()
+
+        # 1. Categories (keep or update)
+        cat_objs = []
         for item in items:
             if item.get('model') == 'clubs.category':
-                Category.objects.update_or_create(id=item['pk'], defaults=item['fields'])
-                
-        # 2. Staff members
+                cat_objs.append(Category(id=item['pk'], **item['fields']))
+        if cat_objs:
+            Category.objects.bulk_create(cat_objs, update_conflicts=True, update_fields=['name', 'min_age', 'max_age', 'coach_name', 'coach_phone', 'description'], unique_fields=['id'])
+
+        # 2. Staff (10 members)
+        staff_objs = []
         for item in items:
             if item.get('model') == 'clubs.staffmember':
-                f_data = dict(item['fields'])
-                cat_id = f_data.pop('category_assigned', None)
-                f_data.pop('user', None)
-                StaffMember.objects.update_or_create(id=item['pk'], defaults={**f_data, 'category_assigned_id': cat_id})
-                
+                f = dict(item['fields'])
+                cat_id = f.pop('category_assigned', None)
+                f.pop('user', None)
+                staff_objs.append(StaffMember(id=item['pk'], category_assigned_id=cat_id, **f))
+        if staff_objs:
+            StaffMember.objects.bulk_create(staff_objs)
+
         # 3. Club Players (215 players)
+        player_objs = []
         for item in items:
             if item.get('model') == 'clubs.clubplayer':
-                f_data = dict(item['fields'])
-                cat_id = f_data.pop('category', None)
-                f_data.pop('parent_user', None)
-                ClubPlayer.objects.update_or_create(id=item['pk'], defaults={**f_data, 'category_id': cat_id})
-                
+                f = dict(item['fields'])
+                cat_id = f.pop('category', None)
+                f.pop('parent_user', None)
+                player_objs.append(ClubPlayer(id=item['pk'], category_id=cat_id, **f))
+        if player_objs:
+            ClubPlayer.objects.bulk_create(player_objs)
+
         # 4. Passports (71 passports)
+        pass_objs = []
         for item in items:
             if item.get('model') == 'clubs.playerpassport':
-                f_data = dict(item['fields'])
-                player_id = f_data.pop('player', None)
-                PlayerPassport.objects.update_or_create(id=item['pk'], defaults={**f_data, 'player_id': player_id})
-                
-        # 5. Subscriptions
+                f = dict(item['fields'])
+                player_id = f.pop('player', None)
+                pass_objs.append(PlayerPassport(id=item['pk'], player_id=player_id, **f))
+        if pass_objs:
+            PlayerPassport.objects.bulk_create(pass_objs)
+
+        # 5. Subscriptions (65 subscriptions)
+        sub_objs = []
         for item in items:
             if item.get('model') == 'clubs.subscription':
-                f_data = dict(item['fields'])
-                player_id = f_data.pop('player', None)
-                Subscription.objects.update_or_create(id=item['pk'], defaults={**f_data, 'player_id': player_id})
+                f = dict(item['fields'])
+                player_id = f.pop('player', None)
+                sub_objs.append(Subscription(id=item['pk'], player_id=player_id, **f))
+        if sub_objs:
+            Subscription.objects.bulk_create(sub_objs)
+            
+        # Update Club Settings
+        from apps.clubs.models import ClubSettings
+        sett = ClubSettings.get_settings()
+        sett.club_name = "نادي الوفاق الرياضي مسلمون"
+        sett.club_subtitle = "ESM Football Club"
+        sett.club_abbreviation = "ESM"
+        sett.president_name = "عمروش محمد"
+        sett.save()
                 
         duration = round(time.time() - t0, 2)
         total_p = ClubPlayer.objects.count()
