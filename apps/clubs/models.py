@@ -132,12 +132,6 @@ class ClubPlayer(models.Model):
         verbose_name = _('Joueur du Club')
         verbose_name_plural = _('Joueurs du Club')
         ordering = ['category', 'last_name', 'first_name']
-        constraints = [
-            models.UniqueConstraint(
-                fields=['first_name', 'last_name', 'date_of_birth'],
-                name='unique_club_player_identity'
-            )
-        ]
 
     def clean(self):
         super().clean()
