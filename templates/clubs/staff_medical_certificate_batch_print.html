@@ -436,7 +436,9 @@
                     </div>
 
                     <div class="photo-box-container">
-                        {% if not item.is_blank and item.staff and item.staff.photo %}
+                        {% if not item.is_blank and item.staff and item.staff.photo_url %}
+                            <img src="{{ item.staff.photo_url }}" alt="{{ item.staff.last_name }}">
+                        {% elif not item.is_blank and item.staff and item.staff.photo %}
                             <img src="{{ item.staff.photo.url }}" alt="{{ item.staff.last_name }}">
                         {% else %}
                             <div class="photo-placeholder-text">

@@ -144,7 +144,9 @@
             <div class="flex items-start justify-between gap-4 relative z-10">
                 <div class="flex items-center gap-4">
                     <div class="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-lg group-hover:border-emerald-500/40 transition-all">
-                        {% if member.photo %}
+                        {% if member.photo_url %}
+                            <img src="{{ member.photo_url }}" class="w-full h-full object-cover">
+                        {% elif member.photo %}
                             <img src="{{ member.photo.url }}" class="w-full h-full object-cover">
                         {% else %}
                             <i class="fas fa-user-tie text-2xl opacity-40 text-emerald-400"></i>

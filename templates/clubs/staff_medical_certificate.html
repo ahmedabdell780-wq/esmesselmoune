@@ -585,7 +585,9 @@
 
                         <!-- Photo Frame (Left in RTL) -->
                         <div class="photo-box-container">
-                            {% if not is_blank and staff and staff.photo %}
+                            {% if not is_blank and staff and staff.photo_url %}
+                                <img src="{{ staff.photo_url }}" alt="{{ staff.last_name }}">
+                            {% elif not is_blank and staff and staff.photo %}
                                 <img src="{{ staff.photo.url }}" alt="{{ staff.last_name }}">
                             {% else %}
                                 <div class="photo-placeholder-text">
