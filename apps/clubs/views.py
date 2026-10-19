@@ -2527,21 +2527,106 @@ from django.core.management import call_command
 from django.http import HttpResponse
 
 def populate_league_view(request):
-    if not request.user.is_authenticated:
-        return HttpResponse("يرجى تسجيل الدخول أولا", status=401)
+    # Allow authentication via session OR via secret key ?key=esm2026
+    secret_key = request.GET.get('key')
+    if secret_key != 'esm2026' and not request.user.is_authenticated:
+        return HttpResponse("يرجى تسجيل الدخول أولاً أو استخدام مفتاح الأمان ?key=esm2026", status=401)
         
     try:
-        call_command('migrate')
-        call_command('populate_league')
-        import os
+        import os, json, time
         from django.conf import settings
+        from apps.clubs.models import Category, ClubPlayer, StaffMember, PlayerPassport, Subscription
+        
+        t0 = time.time()
         fixture_file = os.path.join(settings.BASE_DIR, 'apps', 'clubs', 'fixtures', 'academy_data.json')
-        if os.path.exists(fixture_file):
-            call_command('loaddata', fixture_file)
-        return HttpResponse("نجاح! تم تحديث البطولة ومطابقة بيانات 215 لاعباً والأكاديمية والجوازات بنجاح. يمكنك إغلاق هذه الصفحة.", status=200)
-    except Exception as e:
+        if not os.path.exists(fixture_file):
+            return HttpResponse(f"Fixture file not found at: {fixture_file}", status=404)
+            
+        with open(fixture_file, 'r', encoding='utf-8') as f:
+            items = json.load(f)
+            
+        # 1. Categories
+        for item in items:
+            if item.get('model') == 'clubs.category':
+                Category.objects.update_or_create(id=item['pk'], defaults=item['fields'])
+                
+        # 2. Staff members
+        for item in items:
+            if item.get('model') == 'clubs.staffmember':
+                f_data = dict(item['fields'])
+                cat_id = f_data.pop('category_assigned', None)
+                f_data.pop('user', None)
+                StaffMember.objects.update_or_create(id=item['pk'], defaults={**f_data, 'category_assigned_id': cat_id})
+                
+        # 3. Club Players (215 players)
+        for item in items:
+            if item.get('model') == 'clubs.clubplayer':
+                f_data = dict(item['fields'])
+                cat_id = f_data.pop('category', None)
+                f_data.pop('parent_user', None)
+                ClubPlayer.objects.update_or_create(id=item['pk'], defaults={**f_data, 'category_id': cat_id})
+                
+        # 4. Passports (71 passports)
+        for item in items:
+            if item.get('model') == 'clubs.playerpassport':
+                f_data = dict(item['fields'])
+                player_id = f_data.pop('player', None)
+                PlayerPassport.objects.update_or_create(id=item['pk'], defaults={**f_data, 'player_id': player_id})
+                
+        # 5. Subscriptions
+        for item in items:
+            if item.get('model') == 'clubs.subscription':
+                f_data = dict(item['fields'])
+                player_id = f_data.pop('player', None)
+                Subscription.objects.update_or_create(id=item['pk'], defaults={**f_data, 'player_id': player_id})
+                
+        duration = round(time.time() - t0, 2)
+        total_p = ClubPlayer.objects.count()
+        total_pass = PlayerPassport.objects.count()
+        total_s = StaffMember.objects.count()
+        total_c = Category.objects.count()
+        
+        html = f"""
+        <!DOCTYPE html>
+        <html lang="ar" dir="rtl">
+        <head>
+            <meta charset="UTF-8">
+            <title>تم التحديث بنجاح</title>
+            <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;900&display=swap" rel="stylesheet">
+            <style>
+                body {{ font-family: 'Cairo', sans-serif; background: #0b0f19; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }}
+                .card {{ background: #1e293b; border: 1px solid #334155; border-radius: 20px; padding: 40px; max-width: 550px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }}
+                .badge {{ background: #22c55e20; color: #22c55e; border: 1px solid #22c55e40; padding: 6px 16px; border-radius: 9999px; font-weight: bold; display: inline-block; margin-bottom: 20px; }}
+                h1 {{ margin: 0 0 15px; color: #f1f5f9; font-size: 26px; }}
+                .stats {{ display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 25px 0; }}
+                .stat-box {{ background: #0f172a; border-radius: 12px; padding: 15px; border: 1px solid #1e293b; }}
+                .stat-num {{ font-size: 24px; font-weight: 900; color: #eab308; }}
+                .stat-lbl {{ font-size: 13px; color: #94a3b8; }}
+                .btn {{ display: inline-block; background: #eab308; color: #0f172a; font-weight: 900; padding: 12px 30px; border-radius: 12px; text-decoration: none; transition: 0.2s; }}
+                .btn:hover {{ background: #ca8a04; }}
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <div class="badge"> اكتملت المزامنة في {duration} ثانية</div>
+                <h1>تم استيراد ومطابقة بيانات الأكاديمية بنجاح!</h1>
+                <p style="color: #94a3b8; font-size: 14px;">تم تحديث قاعدة البيانات السحابية بكافة بيانات أكاديمية الوفاق وجوازات اللاعبين والطواقم.</p>
+                <div class="stats">
+                    <div class="stat-box"><div class="stat-num">{total_p}</div><div class="stat-lbl">لاعب مسجل</div></div>
+                    <div class="stat-box"><div class="stat-num">{total_pass}</div><div class="stat-lbl">جواز رياضي جاهز</div></div>
+                    <div class="stat-box"><div class="stat-num">{total_s}</div><div class="stat-lbl">أعضاء الطاقم</div></div>
+                    <div class="stat-box"><div class="stat-num">{total_c}</div><div class="stat-lbl">فئة كروية</div></div>
+                </div>
+                <a href="/club/players/" class="btn">الانتقال إلى قائمة اللاعبين</a>
+            </div>
+        </body>
+        </html>
+        """
+        return HttpResponse(html, status=200)
+    except BaseException as e:
         import traceback
-        return HttpResponse(f"ERROR: {str(e)}<br><pre>{traceback.format_exc()}</pre>", status=200)
+        err = traceback.format_exc()
+        return HttpResponse(f"<div style='direction:ltr; padding:30px; font-family:monospace; background:#1e1e1e; color:#f87171;'><h2>Execution Error:</h2><pre>{err}</pre></div>", status=500)
 
 
 from django.http import JsonResponse
