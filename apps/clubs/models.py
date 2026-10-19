@@ -1,619 +1,394 @@
-from django.conf import settings
+"""
+TurniQ Tournaments — Tournament, Group, GroupStanding models.
+Includes intelligent auto-seeding and standings logic.
+"""
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.core.validators import MinValueValidator, MaxValueValidator
-import uuid
+from django.core.validators import MinValueValidator
+from apps.teams.models import Team
 
-class Category(models.Model):
-    """الفئات العمرية للنادي"""
-    CATEGORY_CHOICES = [
-        ('U6', 'U6 (أقل من 6 سنوات)'),
-        ('U7', 'U7 (أقل من 7 سنوات)'),
-        ('U8', 'U8 (أقل من 8 سنوات)'),
-        ('U9', 'U9 (أقل من 9 سنوات)'),
-        ('U10', 'U10 (أقل من 10 سنوات)'),
-        ('U11', 'U11 (أقل من 11 سنة)'),
-        ('U12', 'U12 (أقل من 12 سنة)'),
-        ('U13', 'U13 (أقل من 13 سنة)'),
-        ('U14', 'U14 (أقل من 14 سنة)'),
-        ('U15', 'U15 (أقل من 15 سنة)'),
-        ('U17', 'U17 (أقل من 17 سنة)'),
-        ('U19', 'U19 (أقل من 19 سنة)'),
-        ('U20', 'U20 (أقل من 20 سنة)'),
-        ('U21', 'U21 (أقل من 21 سنة)'),
-        ('U23', 'U23 (أقل من 23 سنة)'),
-        ('Seniors', 'Seniors (أكابر)'),
-        ('Féminines', 'Féminines (إناث)'),
-        ('École de Football', 'École de Football (مدرسة كروية)'),
-    ]
 
-    name = models.CharField(max_length=50, choices=CATEGORY_CHOICES, verbose_name=_('Nom de la catégorie (اسم الفئة العمرية)'))
-    min_age = models.PositiveIntegerField(null=True, blank=True, verbose_name=_('Âge minimum'))
-    max_age = models.PositiveIntegerField(null=True, blank=True, verbose_name=_('Âge maximum'))
-    coach_name = models.CharField(max_length=100, blank=True, null=True, verbose_name=_('Entraîneur (اسم المدرب)'))
-    coach_phone = models.CharField(max_length=20, blank=True, null=True, verbose_name=_('Téléphone de l\'entraîneur (رقم هاتف المدرب)'))
+class Tournament(models.Model):
+    """Main tournament entity — orchestrates the full competition lifecycle."""
+
+    class Status(models.TextChoices):
+        DRAFT        = 'draft',        _('Brouillon')
+        REGISTRATION = 'registration', _('Inscriptions ouvertes')
+        GROUP_STAGE  = 'group_stage',  _('Phase de groupes')
+        KNOCKOUT     = 'knockout',     _('Phase finale')
+        FINISHED     = 'finished',     _('Terminé')
+
+    class Format(models.TextChoices):
+        GROUP_KNOCKOUT = 'group_knockout', _('Groupes + Élimination directe')
+        ROUND_ROBIN    = 'round_robin',    _('Championnat aller-retour')
+        SINGLE_KNOCKOUT= 'single_knockout',_('Élimination directe')
+
+    # ─── Core ────────────────────────────────────────────────────────────────
+    name        = models.CharField(max_length=200, verbose_name=_('Nom'))
+    edition     = models.PositiveIntegerField(default=1, verbose_name=_('Édition'))
+    year        = models.PositiveIntegerField(verbose_name=_('Année'))
     description = models.TextField(blank=True, verbose_name=_('Description'))
+    banner      = models.ImageField(upload_to='banners/', blank=True, null=True, verbose_name=_('Bannière'))
+
+    # ─── Format ──────────────────────────────────────────────────────────────
+    format      = models.CharField(
+        max_length=20, choices=Format.choices,
+        default=Format.GROUP_KNOCKOUT, verbose_name=_('Format'),
+    )
+    status      = models.CharField(
+        max_length=20, choices=Status.choices,
+        default=Status.DRAFT, verbose_name=_('Statut'),
+    )
+
+    # ─── Teams ───────────────────────────────────────────────────────────────
+    teams       = models.ManyToManyField(
+        Team, through='TournamentTeam',
+        related_name='tournaments', verbose_name=_('Équipes'),
+    )
+    max_teams   = models.PositiveIntegerField(default=16, verbose_name=_('Nb. max équipes'))
+    num_groups  = models.PositiveIntegerField(
+        default=4,
+        validators=[MinValueValidator(1)],
+        verbose_name=_('Nombre de groupes'),
+    )
+    teams_advancing_per_group = models.PositiveIntegerField(
+        default=2, verbose_name=_('Équipes qualifiées/groupe'),
+    )
+
+    # ─── Points system ───────────────────────────────────────────────────────
+    points_win  = models.PositiveIntegerField(default=3, verbose_name=_('Points victoire'))
+    points_draw = models.PositiveIntegerField(default=1, verbose_name=_('Points nul'))
+    points_loss = models.PositiveIntegerField(default=0, verbose_name=_('Points défaite'))
+
+    # ─── Finance system ──────────────────────────────────────────────────────
+    subscription_price = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00,
+        verbose_name=_('Frais d\'inscription / مبلغ الاشتراك')
+    )
+
+    # ─── Schedule ────────────────────────────────────────────────────────────
+    registration_start_date = models.DateField(null=True, blank=True, verbose_name=_('Début inscriptions'))
+    registration_deadline = models.DateField(null=True, blank=True, verbose_name=_('Clôture inscriptions'))
+    start_date  = models.DateField(null=True, blank=True, verbose_name=_('Date de début'))
+    end_date    = models.DateField(null=True, blank=True, verbose_name=_('Date de fin'))
+    location    = models.CharField(max_length=200, default='Stade Communal', verbose_name=_('Lieu'))
+
+    # ─── Winner ──────────────────────────────────────────────────────────────
+    winner      = models.ForeignKey(
+        Team, on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='trophies',
+        verbose_name=_('Vainqueur'),
+    )
+    runner_up   = models.ForeignKey(
+        Team, on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='runner_up_tournaments',
+        verbose_name=_('Finaliste'),
+    )
+
+    created_at  = models.DateTimeField(auto_now_add=True)
+    updated_at  = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = _('Catégorie')
-        verbose_name_plural = _('Catégories')
-        ordering = ['min_age', 'name']
+        verbose_name = _('Tournoi')
+        verbose_name_plural = _('Tournois')
+        ordering = ['-year', '-edition']
 
     def __str__(self):
-        return self.name
+        return f"{self.name} {self.year} (Éd. {self.edition})"
 
     @property
-    def coach_display(self):
-        if self.coach_name and self.coach_name.strip():
-            return self.coach_name.strip()
-        try:
-            assigned_staff = self.staff.filter(role='COACH', is_active=True).first()
-            if assigned_staff:
-                return f"{assigned_staff.first_name} {assigned_staff.last_name}"
-        except Exception:
-            pass
-        return "غير محدد"
+    def is_active(self):
+        return self.status in (self.Status.GROUP_STAGE, self.Status.KNOCKOUT)
 
-class ClubPlayer(models.Model):
-    """لاعب في النادي"""
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='players', verbose_name=_('Catégorie'))
-    parent_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='kids', verbose_name=_('Compte Parent (Lien)'))
-    
-    # Informations Personnelles
-    first_name = models.CharField(max_length=50, verbose_name=_('Prénom (الاسم بالعربية)'))
-    last_name = models.CharField(max_length=50, verbose_name=_('Nom (اللقب بالعربية)'))
-    first_name_fr = models.CharField(max_length=50, blank=True, default='', verbose_name=_('Prénom en français (الاسم بالفرنسية)'))
-    last_name_fr = models.CharField(max_length=50, blank=True, default='', verbose_name=_('Nom en français (اللقب بالفرنسية)'))
-    date_of_birth = models.DateField(verbose_name=_('Date de naissance'))
-    place_of_birth = models.CharField(max_length=100, blank=True, verbose_name=_('Lieu de naissance'))
-    photo = models.ImageField(upload_to='clubs/players/', blank=True, null=True, verbose_name=_('Photo'))
-    
-    BLOOD_TYPE_CHOICES = [
-        ('A+', 'A+'),
-        ('A-', 'A-'),
-        ('B+', 'B+'),
-        ('B-', 'B-'),
-        ('AB+', 'AB+'),
-        ('AB-', 'AB-'),
-        ('O+', 'O+'),
-        ('O-', 'O-'),
-    ]
-    blood_type = models.CharField(max_length=5, choices=BLOOD_TYPE_CHOICES, blank=True, verbose_name=_('Groupe sanguin'))
-    medical_certificate = models.FileField(upload_to='clubs/medical/', blank=True, null=True, verbose_name=_('Certificat médical'))
-    id_card = models.FileField(upload_to='clubs/id_cards/', blank=True, null=True, verbose_name=_('Carte d\'identité (بطاقة التعريف الوطنية)'))
-    school_level = models.CharField(max_length=100, blank=True, verbose_name=_('Niveau Scolaire (المستوى الدراسي)'))
-    
-    # Contact (Parents pour les mineurs)
-    PARENT_RELATION_CHOICES = [
-        ('أب', 'أب (Père)'),
-        ('أم', 'أم (Mère)'),
-        ('وصي شرعي', 'وصي شرعي (Tuteur Légal)'),
-    ]
-    parent_relation = models.CharField(max_length=30, choices=PARENT_RELATION_CHOICES, blank=True, verbose_name=_('Lien de parenté (صلة القرابة)'))
-    parent_name = models.CharField(max_length=100, blank=True, verbose_name=_('Nom du tuteur (Parent)'))
-    parent_phone = models.CharField(max_length=20, blank=True, verbose_name=_('Téléphone du tuteur'))
-    emergency_phone = models.CharField(max_length=20, blank=True, verbose_name=_('Téléphone d\'urgence (هاتف الطوارئ)'))
-    parent_email = models.EmailField(blank=True, verbose_name=_('Email du tuteur (البريد الإلكتروني)'))
-    parent_profession = models.CharField(max_length=150, blank=True, verbose_name=_('Profession et lieu de travail (المهنة ومقر العمل)'))
-    
-    player_phone = models.CharField(max_length=20, blank=True, verbose_name=_('Téléphone du joueur'))
-    address = models.TextField(blank=True, verbose_name=_('Adresse'))
-    
-    POSITION_CHOICES = [
-        ('حارس مرمى', 'حارس مرمى (Gardien de but)'),
-        ('مدافع', 'مدافع (Défenseur)'),
-        ('وسط ميدان', 'وسط ميدان (Milieu de terrain)'),
-        ('مهاجم', 'مهاجم (Attaquant)'),
-    ]
-    FOOT_CHOICES = [
-        ('يمنى', 'يمنى (Droitier)'),
-        ('يسرى', 'يسرى (Gaucher)'),
-        ('كلاهما', 'كلاهما (Ambidextre)'),
-    ]
-    
-    # Sportif
-    position = models.CharField(max_length=50, choices=POSITION_CHOICES, blank=True, verbose_name=_('Poste (المركز التكتيكي)'))
-    preferred_foot = models.CharField(max_length=20, choices=FOOT_CHOICES, blank=True, verbose_name=_('Pied Fort (القدم المفضلة)'))
-    previous_club = models.CharField(max_length=150, blank=True, verbose_name=_('Club précédent (النادي أو المدرسة السابقة)'))
-    jersey_number = models.PositiveIntegerField(null=True, blank=True, verbose_name=_('Numéro de maillot'))
-    joined_date = models.DateField(auto_now_add=True, verbose_name=_("Date d'inscription"))
-    
-    # Biometrie / Medical Ext
-    height = models.PositiveIntegerField(null=True, blank=True, verbose_name=_('Taille en cm (القامة)'))
-    weight = models.PositiveIntegerField(null=True, blank=True, verbose_name=_('Poids en kg (الوزن)'))
-    medical_history = models.TextField(blank=True, verbose_name=_('Antécédents médicaux (الأمراض المزمنة أو السوابق الجراحية)'))
-    notes = models.CharField(max_length=255, blank=True, verbose_name=_('Remarques (ملاحظات)'))
-    
-    # Système
-    is_active = models.BooleanField(default=True, verbose_name=_('Actif'))
-    card_number = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, verbose_name=_('Numéro de carte'))
-    
-    class Meta:
-        verbose_name = _('Joueur du Club')
-        verbose_name_plural = _('Joueurs du Club')
-        ordering = ['category', 'last_name', 'first_name']
-
-    def clean(self):
-        super().clean()
-        from .normalization import get_category_for_dob, find_duplicate_player
+    @property
+    def is_registration_open(self):
+        from django.utils import timezone
+        today = timezone.now().date()
         
-        # 1. Automatic category assignment based on date of birth if not set
-        if not self.category and self.date_of_birth:
-            self.category = get_category_for_dob(self.date_of_birth)
+        # Check status
+        if self.status != self.Status.REGISTRATION:
+            return False
             
-        # 2. Automatic jersey number assignment for U9, U11, U13 if not set (<= 100)
-        cat_name = (self.category.name if self.category else '').upper().strip()
-        if cat_name in ['U9', 'U11', 'U13']:
-            if not self.jersey_number:
-                from .normalization import get_next_available_jersey_number
-                self.jersey_number = get_next_available_jersey_number(
-                    self.category,
-                    exclude_player_id=self.pk,
-                    max_num=100
-                )
-            elif self.jersey_number > 100:
-                from django.core.exceptions import ValidationError
-                raise ValidationError({
-                    'jersey_number': _('رقم القميص للفئات U9 و U11 و U13 لا يجب أن يتجاوز 100.')
-                })
-
-        # 3. Resilient duplicate detection (handles hamza variations, spaces, swapped names)
-        if self.first_name and self.last_name and self.date_of_birth:
-            duplicate = find_duplicate_player(
-                self.first_name,
-                self.last_name,
-                self.date_of_birth,
-                exclude_id=self.pk
-            )
-            if duplicate:
-                from django.core.exceptions import ValidationError
-                cat_str = duplicate.category.name if duplicate.category else 'بدون فئة'
-                raise ValidationError(_(
-                    'يوجد لاعب مسجل بالفعل بنفس الهوية: ({} {} - تاريخ الميلاد: {} - فئة {})! '
-                    'تم كشف التطابق لتفادي التكرار والخلط (رغم اختلاف الهمزة، الفراغات، أو التشكيل).'
-                ).format(duplicate.first_name, duplicate.last_name, duplicate.date_of_birth, cat_str))
-
-    def save(self, *args, **kwargs):
-        # Automatically assign category based on date of birth if missing
-        if not self.category and self.date_of_birth:
-            from .normalization import get_category_for_dob
-            self.category = get_category_for_dob(self.date_of_birth)
+        # Check start date (if set)
+        if self.registration_start_date and today < self.registration_start_date:
+            return False
             
-        # Automatically assign jersey number for U9, U11, U13 if not set (<= 100)
-        cat_name = (self.category.name if self.category else '').upper().strip()
-        if cat_name in ['U9', 'U11', 'U13'] and not self.jersey_number:
-            from .normalization import get_next_available_jersey_number
-            self.jersey_number = get_next_available_jersey_number(
-                self.category,
-                exclude_player_id=self.pk,
-                max_num=100
-            )
-
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.first_name} {self.last_name} ({self.category})"
-        
-    @property
-    def full_name(self):
-        return f"{self.first_name} {self.last_name}".strip()
+        # Check deadline (if set)
+        if self.registration_deadline and today > self.registration_deadline:
+            return False
+            
+        return True
 
     @property
-    def full_name_fr(self):
-        if self.last_name_fr or self.first_name_fr:
-            return f"{self.last_name_fr} {self.first_name_fr}".strip()
-        from .transliteration import transliterate_text
-        ln = transliterate_text(self.last_name)
-        fn = transliterate_text(self.first_name)
-        return f"{ln} {fn}".strip()
+    def registered_team_count(self):
+        return self.tournament_teams.filter(is_confirmed=True).count()
 
     @property
-    def generated_card_number(self):
-        cat_name = self.category.name if self.category else "U0"
-        cat_clean = "".join(cat_name.split())
-        year = self.joined_date.year if self.joined_date else 2024
-        pk_num = self.id if self.id else 0
-        return f"{cat_clean}{year}{pk_num:03d}"
+    def can_generate_groups(self):
+        return (
+            self.status == self.Status.REGISTRATION
+            and self.registered_team_count >= 2
+            and self.num_groups >= 1
+        )
 
-    @property
-    def total_attendances(self):
-        return self.attendances.count()
-        
-    @property
-    def present_count(self):
-        return self.attendances.filter(is_present=True).count()
-        
-    @property
-    def absent_count(self):
-        return self.attendances.filter(is_present=False).count()
 
-    @property
-    def is_passport_eligible(self):
-        return bool(self.category and self.category.name in ['U15', 'U17', 'U20'])
+class TournamentTeam(models.Model):
+    """Pivot: Team ↔ Tournament with registration metadata."""
+    tournament      = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='tournament_teams')
+    team            = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='tournament_teams')
+    registration_date = models.DateTimeField(auto_now_add=True)
+    is_confirmed    = models.BooleanField(default=False, verbose_name=_('Confirmée'))
+    seed            = models.PositiveIntegerField(null=True, blank=True, verbose_name=_('Tête de série'))
+    notes           = models.TextField(blank=True, verbose_name=_('Notes/Motif'))
+    eliminated_at_stage = models.CharField(max_length=20, blank=True, verbose_name=_('Éliminée en'))
 
-    def get_passport(self):
-        if hasattr(self, 'passport') and self.passport:
-            self.passport.ensure_rows_populated()
-            return self.passport
-        from .transliteration import get_player_passport_defaults
-        defaults = get_player_passport_defaults(self)
-        passport, _ = PlayerPassport.objects.get_or_create(player=self, defaults=defaults)
-        passport.ensure_rows_populated()
-        return passport
-
-class TrainingSession(models.Model):
-    """حصة تدريبية"""
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='trainings', verbose_name=_('Catégorie'))
-    date = models.DateField(verbose_name=_('Date'))
-    start_time = models.TimeField(verbose_name=_('Heure de début'))
-    end_time = models.TimeField(verbose_name=_('Heure de fin'))
-    location = models.CharField(max_length=100, default='Stade Communal', verbose_name=_('Lieu'))
-    notes = models.TextField(blank=True, verbose_name=_('Notes / Objectifs'))
+    # ─── Finance details ─────────────────────────────────────────────────────
+    amount_paid     = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00,
+        verbose_name=_('Montant payé / المبلغ المدفوع')
+    )
+    payment_confirmed = models.BooleanField(
+        default=False,
+        verbose_name=_('Paiement validé / تم تأكيد الدفع')
+    )
 
     class Meta:
-        verbose_name = _('Séance d\'entraînement')
-        verbose_name_plural = _('Séances d\'entraînement')
-        ordering = ['-date', '-start_time']
+        unique_together = [['tournament', 'team']]
+        verbose_name = _('Participation')
+        verbose_name_plural = _('Participations')
+        ordering = ['seed', 'team__name']
 
     def __str__(self):
-        return f"{self.category} - {self.date}"
+        return f"{self.team.name} → {self.tournament.name}"
 
 
-class ClubMatch(models.Model):
-    """مباريات النادي"""
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='matches', verbose_name=_('Catégorie'))
-    date = models.DateField(verbose_name=_('Date du match'))
-    time = models.TimeField(null=True, blank=True, verbose_name=_('Heure'))
-    opponent = models.CharField(max_length=100, verbose_name=_('Adversaire'))
-    location = models.CharField(max_length=100, verbose_name=_('Lieu'))
-    is_home = models.BooleanField(default=True, verbose_name=_('À domicile'))
-    
-    our_score = models.PositiveIntegerField(null=True, blank=True, verbose_name=_('Notre score'))
-    their_score = models.PositiveIntegerField(null=True, blank=True, verbose_name=_('Leur score'))
-    squad = models.ManyToManyField('ClubPlayer', blank=True, related_name='matches_called', verbose_name=_('Joueurs Convoqués'))
-    
-    notes = models.TextField(blank=True, verbose_name=_('Compte-rendu'))
+class Group(models.Model):
+    """A group within a tournament's group stage."""
+    tournament  = models.ForeignKey(
+        Tournament, on_delete=models.CASCADE,
+        related_name='groups', verbose_name=_('Tournoi'),
+    )
+    name        = models.CharField(max_length=50, verbose_name=_('Nom'))  # ex: "Groupe A"
+    teams       = models.ManyToManyField(
+        Team, related_name='groups', verbose_name=_('Équipes'),
+    )
 
     class Meta:
-        verbose_name = _('Match du Club')
-        verbose_name_plural = _('Matchs du Club')
-        ordering = ['-date', '-time']
+        verbose_name = _('Groupe')
+        verbose_name_plural = _('Groupes')
+        ordering = ['name']
+        unique_together = [['tournament', 'name']]
 
     def __str__(self):
-        home_team = "Wifaq Messelmoune" if self.is_home else self.opponent
-        away_team = self.opponent if self.is_home else "Wifaq Messelmoune"
-        return f"[{self.category}] {home_team} vs {away_team} - {self.date}"
+        return f"{self.tournament.name} — {self.name}"
 
-class ClubSettings(models.Model):
-    """إعدادات النادي للتحكم في واجهة المستخدم"""
-    club_name = models.CharField(max_length=100, default='نادي الوفاق الرياضي', verbose_name=_('Nom du Club'))
-    club_subtitle = models.CharField(max_length=100, default='أكاديمية كرة القدم - مسلمون', verbose_name=_('Sous-titre'))
-    club_abbreviation = models.CharField(max_length=10, default='WRM', verbose_name=_('Abréviation'))
-    president_name = models.CharField(max_length=100, default='بيرم نصرالدين', verbose_name=_('اسم رئيس النادي'))
-    
-    logo = models.ImageField(upload_to='clubs/settings/', blank=True, null=True, verbose_name=_('Logo du Club'))
-    cover_image = models.ImageField(upload_to='clubs/settings/', blank=True, null=True, verbose_name=_('Image de couverture'))
-    
-    gradient_start = models.CharField(max_length=20, default='from-primary/80', verbose_name=_('Couleur de début (Gradient)'))
-    gradient_end = models.CharField(max_length=20, default='to-black/90', verbose_name=_('Couleur de fin (Gradient)'))
-    
-    academy_registration_open = models.BooleanField(default=False, verbose_name=_('Ouverture des inscriptions (فتح التسجيلات)'))
-    
+    @property
+    def sorted_standings(self):
+        """Sorted standings for this group using official tie-breakers."""
+        from .services.scheduler import StandingsCalculator
+        calc = StandingsCalculator(self.tournament)
+        return calc.get_sorted_standings(self)
+
+
+class GroupStanding(models.Model):
+    """
+    Live standings row per team per group.
+    Updated atomically after every finished group match.
+    """
+    group       = models.ForeignKey(
+        Group, on_delete=models.CASCADE,
+        related_name='groupstanding_set',
+        verbose_name=_('Groupe'),
+    )
+    team        = models.ForeignKey(
+        Team, on_delete=models.CASCADE,
+        related_name='standings', verbose_name=_('Équipe'),
+    )
+    played      = models.PositiveIntegerField(default=0, verbose_name=_('J'))
+    won         = models.PositiveIntegerField(default=0, verbose_name=_('G'))
+    drawn       = models.PositiveIntegerField(default=0, verbose_name=_('N'))
+    lost        = models.PositiveIntegerField(default=0, verbose_name=_('P'))
+    goals_for     = models.PositiveIntegerField(default=0, verbose_name=_('BP'))
+    goals_against = models.PositiveIntegerField(default=0, verbose_name=_('BC'))
+    goal_difference = models.IntegerField(default=0, verbose_name=_('DB'))
+    points         = models.IntegerField(default=0, verbose_name=_('Pts'))
+
     class Meta:
-        verbose_name = _('Paramètres du Club')
-        verbose_name_plural = _('Paramètres du Club')
+        verbose_name = _('Classement groupe')
+        verbose_name_plural = _('Classements groupes')
+        unique_together = [['group', 'team']]
+        ordering = ['-points', '-goal_difference', '-goals_for', 'id']
 
     def __str__(self):
-        return "Paramètres de l'Académie"
-    
-    @classmethod
-    def get_settings(cls):
-        settings, created = cls.objects.get_or_create(id=1)
-        return settings
+        return f"{self.team.name} — {self.group.name} : {self.points} pts"
 
-# --- Nouvelles Fonctionnalités (Staff, Médical, Financier) ---
+    def reset(self):
+        """Reset all counters to zero."""
+        self.played = self.won = self.drawn = self.lost = 0
+        self.goals_for = self.goals_against = self.goal_difference = self.points = 0
 
-class StaffMember(models.Model):
-    """الطاقم الفني والإداري"""
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='staff_profile', verbose_name=_('Compte Utilisateur'))
+
+class TournamentExpense(models.Model):
+    """Tracks financial expenditures for a tournament."""
+    tournament  = models.ForeignKey(
+        Tournament, on_delete=models.CASCADE,
+        related_name='expenses', verbose_name=_('Tournoi')
+    )
+    title       = models.CharField(max_length=200, verbose_name=_('Titre / المصاريف'))
+    amount      = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_('Montant / المبلغ'))
+    date        = models.DateField(auto_now_add=True, verbose_name=_('Date / التاريخ'))
+    notes       = models.TextField(blank=True, verbose_name=_('Notes / ملاحظات'))
+
+    class Meta:
+        verbose_name = _('Dépense Tournoi')
+        verbose_name_plural = _('Dépenses Tournois')
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"{self.title} — {self.amount} DZD ({self.tournament.name})"
+
+
+class TournamentRevenue(models.Model):
+    """Tracks financial revenues/incomes (sponsors, donations, ads) for a tournament."""
+    tournament  = models.ForeignKey(
+        Tournament, on_delete=models.CASCADE,
+        related_name='revenues', verbose_name=_('Tournoi')
+    )
+    title       = models.CharField(max_length=200, verbose_name=_('Source / الإيرادات'))
+    amount      = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_('Montant / المبلغ'))
+    date        = models.DateField(auto_now_add=True, verbose_name=_('Date / التاريخ'))
+    notes       = models.TextField(blank=True, verbose_name=_('Notes / ملاحظات'))
+
+    class Meta:
+        verbose_name = _('Recette Tournoi')
+        verbose_name_plural = _('Recettes Tournois')
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"{self.title} — {self.amount} DZD ({self.tournament.name})"
+
+
+class TeamPaymentTransaction(models.Model):
+    """Tracks detailed payment history (installments) for a team in a tournament."""
+    tournament_team = models.ForeignKey(
+        TournamentTeam, on_delete=models.CASCADE,
+        related_name='transactions', verbose_name=_('Participation')
+    )
+    amount      = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_('Montant / المبلغ'))
+    date        = models.DateTimeField(auto_now_add=True, verbose_name=_('Date / التاريخ'))
+    notes       = models.CharField(max_length=200, blank=True, verbose_name=_('Notes / ملاحظات'))
+
+    class Meta:
+        verbose_name = _('Transaction de paiement')
+        verbose_name_plural = _('Transactions de paiement')
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"{self.tournament_team.team.name} — +{self.amount} DZD ({self.date.strftime('%d/%m/%Y')})"
+
+
+class CommitteeMember(models.Model):
+    """Member of the organizing committee for a tournament."""
+
     class Role(models.TextChoices):
-        COACH = 'COACH', _('Entraîneur (مدرب)')
-        ADMIN = 'ADMIN', _('Administrateur (إداري)')
-        MEDICAL = 'MEDIC', _('Staff Médical (طبيب/معالج)')
-        KITMAN = 'KITMAN', _('Responsable Matériel (مكلف بالعتاد)')
-        
-    first_name = models.CharField(max_length=50, verbose_name=_('Prénom'))
-    last_name = models.CharField(max_length=50, verbose_name=_('Nom'))
-    role = models.CharField(max_length=10, choices=Role.choices, default=Role.COACH, verbose_name=_('Rôle'))
-    function_title = models.CharField(max_length=100, blank=True, verbose_name=_('Fonction / المهمة المحددة'))
-    date_of_birth = models.DateField(null=True, blank=True, verbose_name=_('Date de naissance (تاريخ الميلاد)'))
-    place_of_birth = models.CharField(max_length=100, blank=True, verbose_name=_('Lieu de naissance (مكان الميلاد)'))
-    notes = models.CharField(max_length=255, blank=True, verbose_name=_('Observation (ملاحظة)'))
-    phone = models.CharField(max_length=20, blank=True, verbose_name=_('Téléphone'))
-    photo = models.ImageField(upload_to='clubs/staff/', blank=True, null=True, verbose_name=_('Photo'))
-    category_assigned = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='staff', verbose_name=_('Catégorie Assignée (Optionnel)'))
-    id_card = models.CharField(max_length=50, blank=True, verbose_name=_('N° CNI / Passeport'))
-    forms_data = models.JSONField(default=dict, blank=True, verbose_name=_('Données formulaires'))
-    is_active = models.BooleanField(default=True, verbose_name=_('Actif'))
+        PRESIDENT        = 'president',        _('رئيس اللجنة / Président')
+        VICE_PRESIDENT   = 'vice_president',   _('نائب الرئيس / Vice-Président')
+        TREASURER        = 'treasurer',        _('أمين المال / Trésorier')
+        VICE_TREASURER   = 'vice_treasurer',   _('نائب أمين المال / Vice-Trésorier')
+        SECRETARY        = 'secretary',        _('الكاتب العام / Secrétaire Général')
+        VICE_SECRETARY   = 'vice_secretary',   _('نائب الكاتب العام / Vice-Secrétaire')
+        TECHNICAL        = 'technical',        _('المدير التقني / Directeur Technique')
+        MEDIA            = 'media',            _('مسؤول الإعلام / Chargé Médias')
+        SECURITY         = 'security',         _('مسؤول الأمن / Responsable Sécurité')
+        MEDICAL          = 'medical',          _('مسؤول طبي / Responsable Médical')
+        MEMBER           = 'member',           _('عضو / Membre')
 
-    class Meta:
-        verbose_name = _('Membre du Staff')
-        verbose_name_plural = _('Membres du Staff')
-        ordering = ['role', 'last_name']
-
-    def __str__(self):
-        return f"{self.first_name} {self.last_name} - {self.get_role_display()}"
-
-class Subscription(models.Model):
-    """الاشتراكات الشهرية"""
-    player = models.ForeignKey(ClubPlayer, on_delete=models.CASCADE, related_name='subscriptions', verbose_name=_('Joueur'))
-    month = models.DateField(verbose_name=_('Mois (ex: 2026-09-01 pour Septembre)'), help_text=_('Sélectionnez le 1er jour du mois concerné'))
-    amount = models.DecimalField(max_digits=8, decimal_places=2, default=1500.00, verbose_name=_('Montant (DA)'))
-    is_paid = models.BooleanField(default=False, verbose_name=_('Payé ?'))
-    paid_date = models.DateField(null=True, blank=True, verbose_name=_('Date de paiement'))
-    notes = models.TextField(blank=True, verbose_name=_('Notes'))
-
-    class Meta:
-        verbose_name = _('Abonnement Mensuel')
-        verbose_name_plural = _('Abonnements Mensuels')
-        unique_together = [['player', 'month']]
-        ordering = ['-month', 'player__last_name']
-
-    def __str__(self):
-        return f"{self.player} - {self.month.strftime('%Y/%m')} ({'Payé' if self.is_paid else 'Non Payé'})"
-
-class MedicalRecord(models.Model):
-    """السجل الطبي وإصابات الملاعب"""
-    player = models.ForeignKey(ClubPlayer, on_delete=models.CASCADE, related_name='medical_records', verbose_name=_('Joueur'))
-    injury_type = models.CharField(max_length=100, verbose_name=_('Type de blessure'))
-    date_of_injury = models.DateField(verbose_name=_('Date de blessure'))
-    expected_return = models.DateField(null=True, blank=True, verbose_name=_('Retour prévu le'))
-    is_recovered = models.BooleanField(default=False, verbose_name=_('Rétabli ?'))
-    notes = models.TextField(blank=True, verbose_name=_('Diagnostic et traitement'))
-
-    class Meta:
-        verbose_name = _('Dossier Médical (Blessure)')
-        verbose_name_plural = _('Dossiers Médicaux (Blessures)')
-        ordering = ['-date_of_injury']
-
-    def __str__(self):
-        return f"{self.player} - {self.injury_type} ({'Rétabli' if self.is_recovered else 'En traitement'})"
-
-class TrainingAttendance(models.Model):
-    """حضور وغياب اللاعبين في التدريبات"""
-    session = models.ForeignKey('TrainingSession', on_delete=models.CASCADE, related_name='attendances', verbose_name=_('Séance d\'entraînement'))
-    player = models.ForeignKey(ClubPlayer, on_delete=models.CASCADE, related_name='attendances', verbose_name=_('Joueur'))
-    is_present = models.BooleanField(default=True, verbose_name=_('Présent ?'))
-    reason_for_absence = models.CharField(max_length=200, blank=True, verbose_name=_('Motif d\'absence'))
-
-    class Meta:
-        verbose_name = _('Présence à l\'entraînement')
-        verbose_name_plural = _('Présences aux entraînements')
-        unique_together = [['session', 'player']]
-        ordering = ['session__date', 'player__last_name']
-
-    def __str__(self):
-        return f"{self.player} - {self.session.date} - {'Présent' if self.is_present else 'Absent'}"
-
-class PlayerEvaluation(models.Model):
-    """التقييم الفني والبدني للاعب (كشف النقاط)"""
-    player = models.ForeignKey(ClubPlayer, on_delete=models.CASCADE, related_name='evaluations', verbose_name=_('Joueur'))
-    date_evaluated = models.DateField(auto_now_add=True, verbose_name=_('Date d\'évaluation'))
-    evaluator = models.ForeignKey('StaffMember', on_delete=models.SET_NULL, null=True, verbose_name=_('Évaluateur'))
-    
-    # Metrics out of 10
-    physical_fitness = models.IntegerField(default=5, verbose_name=_('Condition Physique /10'))
-    speed = models.IntegerField(default=5, verbose_name=_('Vitesse /10'))
-    passing = models.IntegerField(default=5, verbose_name=_('Passes & Contrôle /10'))
-    tactical_awareness = models.IntegerField(default=5, verbose_name=_('Sens Tactique /10'))
-    discipline = models.IntegerField(default=5, verbose_name=_('Discipline & Assiduité /10'))
-    
-    coach_remarks = models.TextField(blank=True, verbose_name=_('Remarques du Coach'))
-
-    class Meta:
-        verbose_name = _('Évaluation du Joueur')
-        verbose_name_plural = _('Évaluations des Joueurs')
-        ordering = ['-date_evaluated']
-
-    def __str__(self):
-        return f"Évaluation {self.player} ({self.date_evaluated})"
-        
-    def total_score(self):
-        return self.physical_fitness + self.speed + self.passing + self.tactical_awareness + self.discipline
-
-class PlayerEquipment(models.Model):
-    """إدارة العتاد والألبسة الرياضية"""
-    player = models.ForeignKey(ClubPlayer, on_delete=models.CASCADE, related_name='equipment', verbose_name=_('Joueur'))
-    
-    received_training_kit = models.BooleanField(default=False, verbose_name=_('Tenue d\'entraînement reçue'))
-    training_kit_date = models.DateField(null=True, blank=True, verbose_name=_('Date tenue entraînement'))
-    
-    received_tracksuit = models.BooleanField(default=False, verbose_name=_('Survêtement (Parade) reçu'))
-    tracksuit_date = models.DateField(null=True, blank=True, verbose_name=_('Date survêtement'))
-    
-    received_bag = models.BooleanField(default=False, verbose_name=_('Sac de sport reçu'))
-    bag_date = models.DateField(null=True, blank=True, verbose_name=_('Date sac'))
-    
-    notes = models.TextField(blank=True, verbose_name=_('Notes sur l\'équipement'))
-
-    class Meta:
-        verbose_name = _('Équipement du Joueur')
-        verbose_name_plural = _('Équipements des Joueurs')
-
-    def __str__(self):
-        return f"Équipements de {self.player}"
-
-
-class PlayerPassport(models.Model):
-    """جواز اللاعب - Passeport du Joueur (Ligue Wilaya de Football - Tipaza)"""
-    player = models.OneToOneField(ClubPlayer, on_delete=models.CASCADE, related_name='passport', verbose_name=_('Joueur'))
-    
-    full_name_fr = models.CharField(max_length=200, blank=True, verbose_name=_('Nom et Prénom du Joueur'))
-    license_number = models.CharField(max_length=100, blank=True, verbose_name=_('Numéro de Licence'))
-    date_of_birth = models.DateField(null=True, blank=True, verbose_name=_('Date de Naissance'))
-    place_of_birth_fr = models.CharField(max_length=150, blank=True, verbose_name=_('Lieu de Naissance'))
-    nationality = models.CharField(max_length=100, default='Algérienne', verbose_name=_('Nationalité'))
-    club_name = models.CharField(max_length=150, default='ES Messelmoun', verbose_name=_('Nom du Club'))
-    ligue_name = models.CharField(max_length=150, default='Ligue Wilaya de Football - Tipaza', verbose_name=_('Nom de la Ligue'))
-    declaration_text = models.TextField(
-        blank=True,
-        verbose_name=_('Déclaration'),
-        default="Je soussigné, président du club ES Messelmoun, me suis efforcé dans la mesure du possible de produire une histoire chronologique aussi complète que possible de l'histoire d'enregistrement du joueur susmentionné depuis la saison de son 12ème anniversaire et déclare, au nom du club ES Messelmoun que les détails fournis dans ce document sont à ma connaissance fiable et exactes."
+    tournament  = models.ForeignKey(
+        Tournament, on_delete=models.CASCADE,
+        related_name='committee_members', verbose_name=_('Tournoi / الدورة'),
     )
-    rows_data = models.JSONField(default=list, blank=True, verbose_name=_('Lignes du passeport'))
-    forms_data = models.JSONField(default=dict, blank=True, verbose_name=_('بيانات استمارات الرابطة'))
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    full_name   = models.CharField(max_length=200, verbose_name=_('Nom complet / الاسم الكامل'))
+    role        = models.CharField(
+        max_length=30, choices=Role.choices,
+        default=Role.MEMBER, verbose_name=_('Rôle / المنصب'),
+    )
+    photo       = models.ImageField(
+        upload_to='committee/', blank=True, null=True,
+        verbose_name=_('Photo / الصورة'),
+    )
+    phone       = models.CharField(max_length=20, blank=True, verbose_name=_('Téléphone / الهاتف'))
+    email       = models.EmailField(blank=True, verbose_name=_('Email / البريد الإلكتروني'))
+    birth_date  = models.DateField(null=True, blank=True, verbose_name=_('Date de naissance / تاريخ الميلاد'))
+    join_date   = models.DateField(null=True, blank=True, verbose_name=_('Date d\'adhésion / تاريخ الانضمام'))
+    id_number   = models.CharField(max_length=50, blank=True, verbose_name=_('N° Identité / رقم الهوية'))
+    order       = models.PositiveIntegerField(default=0, verbose_name=_('Ordre / الترتيب'))
+    notes       = models.TextField(blank=True, verbose_name=_('Notes / ملاحظات'))
 
     class Meta:
-        verbose_name = _('Passeport du Joueur')
-        verbose_name_plural = _('Passeports des Joueurs')
+        verbose_name = _('Membre du comité / عضو اللجنة')
+        verbose_name_plural = _('Membres du comité / أعضاء اللجنة')
+        ordering = ['order', 'full_name']
 
     def __str__(self):
-        return f"Passeport: {self.full_name_fr or self.player}"
+        return f"{self.full_name} — {self.get_role_display()} ({self.tournament.name})"
 
-    def ensure_rows_populated(self):
-        if not self.rows_data:
-            from .transliteration import get_player_passport_defaults
-            defaults = get_player_passport_defaults(self.player)
-            self.rows_data = defaults['rows_data']
-            if not self.full_name_fr:
-                self.full_name_fr = defaults['full_name_fr']
-            if not self.place_of_birth_fr:
-                self.place_of_birth_fr = defaults['place_of_birth_fr']
-            if not self.date_of_birth:
-                self.date_of_birth = defaults['date_of_birth']
-            self.save()
-
-class ClubNews(models.Model):
-    title = models.CharField(max_length=200, verbose_name=_('Titre / العنوان'))
-    slug = models.SlugField(max_length=200, unique=True, blank=True)
-    content = models.TextField(verbose_name=_('Contenu / المحتوى'))
-    image = models.ImageField(upload_to='clubs/news/', blank=True, null=True, verbose_name=_('Image / صورة'))
-    is_published = models.BooleanField(default=True, verbose_name=_('Publie / منشور'))
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = _('Actualite du Club')
-        verbose_name_plural = _('Actualites du Club')
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return self.title
-
-class ClubNotification(models.Model):
-    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='club_notifications', verbose_name=_('Destinataire'))
-    title = models.CharField(max_length=200, verbose_name=_('Titre'))
-    message = models.TextField(verbose_name=_('Message'))
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Date'))
-    is_read = models.BooleanField(default=False, verbose_name=_('Lu'))
-
-    class Meta:
-        verbose_name = _('Notification')
-        verbose_name_plural = _('Notifications')
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return f"{self.title} - {self.recipient}"
+    @property
+    def photo_url(self):
+        """Permanent static photo fallback for committee members."""
+        import os
+        from django.conf import settings
+        from django.templatetags.static import static
+        mapping = {
+            'بوستة إبراهيم': 'ibrahim_boussetta.jpg',
+            'إبراهيم بوستة': 'ibrahim_boussetta.jpg',
+            'شرفي حكيم': 'hakim_charafi.jpg',
+            'حكيم شرفي': 'hakim_charafi.jpg',
+            'لعراب رياض': 'riad_laarab.jpg',
+            'رياض لعراب': 'riad_laarab.jpg',
+            'عريج يوسف': 'arij_youssef.jpg',
+            'قيدون علي': 'ali_guidoun.jpg',
+            'علي قيدون': 'ali_guidoun.jpg',
+            'بيرم نصرالدين': 'nasreddine_bayrem.jpg',
+            'نصرالدين بيرم': 'nasreddine_bayrem.jpg',
+        }
+        for k, filename in mapping.items():
+            if k in self.full_name or self.full_name in k:
+                staff_subpath = os.path.join(settings.BASE_DIR, 'static', 'img', 'staff', filename)
+                if os.path.exists(staff_subpath):
+                    return static(f"img/staff/{filename}")
+                return static(f"img/{filename}")
+        if self.photo:
+            try:
+                return self.photo.url
+            except Exception:
+                pass
+        return None
 
 
-class LeagueTeam(models.Model):
-    name = models.CharField(max_length=100, verbose_name=_('Nom de l\'équipe / اسم الفريق'))
-    code = models.CharField(max_length=10, blank=True)
-    logo = models.ImageField(upload_to='league_teams/', blank=True, null=True)
-
-    class Meta:
-        verbose_name = _('Equipe de Ligue')
-        verbose_name_plural = _('Equipes de Ligue')
-
-    def __str__(self):
-        return self.name
-
-class LeagueStanding(models.Model):
-    CATEGORY_CHOICES = [('U15','U15'), ('U17','U17'), ('U20','U20')]
-    team = models.ForeignKey(LeagueTeam, on_delete=models.CASCADE, related_name='standings')
-    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='U17')
-    played = models.IntegerField(default=0)
-    won = models.IntegerField(default=0)
-    drawn = models.IntegerField(default=0)
-    lost = models.IntegerField(default=0)
-    goals_for = models.IntegerField(default=0)
-    goals_against = models.IntegerField(default=0)
-    points = models.IntegerField(default=0)
-
-    class Meta:
-        unique_together = ('team', 'category')
-        ordering = ['-points', '-goals_for']
-
-    def __str__(self):
-        return f"{self.team.name} ({self.category}) - {self.points} pts"
-
-class LeagueMatch(models.Model):
-    CATEGORY_CHOICES = [('U15','U15'), ('U17','U17'), ('U20','U20')]
-    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='U17')
-    round_number = models.IntegerField(default=1, verbose_name=_('Journée / الجولة'))
-    home_team = models.ForeignKey(LeagueTeam, on_delete=models.CASCADE, related_name='home_matches')
-    away_team = models.ForeignKey(LeagueTeam, on_delete=models.CASCADE, related_name='away_matches')
-    home_score = models.IntegerField(null=True, blank=True)
-    away_score = models.IntegerField(null=True, blank=True)
-    is_played = models.BooleanField(default=False)
-    date = models.DateTimeField(null=True, blank=True)
-
-    class Meta:
-        verbose_name = _('Match de Ligue')
-        verbose_name_plural = _('Matchs de Ligue')
-        ordering = ['round_number', 'date']
-
-    def __str__(self):
-        return f"J{self.round_number} {self.category}: {self.home_team.name} vs {self.away_team.name}"
-
-    def update_standings(self):
-        # We will trigger this manually or on save
-        pass
-
-
-from django.db.models.signals import post_save, post_delete
+# ─── Signals ─────────────────────────────────────────────────────────────────
+from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.urls import reverse
 
-@receiver([post_save, post_delete], sender=LeagueMatch)
-def update_league_standings(sender, instance, **kwargs):
-    cat = instance.category
-    LeagueStanding.objects.filter(category=cat).update(
-        played=0, won=0, drawn=0, lost=0, goals_for=0, goals_against=0, points=0
-    )
-    
-    matches = LeagueMatch.objects.filter(category=cat, is_played=True)
-    for m in matches:
-        if m.home_score is None or m.away_score is None:
-            continue
-            
-        home_st, _ = LeagueStanding.objects.get_or_create(team=m.home_team, category=cat)
-        away_st, _ = LeagueStanding.objects.get_or_create(team=m.away_team, category=cat)
+@receiver(post_save, sender=Tournament)
+def notify_users_on_registration_open(sender, instance, created, **kwargs):
+    """Notify all active users when a tournament moves to registration status."""
+    if instance.status == Tournament.Status.REGISTRATION:
+        from apps.accounts.models import User
+        from apps.notifications.models import Notification
         
-        home_st.played += 1
-        away_st.played += 1
+        reg_url = reverse('teams:registration')
         
-        home_st.goals_for += m.home_score
-        home_st.goals_against += m.away_score
-        
-        away_st.goals_for += m.away_score
-        away_st.goals_against += m.home_score
-        
-        if m.home_score > m.away_score:
-            home_st.won += 1
-            home_st.points += 3
-            away_st.lost += 1
-        elif m.home_score < m.away_score:
-            away_st.won += 1
-            away_st.points += 3
-            home_st.lost += 1
-        else:
-            home_st.drawn += 1
-            home_st.points += 1
-            away_st.drawn += 1
-            away_st.points += 1
-            
-        home_st.save()
-        away_st.save()
+        users = User.objects.filter(is_active=True)
+        notifs = [
+            Notification(
+                recipient=user,
+                notif_type=Notification.Type.TOURNAMENT,
+                title=_('Nouveau tournoi : %s') % instance.name,
+                message=_('Les inscriptions sont ouvertes pour %s. Cliquez pour participer !') % instance.name,
+                link=reg_url
+            ) for user in users
+        ]
+        Notification.objects.bulk_create(notifs)
