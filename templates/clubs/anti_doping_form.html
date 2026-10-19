@@ -1,0 +1,728 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        {% if is_blank %}
+            شهادة الكشف عن تعاطي المخدرات (نموذج رسمي فارغ)
+        {% elif is_staff %}
+            كشف تعاطي المخدرات — {{ staff.first_name }} {{ staff.last_name }} ({{ staff.get_role_display }})
+        {% else %}
+            كشف تعاطي المخدرات — {{ player.last_name }} {{ player.first_name }} ({{ category_name }})
+        {% endif %}
+    </title>
+    
+    <!-- Bootstrap 5 CSS & FontAwesome -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&family=Tajawal:wght@500;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #0b1120;
+            color: #0f172a;
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ─── SCREEN TOOLBAR (NOT PRINTED) ─── */
+        .screen-toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            z-index: 1050;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            color: #ffffff;
+            direction: rtl;
+        }
+
+        .document-workspace {
+            padding-top: 75px;
+            padding-bottom: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            background: #0b1120;
+            min-height: 100vh;
+        }
+
+        /* ─── MASTER A4 SHEET ─── */
+        .anti-doping-sheet {
+            position: relative;
+            width: 210mm;
+            height: 297mm;
+            background-color: #ffffff;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            box-sizing: border-box;
+            margin: 0 auto;
+        }
+
+        /* Master Authentic Image Background */
+        .sheet-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: fill;
+            z-index: 1;
+            pointer-events: none;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        /* Dynamic Overlays Layer */
+        .sheet-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            direction: rtl;
+            pointer-events: auto;
+        }
+
+        /* Field Display Values */
+        .field-val {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+            font-weight: 700;
+            color: #0f172a;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.2;
+        }
+
+        /* Section 1: Laboratory Information */
+        .field-lab-name {
+            top: 22.1%;
+            right: 23.5%;
+            left: 12.0%;
+            height: 2.5%;
+            font-size: 13.5pt;
+            font-weight: 800;
+            color: #042f2e;
+        }
+
+        .field-lab-addr {
+            top: 24.7%;
+            right: 15.5%;
+            left: 12.0%;
+            height: 2.3%;
+            font-size: 12.0pt;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .field-lab-phone {
+            top: 27.2%;
+            left: 44.5%;
+            width: 21.0%;
+            height: 2.3%;
+            justify-content: center;
+            font-size: 13.0pt;
+            font-family: monospace, sans-serif;
+            font-weight: 800;
+            direction: ltr;
+            color: #0f172a;
+        }
+
+        .field-lab-email {
+            top: 27.2%;
+            left: 12.5%;
+            width: 27.5%;
+            height: 2.3%;
+            justify-content: flex-start;
+            font-size: 11.5pt;
+            font-family: monospace, sans-serif;
+            font-weight: 700;
+            direction: ltr;
+            color: #0f172a;
+        }
+
+        /* Section 2: Person Information */
+        .field-person-name {
+            top: 33.8%;
+            right: 21.0%;
+            left: 12.0%;
+            height: 2.6%;
+            font-size: 14.5pt;
+            font-weight: 900;
+            color: #022c22;
+        }
+
+        .field-person-dob-pob {
+            top: 36.7%;
+            right: 25.0%;
+            left: 12.0%;
+            height: 2.5%;
+            font-size: 13.0pt;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .field-sample-type {
+            top: 39.5%;
+            right: 19.8%;
+            left: 12.0%;
+            height: 2.4%;
+            font-size: 13.0pt;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .field-id-card {
+            top: 42.2%;
+            right: 33.5%;
+            left: 12.0%;
+            height: 2.4%;
+            font-size: 13.0pt;
+            font-family: monospace, sans-serif;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .field-requesting-party {
+            top: 45.0%;
+            right: 28.0%;
+            left: 12.0%;
+            height: 2.4%;
+            font-size: 13.0pt;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        /* Section 3: Examination Details */
+        .field-test-date {
+            top: 51.4%;
+            left: 33.5%;
+            width: 22.0%;
+            height: 2.4%;
+            justify-content: center;
+            font-size: 14.0pt;
+            font-weight: 900;
+            color: #022c22;
+        }
+
+        /* Section 4: Conclusion (Checkmark) */
+        .field-checkmark {
+            top: 63.8%;
+            left: 40.6%;
+            width: 3.8%;
+            height: 2.8%;
+            justify-content: center;
+            font-size: 26pt;
+            font-weight: 900;
+            color: #15803d;
+            line-height: 1;
+        }
+
+        /* Section 6: Dual Signatures */
+        .field-sig-president {
+            top: 86.0%;
+            left: 15.0%;
+            width: 26.0%;
+            text-align: center;
+            display: block !important;
+            font-size: 10pt;
+            color: #334155;
+        }
+
+        .field-sig-lab {
+            top: 86.0%;
+            right: 15.0%;
+            width: 26.0%;
+            text-align: center;
+            display: block !important;
+            font-size: 10pt;
+            color: #334155;
+        }
+
+        /* ─── LIVE EDIT MODE INPUTS ─── */
+        .edit-input {
+            width: 100%;
+            height: 100%;
+            border: 1.5px dashed #2563eb !important;
+            background: rgba(239, 246, 255, 0.92) !important;
+            color: #0f172a !important;
+            font-weight: bold !important;
+            padding: 1px 6px !important;
+            border-radius: 4px !important;
+            outline: none !important;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
+        }
+
+        .edit-input:focus {
+            border-color: #1d4ed8 !important;
+            background: #ffffff !important;
+        }
+
+        .edit-checkbox {
+            width: 26px !important;
+            height: 26px !important;
+            cursor: pointer !important;
+            accent-color: #15803d !important;
+        }
+
+        /* ─── TOAST NOTIFICATION ─── */
+        .toast-notify {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #10b981;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            font-weight: bold;
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* ─── PRINT RULES (STRICT SINGLE PAGE A4 PORTRAIT) ─── */
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+
+        @media print {
+            html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #ffffff !important;
+                width: 210mm !important;
+                height: 297mm !important;
+                overflow: hidden !important;
+            }
+
+            .screen-toolbar, .no-print, .toast-notify {
+                display: none !important;
+            }
+
+            .document-workspace {
+                padding: 0 !important;
+                margin: 0 !important;
+                background: transparent !important;
+                min-height: auto !important;
+                display: block !important;
+            }
+
+            .anti-doping-sheet {
+                width: 210mm !important;
+                height: 297mm !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+                page-break-after: avoid !important;
+                page-break-inside: avoid !important;
+            }
+
+            .sheet-bg {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .edit-input {
+                border: none !important;
+                background: transparent !important;
+                box-shadow: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── SCREEN TOOLBAR (NOT PRINTED) ─── -->
+    <div class="screen-toolbar no-print">
+        <div class="d-flex align-items-center gap-2">
+            {% if is_staff %}
+                <a href="{% url 'clubs:staff_list' %}" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-bold">
+                    <i class="fas fa-arrow-right ms-1"></i> قائمة المدربين
+                </a>
+            {% else %}
+                <a href="{% url 'clubs:player_passport_list' %}?category={{ category_name }}" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-bold">
+                    <i class="fas fa-arrow-right ms-1"></i> وثائق {{ category_name }}
+                </a>
+            {% endif %}
+
+            <!-- Dropdown selector for players/coaches -->
+            {% if not is_blank and siblings %}
+            <div class="dropdown me-2">
+                <select onchange="window.location.href=this.value" class="form-select form-select-sm rounded-pill bg-slate-800 text-white border-slate-700 fw-bold px-3" style="min-width: 220px;">
+                    {% for item in siblings %}
+                        {% if is_staff %}
+                            <option value="{% url 'clubs:staff_anti_doping' item.id %}" {% if item.id == staff.id %}selected{% endif %}>
+                                {{ forloop.counter }}. {{ item.last_name }} {{ item.first_name }} ({{ item.get_role_display }})
+                            </option>
+                        {% else %}
+                            <option value="{% url 'clubs:player_anti_doping' item.id %}" {% if item.id == player.id %}selected{% endif %}>
+                                {{ forloop.counter }}. {{ item.last_name }} {{ item.first_name }}
+                            </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Prev / Next buttons -->
+            <div class="btn-group btn-group-sm">
+                {% if prev_item %}
+                    {% if is_staff %}
+                        <a href="{% url 'clubs:staff_anti_doping' prev_item.id %}" class="btn btn-secondary" title="السابق"><i class="fas fa-chevron-right"></i></a>
+                    {% else %}
+                        <a href="{% url 'clubs:player_anti_doping' prev_item.id %}" class="btn btn-secondary" title="السابق"><i class="fas fa-chevron-right"></i></a>
+                    {% endif %}
+                {% endif %}
+                {% if next_item %}
+                    {% if is_staff %}
+                        <a href="{% url 'clubs:staff_anti_doping' next_item.id %}" class="btn btn-secondary" title="التالي"><i class="fas fa-chevron-left"></i></a>
+                    {% else %}
+                        <a href="{% url 'clubs:player_anti_doping' next_item.id %}" class="btn btn-secondary" title="التالي"><i class="fas fa-chevron-left"></i></a>
+                    {% endif %}
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Quick Switch to other Player documents -->
+        <div class="d-flex align-items-center gap-2">
+            {% if not is_staff and player %}
+                <a href="{% url 'clubs:player_license_form' player.id %}" class="btn btn-outline-warning btn-sm rounded-pill px-3 fw-bold">
+                    <i class="fas fa-id-card ms-1"></i> طلب الرخصة
+                </a>
+                <a href="{% url 'clubs:player_medical_certificate' player.id %}" class="btn btn-outline-info btn-sm rounded-pill px-3 fw-bold">
+                    <i class="fas fa-file-medical ms-1"></i> الشهادة الطبية
+                </a>
+                <a href="{% url 'clubs:player_passport' player.id %}" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-bold">
+                    <i class="fas fa-passport ms-1"></i> جواز اللاعب
+                </a>
+            {% elif is_staff and staff %}
+                <a href="{% url 'clubs:staff_medical_certificate' staff.id %}" class="btn btn-outline-info btn-sm rounded-pill px-3 fw-bold">
+                    <i class="fas fa-file-medical ms-1"></i> الشهادة الطبية للمدرب
+                </a>
+            {% elif is_staff %}
+                <a href="{% url 'clubs:blank_staff_medical_certificate' %}" class="btn btn-outline-info btn-sm rounded-pill px-3 fw-bold">
+                    <i class="fas fa-file-medical ms-1"></i> شهادة طبية فارغة
+                </a>
+            {% endif %}
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-flex align-items-center gap-2">
+            <!-- Toggle Blank / Filled -->
+            {% if is_blank %}
+                {% if player %}
+                    <a href="{% url 'clubs:player_anti_doping' player.id %}" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold">
+                        <i class="fas fa-user-check ms-1"></i> عرض النسخة الممتلئة
+                    </a>
+                {% elif staff %}
+                    <a href="{% url 'clubs:staff_anti_doping' staff.id %}" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold">
+                        <i class="fas fa-user-check ms-1"></i> عرض النسخة الممتلئة
+                    </a>
+                {% endif %}
+            {% else %}
+                {% if is_staff %}
+                    <a href="{% url 'clubs:blank_anti_doping' %}?staff=1" class="btn btn-outline-warning btn-sm rounded-pill px-3 fw-bold">
+                        <i class="fas fa-file ms-1"></i> عرض نسخة فارغة
+                    </a>
+                {% else %}
+                    <a href="{% url 'clubs:player_anti_doping' player.id %}?blank=1" class="btn btn-outline-warning btn-sm rounded-pill px-3 fw-bold">
+                        <i class="fas fa-file ms-1"></i> عرض نسخة فارغة
+                    </a>
+                {% endif %}
+            {% endif %}
+
+            <!-- Batch Print Link -->
+            {% if is_staff %}
+                <a href="{% url 'clubs:staff_anti_doping_batch_print' %}" target="_blank" class="btn btn-outline-info btn-sm rounded-pill px-3 fw-bold">
+                    <i class="fas fa-print ms-1"></i> طباعة جماعية للطاقم
+                </a>
+            {% elif not is_blank and player %}
+                <a href="{% url 'clubs:anti_doping_batch_print' %}?category={{ category_name }}" target="_blank" class="btn btn-outline-info btn-sm rounded-pill px-3 fw-bold">
+                    <i class="fas fa-print ms-1"></i> طباعة جماعية (U20)
+                </a>
+            {% endif %}
+
+            <!-- Live Edit Mode Toggle -->
+            {% if not is_blank %}
+            <button type="button" id="editToggleBtn" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-bold" onclick="toggleEditMode()">
+                <i class="fas fa-edit ms-1"></i> <span id="editText">تعديل البيانات</span>
+            </button>
+            <button type="button" id="saveBtn" class="btn btn-success btn-sm rounded-pill px-3 fw-bold d-none" onclick="saveDopingData()">
+                <i class="fas fa-save ms-1"></i> حفظ التغييرات
+            </button>
+            {% endif %}
+
+            <!-- Print Button -->
+            <button onclick="window.print()" class="btn btn-warning btn-sm rounded-pill px-4 fw-bold">
+                <i class="fas fa-print ms-1"></i> طباعة الاستمارة (A4)
+            </button>
+        </div>
+    </div>
+
+    <!-- ─── DOCUMENT WORKSPACE ─── -->
+    <div class="document-workspace">
+
+        <!-- ─── MASTER A4 SHEET (100% MATCHING OFFICIAL FAF SPECIFICATION) ─── -->
+        <div class="anti-doping-sheet" id="antiDopingSheet">
+
+            <!-- Authentic Pre-rendered Vector Master Background -->
+            <img src="{% static 'img/anti_doping_template.png' %}" class="sheet-bg" alt="Official FAF Template" />
+
+            <!-- Dynamic Overlays Layer (Only shown when not blank) -->
+            <div class="sheet-overlay">
+                {% if not is_blank %}
+                    <!-- 1. Lab Name -->
+                    <div class="field-val field-lab-name">
+                        <span class="view-mode" id="val_labo_name">{{ forms_data.labo_name|default:"مخبر التحاليل الطبية والبيولوجية المعتمد - ولاية تيبازة" }}</span>
+                        <input type="text" class="edit-input d-none" id="inp_labo_name" value="{{ forms_data.labo_name|default:'مخبر التحاليل الطبية والبيولوجية المعتمد - ولاية تيبازة' }}">
+                    </div>
+
+                    <!-- 2. Lab Address -->
+                    <div class="field-val field-lab-addr">
+                        <span class="view-mode" id="val_labo_address">{{ forms_data.labo_address|default:"حي 05 جويلية، سيدي غيلاس - ولاية تيبازة" }}</span>
+                        <input type="text" class="edit-input d-none" id="inp_labo_address" value="{{ forms_data.labo_address|default:'حي 05 جويلية، سيدي غيلاس - ولاية تيبازة' }}">
+                    </div>
+
+                    <!-- 3. Lab Phone -->
+                    <div class="field-val field-lab-phone">
+                        <span class="view-mode" id="val_labo_phone">{{ forms_data.labo_phone|default:"024 43 12 89" }}</span>
+                        <input type="text" class="edit-input d-none text-center" id="inp_labo_phone" value="{{ forms_data.labo_phone|default:'024 43 12 89' }}" dir="ltr">
+                    </div>
+
+                    <!-- 4. Lab Email -->
+                    <div class="field-val field-lab-email">
+                        <span class="view-mode" id="val_labo_email">{{ forms_data.labo_email|default:"contact@labo-tipaza.dz" }}</span>
+                        <input type="text" class="edit-input d-none" id="inp_labo_email" value="{{ forms_data.labo_email|default:'contact@labo-tipaza.dz' }}" dir="ltr">
+                    </div>
+
+                    <!-- 5. Person Name (الاسم واللقب) -->
+                    <div class="field-val field-person-name">
+                        <span class="view-mode" id="val_person_name">
+                            {% if is_staff %}
+                                {{ staff.last_name }} {{ staff.first_name }}
+                            {% else %}
+                                {{ player.last_name }} {{ player.first_name }}{% if passport.full_name_fr %} / {{ passport.full_name_fr }}{% endif %}
+                            {% endif %}
+                        </span>
+                        <input type="text" class="edit-input d-none" id="inp_person_name" value="{% if is_staff %}{{ staff.last_name }} {{ staff.first_name }}{% else %}{{ player.last_name }} {{ player.first_name }}{% if passport.full_name_fr %} / {{ passport.full_name_fr }}{% endif %}{% endif %}">
+                    </div>
+
+                    <!-- 6. Date & Place of Birth (تاريخ ومكان الميلاد) -->
+                    <div class="field-val field-person-dob-pob">
+                        <span class="view-mode" id="val_person_dob_pob">
+                            {% if is_staff %}
+                                {{ staff.date_of_birth|date:"d/m/Y"|default:"" }} بـ {{ staff.place_of_birth|default:"سيدي غيلاس" }}
+                            {% else %}
+                                {{ player.date_of_birth|date:"d/m/Y"|default:"" }} بـ {{ player.place_of_birth|default:passport.place_of_birth_fr|default:"قوراية" }}
+                            {% endif %}
+                        </span>
+                        <input type="text" class="edit-input d-none" id="inp_person_dob_pob" value="{% if is_staff %}{{ staff.date_of_birth|date:'d/m/Y'|default:'' }} بـ {{ staff.place_of_birth|default:'سيدي غيلاس' }}{% else %}{{ player.date_of_birth|date:'d/m/Y'|default:'' }} بـ {{ player.place_of_birth|default:passport.place_of_birth_fr|default:'قوراية' }}{% endif %}">
+                    </div>
+
+                    <!-- 7. Sample Type (نوع العينة) -->
+                    <div class="field-val field-sample-type">
+                        <span class="view-mode" id="val_sample_type">{{ forms_data.sample_type|default:"بول (Urine)" }}</span>
+                        <select class="edit-input d-none" id="inp_sample_type">
+                            <option value="بول (Urine)" {% if forms_data.sample_type == "بول (Urine)" or not forms_data.sample_type %}selected{% endif %}>بول (Urine)</option>
+                            <option value="دم (Sang)" {% if forms_data.sample_type == "دم (Sang)" %}selected{% endif %}>دم (Sang)</option>
+                            <option value="لعاب (Salive)" {% if forms_data.sample_type == "لعاب (Salive)" %}selected{% endif %}>لعاب (Salive)</option>
+                        </select>
+                    </div>
+
+                    <!-- 8. ID Card / Passport (رقم بطاقة الهوية / جواز السفر) -->
+                    <div class="field-val field-id-card">
+                        <span class="view-mode" id="val_id_card">
+                            {% if is_staff %}
+                                {{ staff.id_card|default:"........................" }}
+                            {% else %}
+                                {{ player.id_card|default:passport.license_number|default:"........................" }}
+                            {% endif %}
+                        </span>
+                        <input type="text" class="edit-input d-none" id="inp_id_card" value="{% if is_staff %}{{ staff.id_card|default:'' }}{% else %}{{ player.id_card|default:passport.license_number|default:'' }}{% endif %}" dir="ltr">
+                    </div>
+
+                    <!-- 9. Requesting Party (الجهة الطالبة للتحاليل) -->
+                    <div class="field-val field-requesting-party">
+                        <span class="view-mode" id="val_requesting_party">{{ forms_data.requesting_party|default:"النادي الرياضي الهاوي نجم مسلمون (ES Messelmoun)" }}</span>
+                        <input type="text" class="edit-input d-none" id="inp_requesting_party" value="{{ forms_data.requesting_party|default:'النادي الرياضي الهاوي نجم مسلمون (ES Messelmoun)' }}">
+                    </div>
+
+                    <!-- 10. Examination Date in details (بتاريخ) -->
+                    <div class="field-val field-test-date">
+                        <span class="view-mode" id="val_test_date">{{ forms_data.test_date|default:"15 / 10 / 2026" }}</span>
+                        <input type="text" class="edit-input d-none text-center" id="inp_test_date" value="{{ forms_data.test_date|default:'15 / 10 / 2026' }}" dir="ltr">
+                    </div>
+
+                    <!-- 11. Conclusion Checkmark [✓] -->
+                    <div class="field-val field-checkmark">
+                        <span class="view-mode" id="val_checkmark">{% if forms_data.doping_result != "positive" %}&#10004;{% endif %}</span>
+                        <input type="checkbox" class="edit-checkbox d-none" id="inp_checkmark" {% if forms_data.doping_result != "positive" %}checked{% endif %}>
+                    </div>
+
+                    <!-- 12. President Signature Block (Left) -->
+                    <div class="field-val field-sig-president">
+                        <div style="font-weight: 800; font-size: 11pt; color: #0f172a;">توقيع وختم رئيس النادي</div>
+                    </div>
+
+                    <!-- 13. Laboratory Stamp Block (Right) -->
+                    <div class="field-val field-sig-lab">
+                        <div style="font-weight: 800; font-size: 11pt; color: #0f172a;">توقيع وختم المخبر الطبي</div>
+                        <div style="font-size: 9.5pt; color: #64748b; margin-top: 3px;">تأشيرة الطبيب المسؤول</div>
+                    </div>
+                {% endif %}
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toastNotification" class="toast-notify">
+        <i class="fas fa-check-circle fa-lg"></i>
+        <span id="toastMsg">تم حفظ البيانات بنجاح!</span>
+    </div>
+
+    <!-- JavaScript for Live In-Place Edit & AJAX Save -->
+    <script>
+        let isEditMode = false;
+
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            const viewEls = document.querySelectorAll('.view-mode');
+            const editEls = document.querySelectorAll('.edit-input, .edit-checkbox');
+            const editToggleBtn = document.getElementById('editToggleBtn');
+            const editText = document.getElementById('editText');
+            const saveBtn = document.getElementById('saveBtn');
+
+            if (isEditMode) {
+                viewEls.forEach(el => el.classList.add('d-none'));
+                editEls.forEach(el => el.classList.remove('d-none'));
+                editText.textContent = 'إلغاء التعديل';
+                editToggleBtn.className = 'btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold';
+                saveBtn.classList.remove('d-none');
+            } else {
+                viewEls.forEach(el => el.classList.remove('d-none'));
+                editEls.forEach(el => el.classList.add('d-none'));
+                editText.textContent = 'تعديل البيانات';
+                editToggleBtn.className = 'btn btn-outline-light btn-sm rounded-pill px-3 fw-bold';
+                saveBtn.classList.add('d-none');
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toastNotification');
+            const toastMsg = document.getElementById('toastMsg');
+            toastMsg.textContent = msg;
+            toast.style.display = 'flex';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3500);
+        }
+
+        function saveDopingData() {
+            const isChecked = document.getElementById('inp_checkmark').checked;
+            
+            const payload = {
+                doping_data: {
+                    labo_name: document.getElementById('inp_labo_name').value.trim(),
+                    labo_address: document.getElementById('inp_labo_address').value.trim(),
+                    labo_phone: document.getElementById('inp_labo_phone').value.trim(),
+                    labo_email: document.getElementById('inp_labo_email').value.trim(),
+                    person_name: document.getElementById('inp_person_name').value.trim(),
+                    person_dob_pob: document.getElementById('inp_person_dob_pob').value.trim(),
+                    sample_type: document.getElementById('inp_sample_type').value,
+                    id_card: document.getElementById('inp_id_card').value.trim(),
+                    requesting_party: document.getElementById('inp_requesting_party').value.trim(),
+                    test_date: document.getElementById('inp_test_date').value.trim(),
+                    sign_date: document.getElementById('inp_sign_date') ? document.getElementById('inp_sign_date').value.trim() : '',
+                    doping_result: isChecked ? 'negative' : 'positive'
+                }
+            };
+
+            const url = window.location.pathname;
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Update view mode elements
+                    document.getElementById('val_labo_name').textContent = payload.doping_data.labo_name;
+                    document.getElementById('val_labo_address').textContent = payload.doping_data.labo_address;
+                    document.getElementById('val_labo_phone').textContent = payload.doping_data.labo_phone;
+                    document.getElementById('val_labo_email').textContent = payload.doping_data.labo_email;
+                    document.getElementById('val_person_name').textContent = payload.doping_data.person_name;
+                    document.getElementById('val_person_dob_pob').textContent = payload.doping_data.person_dob_pob;
+                    document.getElementById('val_sample_type').textContent = payload.doping_data.sample_type;
+                    document.getElementById('val_id_card').textContent = payload.doping_data.id_card;
+                    document.getElementById('val_requesting_party').textContent = payload.doping_data.requesting_party;
+                    document.getElementById('val_test_date').textContent = payload.doping_data.test_date;
+                    if (document.getElementById('val_sign_date')) {
+                        document.getElementById('val_sign_date').textContent = payload.doping_data.sign_date;
+                    }
+                    document.getElementById('val_checkmark').innerHTML = isChecked ? '&#10004;' : '';
+
+                    toggleEditMode();
+                    showToast(data.message || 'تم حفظ التعديلات بنجاح!');
+                } else {
+                    alert('حدث خطأ أثناء الحفظ: ' + (data.message || 'يرجى المحاولة مجدداً'));
+                }
+            })
+            .catch(error => {
+                console.error('Save error:', error);
+                alert('فشل الاتصال بالخادم لحفظ البيانات.');
+            });
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>

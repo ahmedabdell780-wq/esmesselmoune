@@ -1,52 +1,224 @@
 {% extends "base.html" %}
 {% load i18n %}
 
-{% block title %}Staff de l'Académie - Wifaq{% endblock %}
+{% block title %}Staff de l'Académie - الطاقم الفني والإداري{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4 max-w-7xl mx-auto">
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-3xl font-black flex items-center gap-3 text-white">
-            <i class="fas fa-user-tie text-primary"></i>الطاقم الفني والإداري
-        </h2>
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-            <a href="{% url 'clubs:dashboard' %}" class="btn btn-ghost">رجوع للوحة التحكم</a>
-            <a href="{% url 'clubs:staff_add' %}" class="btn btn-primary ml-2 rounded-xl">إضافة عضو +</a>
+            <h2 class="text-3xl font-black flex items-center gap-3 text-white">
+                <i class="fas fa-user-tie text-primary"></i>الطاقم الفني والإداري
+            </h2>
+            <p class="text-sm text-slate-400 mt-1">إدارة أعضاء الطاقم الإداري، الفني، والطبي وطباعة القوائم الرسمية للموسم</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+            <!-- زر طباعة قائمة الطاقم مع قائمة منسدلة للفئات -->
+            <div class="relative group" x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false">
+                <button type="button" 
+                        @click="open = !open" 
+                        class="btn btn-outline-success rounded-xl flex items-center gap-2 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 font-bold shadow-lg transition-all cursor-pointer">
+                    <i class="fas fa-print"></i>
+                    <span>طباعة قائمة الطاقم</span>
+                    <i class="fas fa-chevron-down text-xs transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
+                </button>
+                <div :class="{ 'block': open, 'hidden': !open }" 
+                     class="absolute left-0 mt-2 w-64 bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl p-2 group-hover:block hover:block z-50 backdrop-blur-xl">
+                    <div class="px-3 py-1.5 text-xs font-bold text-slate-400 border-b border-slate-800">
+                        اختر فئة الطاقم للطباعة:
+                    </div>
+                    <a href="{% url 'clubs:staff_list_print' %}?category=admin" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-white hover:bg-slate-800 transition-all mt-1">
+                        <i class="fas fa-building text-amber-400"></i>
+                        <span>قائمة الطاقم الإداري</span>
+                    </a>
+                    <a href="{% url 'clubs:staff_list_print' %}?category=U15" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-white hover:bg-slate-800 transition-all">
+                        <i class="fas fa-futbol text-emerald-400"></i>
+                        <span>طاقم فئة U15</span>
+                    </a>
+                    <a href="{% url 'clubs:staff_list_print' %}?category=U17" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-white hover:bg-slate-800 transition-all">
+                        <i class="fas fa-futbol text-emerald-400"></i>
+                        <span>طاقم فئة U17</span>
+                    </a>
+                    <a href="{% url 'clubs:staff_list_print' %}?category=U20" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-white hover:bg-slate-800 transition-all">
+                        <i class="fas fa-futbol text-emerald-400"></i>
+                        <span>طاقم فئة U20</span>
+                    </a>
+                    {% for cat in categories %}
+                        {% if cat.name != 'U15' and cat.name != 'U17' and cat.name != 'U20' %}
+                        <a href="{% url 'clubs:staff_list_print' %}?category={{ cat.name }}" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-white hover:bg-slate-800 transition-all">
+                            <i class="fas fa-futbol text-blue-400"></i>
+                            <span>طاقم فئة {{ cat.name }}</span>
+                        </a>
+                        {% endif %}
+                    {% endfor %}
+                    <div class="border-t border-slate-800 my-1"></div>
+                    <a href="{% url 'clubs:staff_list_print' %}?category=all" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-slate-300 hover:bg-slate-800 transition-all">
+                        <i class="fas fa-users text-sky-400"></i>
+                        <span>القائمة الشاملة لكافة الطاقم</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- زر قائمة بسيطة للطاقم -->
+            <a href="{% url 'clubs:player_simple_list_print' %}?category=staff" target="_blank"
+               class="btn rounded-xl flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white font-bold shadow-lg shadow-teal-600/25 transition-all cursor-pointer"
+               title="طباعة قائمة بسيطة للطاقم بدون إمضاءات">
+                <i class="fas fa-file-alt"></i>
+                <span>قائمة بسيطة للطاقم</span>
+            </a>
+
+            <!-- زر طباعة قائمة اللاعبين مع قائمة منسدلة للفئات -->
+            <div class="relative group" x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false">
+                <button type="button" 
+                        @click="open = !open" 
+                        class="btn btn-outline-primary rounded-xl flex items-center gap-2 border-blue-500/30 text-blue-400 hover:bg-blue-500 hover:text-white font-bold shadow-lg transition-all cursor-pointer">
+                    <i class="fas fa-users"></i>
+                    <span>طباعة قائمة اللاعبين</span>
+                    <i class="fas fa-chevron-down text-xs transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
+                </button>
+                <div :class="{ 'block': open, 'hidden': !open }" 
+                     class="absolute left-0 mt-2 w-64 bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl p-2 group-hover:block hover:block z-50 backdrop-blur-xl">
+                    <div class="px-3 py-1.5 text-xs font-bold text-slate-400 border-b border-slate-800">
+                        اختر فئة اللاعبين للطباعة:
+                    </div>
+                    <a href="{% url 'clubs:player_list_print' %}?category=U15" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-white hover:bg-slate-800 transition-all mt-1">
+                        <i class="fas fa-futbol text-emerald-400"></i>
+                        <span>قائمة لاعبي U15</span>
+                    </a>
+                    <a href="{% url 'clubs:player_list_print' %}?category=U17" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-white hover:bg-slate-800 transition-all">
+                        <i class="fas fa-futbol text-emerald-400"></i>
+                        <span>قائمة لاعبي U17</span>
+                    </a>
+                    <a href="{% url 'clubs:player_list_print' %}?category=U20" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-white hover:bg-slate-800 transition-all">
+                        <i class="fas fa-futbol text-emerald-400"></i>
+                        <span>قائمة لاعبي U20</span>
+                    </a>
+                    {% for cat in categories %}
+                        {% if cat.name != 'U15' and cat.name != 'U17' and cat.name != 'U20' %}
+                        <a href="{% url 'clubs:player_list_print' %}?category={{ cat.name }}" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-white hover:bg-slate-800 transition-all">
+                            <i class="fas fa-futbol text-blue-400"></i>
+                            <span>قائمة لاعبي {{ cat.name }}</span>
+                        </a>
+                        {% endif %}
+                    {% endfor %}
+                    <div class="border-t border-slate-800 my-1"></div>
+                    <a href="{% url 'clubs:player_list_print' %}?category=all" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-slate-300 hover:bg-slate-800 transition-all">
+                        <i class="fas fa-users text-sky-400"></i>
+                        <span>القائمة الشاملة لكافة الفئات</span>
+                    </a>
+                    <a href="{% url 'clubs:player_list_print' %}?blank=1" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-amber-300 hover:bg-slate-800 transition-all">
+                        <i class="fas fa-file-signature text-amber-400"></i>
+                        <span>استمارة فارغة (25 لاعب)</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- زر طباعة الشهادات الطبية لكافة المدربين والطاقم -->
+            <a href="{% url 'clubs:staff_medical_certificate_batch_print' %}" target="_blank" class="btn btn-outline-info rounded-xl flex items-center gap-2 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500 hover:text-slate-950 font-bold shadow-lg transition-all">
+                <i class="fas fa-file-medical"></i>
+                <span>الشهادات الطبية للمدربين</span>
+            </a>
+
+            <!-- زر طباعة كشوف تعاطي المخدرات لكافة المدربين والطاقم -->
+            <a href="{% url 'clubs:staff_anti_doping_batch_print' %}" target="_blank" class="btn btn-outline-warning rounded-xl flex items-center gap-2 border-amber-500/30 text-amber-400 hover:bg-amber-500 hover:text-slate-950 font-bold shadow-lg transition-all">
+                <i class="fas fa-flask"></i>
+                <span>كشوف تعاطي المخدرات للمدربين</span>
+            </a>
+
+            <a href="{% url 'clubs:staff_add' %}" class="btn btn-primary rounded-xl font-bold shadow-lg flex items-center gap-2">
+                <i class="fas fa-plus"></i> إضافة عضو +
+            </a>
+            <a href="{% url 'clubs:dashboard' %}" class="btn btn-ghost rounded-xl">
+                <i class="fas fa-arrow-left me-1"></i> لوحة التحكم
+            </a>
         </div>
     </div>
 
+    <!-- بطاقات أعضاء الطاقم -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for member in staff_members %}
-        <div class="card rounded-3xl p-6 border border-white/10 relative overflow-hidden group" style="background: color-mix(in srgb, var(--card) 60%, transparent);">
+        <div class="card rounded-3xl p-6 border border-white/10 relative overflow-hidden group hover:border-emerald-500/40 transition-all shadow-xl" style="background: color-mix(in srgb, var(--card) 60%, transparent);">
             <div class="absolute -right-10 -top-10 w-32 h-32 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all"></div>
             
-            <div class="flex items-center gap-4 relative z-10">
-                <div class="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-lg">
-                    {% if member.photo %}
-                        <img src="{{ member.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
-                    {% else %}
-                        <i class="fas fa-user text-3xl opacity-30"></i>
-                    {% endif %}
+            <div class="flex items-start justify-between gap-4 relative z-10">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-lg group-hover:border-emerald-500/40 transition-all">
+                        {% if member.photo %}
+                            <img src="{{ member.photo.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <i class="fas fa-user-tie text-2xl opacity-40 text-emerald-400"></i>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors mb-0.5">
+                            {{ member.first_name }} {{ member.last_name }}
+                        </h3>
+                        <div class="text-emerald-400 font-bold text-xs mb-1">
+                            {% if member.function_title %}
+                                {{ member.function_title }} <span class="opacity-60">({{ member.get_role_display }})</span>
+                            {% else %}
+                                {{ member.get_role_display }}
+                            {% endif %}
+                        </div>
+                        {% if member.category_assigned %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                {{ member.category_assigned.name }}
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                                إدارة عامة
+                            </span>
+                        {% endif %}
+                    </div>
                 </div>
-                <div>
-                    <h3 class="text-xl font-bold">{{ member.first_name }} {{ member.last_name }}</h3>
-                    <div class="text-primary font-bold text-sm mb-1">{{ member.get_role_display }}</div>
-                    {% if member.category_assigned %}
-                        <span class="badge bg-white/10 text-xs">{{ member.category_assigned.name }}</span>
-                    {% endif %}
+
+                <!-- أزرار الإجراءات (شهادة طبية، كشف المخدرات، تعديل وحذف) -->
+                <div class="flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                    <a href="{% url 'clubs:staff_medical_certificate' member.id %}" class="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500 hover:text-slate-950 flex items-center justify-center transition-all" title="شهادة الأهلية الطبية للمدرب">
+                        <i class="fas fa-file-medical text-xs"></i>
+                    </a>
+                    <a href="{% url 'clubs:staff_anti_doping' member.id %}" class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 flex items-center justify-center transition-all" title="كشف تعاطي المخدرات (التحاليل السلبية)">
+                        <i class="fas fa-flask text-xs"></i>
+                    </a>
+                    <a href="{% url 'clubs:staff_edit' member.id %}" class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-slate-950 flex items-center justify-center transition-all" title="تعديل">
+                        <i class="fas fa-edit text-xs"></i>
+                    </a>
+                    <a href="{% url 'clubs:staff_delete' member.id %}" class="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all" title="حذف">
+                        <i class="fas fa-trash-alt text-xs"></i>
+                    </a>
                 </div>
             </div>
-            
-            {% if member.phone %}
-            <div class="mt-4 pt-4 border-t border-white/10 flex items-center gap-2 opacity-80 text-sm font-mono" dir="ltr">
-                <i class="fas fa-phone-alt text-primary/70"></i> {{ member.phone }}
+
+            <!-- معلومات إضافية -->
+            <div class="mt-4 pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+                {% if member.phone %}
+                <div class="flex items-center gap-1.5 font-mono" dir="ltr">
+                    <i class="fas fa-phone-alt text-emerald-400/80"></i> {{ member.phone }}
+                </div>
+                {% endif %}
+
+                {% if member.date_of_birth or member.place_of_birth %}
+                <div class="flex items-center gap-1">
+                    <i class="fas fa-birthday-cake text-slate-500"></i>
+                    <span dir="ltr">{{ member.date_of_birth|date:"Y-m-d"|default:"" }}</span>
+                    {% if member.place_of_birth %}<span class="text-slate-500">({{ member.place_of_birth }})</span>{% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            {% if member.notes %}
+            <div class="mt-2 text-xs text-slate-400 bg-white/5 rounded-xl px-3 py-1.5 border border-white/5 flex items-center gap-2">
+                <i class="fas fa-info-circle text-amber-400/80"></i>
+                <span class="truncate">{{ member.notes }}</span>
             </div>
             {% endif %}
         </div>
         {% empty %}
-        <div class="col-span-full py-12 text-center opacity-50">
-            <i class="fas fa-users-slash text-5xl mb-4"></i>
-            <p>لم يتم تسجيل أي أعضاء في الطاقم بعد.</p>
+        <div class="col-span-full py-16 text-center opacity-60">
+            <i class="fas fa-users-slash text-5xl mb-4 text-slate-600"></i>
+            <h4 class="text-lg font-bold text-slate-300">لم يتم تسجيل أي أعضاء في الطاقم بعد</h4>
+            <p class="text-sm text-slate-500 mt-1">ابدأ بإضافة أول عضو أو استيراد الطاقم الإداري</p>
         </div>
         {% endfor %}
     </div>

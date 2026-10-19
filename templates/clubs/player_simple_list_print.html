@@ -1,0 +1,817 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ doc_title }} - ESM</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-color: #0f172a;
+            --accent-color: #0d9488;
+            --border-color: #1e293b;
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: 6mm 8mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0f172a;
+            color: #0f172a;
+            font-family: 'Cairo', 'Amiri', 'Tajawal', sans-serif;
+            margin: 0;
+            padding: 0;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        /* ─── Top Action Bar (Screen Only) ─── */
+        .top-action-bar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 16px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 13.5px;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-print {
+            background: #0d9488;
+            color: white;
+            box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+        }
+        .btn-print:hover {
+            background: #0f766e;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .btn-back {
+            background: #334155;
+            color: #f1f5f9;
+        }
+        .btn-back:hover {
+            background: #475569;
+            color: white;
+        }
+
+        .btn-date-toggle {
+            background: #2563eb;
+            color: white;
+            box-shadow: 0 3px 10px rgba(37, 99, 235, 0.25);
+        }
+        .btn-date-toggle:hover {
+            background: #1d4ed8;
+            color: white;
+        }
+
+        .date-control-group {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 4px 10px;
+            border-radius: 10px;
+        }
+
+        .date-custom-input {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fbbf24;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 7px;
+            padding: 4px 8px;
+            width: 125px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .date-custom-input:focus {
+            outline: none;
+            border-color: #0d9488;
+            box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.3);
+            background: #0f172a;
+        }
+
+        .btn-clear-date {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #f87171;
+            border-radius: 7px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+        .btn-clear-date:hover {
+            background: #ef4444;
+            color: white;
+        }
+
+        .category-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 11px;
+            border-radius: 9999px;
+            font-size: 11.5px;
+            font-weight: 700;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.08);
+            color: #cbd5e1;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            transition: all 0.2s ease;
+        }
+        .category-pill:hover {
+            background: rgba(255, 255, 255, 0.18);
+            color: white;
+        }
+        .category-pill.active {
+            background: #0d9488;
+            color: white;
+            border-color: #0d9488;
+        }
+        .category-pill.pill-staff {
+            border-color: rgba(245, 158, 11, 0.4);
+            color: #fbbf24;
+        }
+        .category-pill.pill-staff.active {
+            background: #d97706;
+            color: white;
+            border-color: #d97706;
+        }
+
+        /* ─── Printable Page Sheet (A4) ─── */
+        .print-page {
+            width: 210mm;
+            min-height: 297mm;
+            box-sizing: border-box;
+            margin: 20px auto;
+            background: #ffffff;
+            padding: 8mm 10mm;
+            border-radius: 6px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            page-break-after: always;
+            break-after: page;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .print-page:last-child {
+            page-break-after: auto;
+            break-after: auto;
+            margin-bottom: 40px;
+        }
+
+        /* ─── Header Styling ─── */
+        .header-section {
+            border-bottom: 2px solid #0f172a;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 35%;
+        }
+
+        .header-logo {
+            width: 58px;
+            height: 58px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .club-info h4 {
+            font-size: 15px;
+            font-weight: 900;
+            margin: 0;
+            color: #0f172a;
+            line-height: 1.3;
+        }
+        .club-info span {
+            font-size: 10px;
+            font-weight: 700;
+            color: #64748b;
+            font-family: sans-serif;
+            letter-spacing: 0.3px;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .header-center {
+            text-align: center;
+            width: 38%;
+        }
+
+        .main-title {
+            font-size: 17.5px;
+            font-weight: 900;
+            color: #0f172a;
+            margin: 0 0 4px 0;
+            letter-spacing: -0.3px;
+            display: inline-block;
+            border-bottom: 2px solid #0d9488;
+            padding-bottom: 2px;
+        }
+
+        .category-badge-print {
+            display: inline-block;
+            background: #0f172a;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 800;
+            padding: 2px 14px;
+            border-radius: 6px;
+            margin-bottom: 3px;
+        }
+
+        .season-text {
+            font-size: 11px;
+            font-weight: 700;
+            color: #475569;
+            margin: 0;
+        }
+
+        .header-left {
+            width: 27%;
+            text-align: left;
+            font-size: 10.5px;
+            font-weight: 700;
+            color: #334155;
+            line-height: 1.4;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .meta-box {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 4px 10px;
+            text-align: right;
+            min-width: 140px;
+        }
+
+        /* ─── Editable Date Row ─── */
+        .date-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 4px;
+            line-height: 1.5;
+        }
+
+        .release-date-val {
+            cursor: pointer;
+            border-radius: 4px;
+            padding: 0 4px;
+            transition: all 0.2s ease;
+            display: inline-block;
+            min-width: 75px;
+            border-bottom: 1px dashed transparent;
+        }
+
+        .release-date-val:hover {
+            background: #e2e8f0;
+            border-bottom-color: #0d9488;
+        }
+
+        .release-date-val:focus {
+            background: #fff;
+            outline: 2px solid #0d9488;
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.2);
+        }
+
+        .btn-del-date {
+            background: transparent;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            padding: 0 2px;
+            font-size: 11px;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+            line-height: 1;
+        }
+        .btn-del-date:hover {
+            opacity: 1;
+            transform: scale(1.15);
+        }
+
+        body.hide-release-date .date-row {
+            display: none !important;
+        }
+
+        /* ─── Table Styling ─── */
+        .simple-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11.5px;
+            margin-top: 4px;
+            color: #0f172a;
+        }
+
+        .simple-table th {
+            background: #f1f5f9 !important;
+            color: #0f172a !important;
+            font-weight: 900;
+            border: 1.2px solid #334155 !important;
+            padding: 6px 6px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 11.5px;
+            line-height: 1.2;
+        }
+
+        .simple-table td {
+            border: 1px solid #475569 !important;
+            padding: 5.5px 7px;
+            vertical-align: middle;
+            line-height: 1.25;
+            font-weight: 600;
+        }
+
+        .simple-table tr:nth-child(even) td {
+            background-color: #fafbfc;
+        }
+
+        .col-num {
+            width: 6%;
+            text-align: center;
+            font-weight: 900;
+            font-size: 12px;
+            color: #0f172a;
+        }
+
+        .col-name {
+            width: 38%;
+            text-align: right;
+            padding-right: 10px !important;
+        }
+
+        .col-role {
+            width: 22%;
+            text-align: center;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .player-ar {
+            font-weight: 800;
+            font-size: 12.5px;
+            color: #0f172a;
+            display: block;
+        }
+
+        .player-fr {
+            font-family: 'Tajawal', sans-serif;
+            font-weight: 700;
+            font-size: 10px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            display: block;
+            margin-top: 1px;
+        }
+
+        .col-dob {
+            width: 17%;
+            text-align: center;
+            font-weight: 700;
+            direction: ltr;
+            font-size: 11.5px;
+            color: #1e293b;
+        }
+
+        .col-pob {
+            width: 19%;
+            text-align: center;
+            font-weight: 700;
+            font-size: 11.5px;
+            color: #1e293b;
+        }
+
+        .col-obs {
+            width: 14%;
+            text-align: center;
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        /* ─── Footer Styling ─── */
+        .page-footer {
+            margin-top: auto;
+            padding-top: 8px;
+            border-top: 1px solid #cbd5e1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: #64748b;
+        }
+
+        /* ─── Print Media Settings ─── */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .no-print, .top-action-bar, .btn-del-date {
+                display: none !important;
+            }
+
+            .print-page {
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 4mm 6mm !important;
+                border-radius: 0 !important;
+                width: 100% !important;
+                min-height: auto !important;
+                page-break-after: always !important;
+                break-after: page !important;
+            }
+
+            .print-page:last-child {
+                page-break-after: auto !important;
+                break-after: auto !important;
+            }
+
+            .simple-table th {
+                background: #f1f5f9 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .category-badge-print {
+                background: #0f172a !important;
+                color: #ffffff !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .release-date-val {
+                border-bottom: none !important;
+                padding: 0 !important;
+                background: transparent !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── TOP ACTION BAR (شريط التحكم للشاشة فقط) ─── -->
+    <div class="top-action-bar no-print">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <a href="{% if is_staff %}{% url 'clubs:staff_list' %}{% else %}{% url 'clubs:player_list' %}{% endif %}" class="btn-action btn-back">
+                <i class="fas fa-arrow-right"></i>
+                <span>الرجوع</span>
+            </a>
+            <button onclick="window.print()" class="btn-action btn-print">
+                <i class="fas fa-print"></i>
+                <span>طباعة (A4)</span>
+            </button>
+            
+            <!-- أداة تعديل أو حذف تاريخ التحرير -->
+            <div class="d-flex align-items-center gap-2 date-control-group ms-2">
+                <span class="text-white text-xs font-bold opacity-80"><i class="fas fa-calendar-day text-amber-400"></i> التاريخ:</span>
+                <input type="text" id="top-date-input" value="{% now 'd / m / Y' %}" class="date-custom-input" placeholder="اكتب التاريخ..." title="عدّل التاريخ مباشرة هنا أو اتركه فارغاً">
+                <button type="button" onclick="clearDate()" class="btn-clear-date" title="حذف ومسح التاريخ">
+                    <i class="fas fa-trash-alt"></i> مسح
+                </button>
+                <button type="button" id="btn-toggle-date" onclick="toggleDateVisibility()" class="btn-action btn-date-toggle py-1 px-2.5 text-xs" title="إظهار / إخفاء تاريخ التحرير">
+                    <span id="btn-date-text">إخفاء التاريخ</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="text-white text-xs font-bold opacity-70">القوائم:</span>
+            <!-- زر قائمة الطاقم -->
+            <a href="?category=staff" class="category-pill pill-staff {% if is_staff %}active{% endif %}">
+                <i class="fas fa-user-tie ms-1"></i> قائمة الطاقم ({{ total_staff_count }})
+            </a>
+            <span class="text-slate-600">|</span>
+            <span class="text-white text-xs font-bold opacity-70">اللاعبين:</span>
+            <a href="?category=all" class="category-pill {% if not is_staff and selected_filter == 'all' %}active{% endif %}">
+                كافة اللاعبين
+            </a>
+            <a href="?category=U15" class="category-pill {% if not is_staff and selected_filter == 'U15' %}active{% endif %}">U15</a>
+            <a href="?category=U17" class="category-pill {% if not is_staff and selected_filter == 'U17' %}active{% endif %}">U17</a>
+            <a href="?category=U20" class="category-pill {% if not is_staff and selected_filter == 'U20' %}active{% endif %}">U20</a>
+            {% for cat in categories %}
+                {% if cat.name != 'U15' and cat.name != 'U17' and cat.name != 'U20' %}
+                <a href="?category={{ cat.name }}" class="category-pill {% if not is_staff and selected_filter == cat.name %}active{% endif %}">{{ cat.name }}</a>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ─── PAGES CONTAINER ─── -->
+    <div class="pages-wrapper">
+        {% for page in pages %}
+        <div class="print-page">
+            
+            <!-- ─── HEADER (العنوان والشعار نادي) ─── -->
+            <div class="header-section">
+                <div class="header-right">
+                    {% if settings.logo %}
+                        <img src="{{ settings.logo.url }}" alt="Logo" class="header-logo">
+                    {% else %}
+                        <div class="header-logo bg-light d-flex align-items-center justify-content-center border">
+                            <i class="fas fa-shield-alt text-muted fa-2x"></i>
+                        </div>
+                    {% endif %}
+                    <div class="club-info">
+                        <h4>نادي الوفاق الرياضي مسلمون</h4>
+                        <span>El-Wefaq Sportif messelmoun</span>
+                    </div>
+                </div>
+
+                <div class="header-center">
+                    <h2 class="main-title">
+                        {% if is_staff %}
+                            قائمة الطاقم الفني والإداري
+                        {% else %}
+                            قائمة اللاعبين
+                        {% endif %}
+                    </h2>
+                    <br>
+                    <div class="category-badge-print">
+                        {{ doc_badge }}
+                    </div>
+                    <p class="season-text">الموسم الرياضي: 2026 / 2027</p>
+                </div>
+
+                <div class="header-left">
+                    <div class="meta-box">
+                        <div class="date-row">
+                            <strong>تاريخ التحرير:</strong> 
+                            <span class="release-date-val" contenteditable="true" spellcheck="false" title="انقر هنا لتعديل التاريخ أو مسحه مباشرة">{% now "d / m / Y" %}</span>
+                            <button type="button" onclick="deleteDate(event)" class="no-print btn-del-date" title="حذف تاريخ التحرير">
+                                <i class="fas fa-times-circle"></i>
+                            </button>
+                        </div>
+                        <div>
+                            {% if is_staff %}
+                                <strong>إجمالي الطاقم:</strong> {{ total_items_count }} عضو
+                            {% else %}
+                                <strong>إجمالي اللاعبين:</strong> {{ total_items_count }} لاعب
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── TABLE ─── -->
+            {% if is_staff %}
+            <!-- جدول الطاقم الفني والإداري -->
+            <table class="simple-table">
+                <thead>
+                    <tr>
+                        <th class="col-num">الرقم</th>
+                        <th class="col-name" style="width: 32%;">اللقب والاسم / Nom & Prénom</th>
+                        <th class="col-role" style="width: 22%;">الصفة والمهمة / Rôle & Fonction</th>
+                        <th class="col-dob" style="width: 15%;">تاريخ الازدياد</th>
+                        <th class="col-pob" style="width: 17%;">مكان الازدياد</th>
+                        <th class="col-obs" style="width: 14%;">الملاحظة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in page.items %}
+                    <tr>
+                        <td class="col-num">{{ item.counter }}</td>
+                        <td class="col-name" style="width: 32%;">
+                            {% if item.member %}
+                                <span class="player-ar">{{ item.member.last_name }} {{ item.member.first_name }}</span>
+                                {% if item.member.phone %}
+                                    <span class="player-fr" dir="ltr">{{ item.member.phone }}</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted opacity-25">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="col-role" style="width: 22%;">
+                            {% if item.member %}
+                                <span class="fw-bold text-dark">
+                                    {{ item.member.function_title|default:item.member.get_role_display }}
+                                </span>
+                                {% if item.member.category_assigned %}
+                                    <span class="player-fr">فئة {{ item.member.category_assigned.name }}</span>
+                                {% else %}
+                                    <span class="player-fr">الإدارة العامة</span>
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="col-dob" style="width: 15%;">
+                            {% if item.member and item.member.date_of_birth %}
+                                {{ item.member.date_of_birth|date:"Y-m-d" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="col-pob" style="width: 17%;">
+                            {% if item.member and item.member.place_of_birth %}
+                                {{ item.member.place_of_birth }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="col-obs" style="width: 14%;">
+                            {% if item.member and item.member.notes %}
+                                {{ item.member.notes }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <!-- جدول اللاعبين البسيط -->
+            <table class="simple-table">
+                <thead>
+                    <tr>
+                        <th class="col-num">الرقم</th>
+                        <th class="col-name">اللقب والاسم / Nom et Prénom</th>
+                        <th class="col-dob">تاريخ الازدياد / Date de Naissance</th>
+                        <th class="col-pob">مكان الازدياد / Lieu de Naissance</th>
+                        <th class="col-obs">الملاحظة / Observations</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in page.items %}
+                    <tr>
+                        <td class="col-num">{{ item.counter }}</td>
+                        <td class="col-name">
+                            {% if item.player %}
+                                <span class="player-ar">{{ item.player.last_name }} {{ item.player.first_name }}</span>
+                                {% if item.player.last_name_fr or item.player.first_name_fr %}
+                                    <span class="player-fr">{{ item.player.last_name_fr }} {{ item.player.first_name_fr }}</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted opacity-25">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="col-dob">
+                            {% if item.player %}
+                                {{ item.player.date_of_birth|date:"Y-m-d"|default:"-" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="col-pob">
+                            {% if item.player %}
+                                {{ item.player.place_of_birth|default:"-" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="col-obs">
+                            {% if item.player and item.player.notes %}
+                                {{ item.player.notes }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+
+            <!-- ─── FOOTER (لا إمضاء، فقط ترقيم الصفحات وبيانات النادي البسيطة) ─── -->
+            <div class="page-footer">
+                <div>نادي الوفاق الرياضي مسلمون - رابطة ولاية تيبازة لكرة القدم</div>
+                <div>الصفحة {{ page.page_num }} من {{ page.total_pages }}</div>
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- ─── JavaScript لتعديل التاريخ أو حذفه فورياً ─── -->
+    <script>
+        let isDateHidden = false;
+
+        function syncDateAcrossAllPages(val) {
+            document.querySelectorAll('.release-date-val').forEach(el => {
+                el.innerText = val;
+            });
+            const topInput = document.getElementById('top-date-input');
+            if (topInput && topInput.value !== val) {
+                topInput.value = val;
+            }
+        }
+
+        function clearDate() {
+            syncDateAcrossAllPages('');
+            toggleDateVisibility(true);
+        }
+
+        function deleteDate(e) {
+            if (e) e.stopPropagation();
+            toggleDateVisibility(true);
+        }
+
+        function toggleDateVisibility(forceHide) {
+            if (typeof forceHide === 'boolean') {
+                isDateHidden = forceHide;
+            } else {
+                isDateHidden = !isDateHidden;
+            }
+
+            const btnText = document.getElementById('btn-date-text');
+            const btnToggle = document.getElementById('btn-toggle-date');
+
+            if (isDateHidden) {
+                document.body.classList.add('hide-release-date');
+                if (btnText) btnText.innerText = 'إظهار التاريخ';
+                if (btnToggle) {
+                    btnToggle.classList.remove('btn-date-toggle');
+                    btnToggle.classList.add('btn-back');
+                }
+            } else {
+                document.body.classList.remove('hide-release-date');
+                if (btnText) btnText.innerText = 'إخفاء التاريخ';
+                if (btnToggle) {
+                    btnToggle.classList.remove('btn-back');
+                    btnToggle.classList.add('btn-date-toggle');
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const topInput = document.getElementById('top-date-input');
+            if (topInput) {
+                topInput.addEventListener('input', function() {
+                    const val = this.value;
+                    syncDateAcrossAllPages(val);
+                    if (isDateHidden && val.trim() !== '') {
+                        toggleDateVisibility(false);
+                    }
+                });
+            }
+
+            document.querySelectorAll('.release-date-val').forEach(el => {
+                el.addEventListener('input', function() {
+                    const val = this.innerText;
+                    document.querySelectorAll('.release-date-val').forEach(other => {
+                        if (other !== el) other.innerText = val;
+                    });
+                    if (topInput) topInput.value = val;
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>

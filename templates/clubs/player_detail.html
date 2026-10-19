@@ -9,7 +9,21 @@
         <a href="{% url 'clubs:player_list' %}" class="btn btn-ghost">
             <i class="fas fa-arrow-left me-2"></i>قائمة اللاعبين
         </a>
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2">
+            {% if player.is_passport_eligible %}
+            <a href="{% url 'clubs:player_passport' player.id %}" class="btn bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 rounded-xl">
+                <i class="fas fa-passport me-2"></i>جواز اللاعب
+            </a>
+            <a href="{% url 'clubs:player_license_form' player.id %}" class="btn bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 rounded-xl">
+                <i class="fas fa-id-card me-2"></i>طلب رخصة اللاعب
+            </a>
+            <a href="{% url 'clubs:player_medical_certificate' player.id %}" class="btn bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 rounded-xl">
+                <i class="fas fa-file-medical me-2"></i>شهادة الأهلية الطبية
+            </a>
+            <a href="{% url 'clubs:player_anti_doping' player.id %}" class="btn bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 rounded-xl">
+                <i class="fas fa-flask me-2"></i>كشف تعاطي المخدرات
+            </a>
+            {% endif %}
             <a href="{% url 'clubs:subscription_add' %}?player={{ player.id }}" class="btn bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-xl">
                 <i class="fas fa-money-bill-wave me-2"></i>تسديد اشتراك
             </a>
@@ -28,13 +42,18 @@
                 <div class="relative z-10">
                     <div class="w-40 h-40 mx-auto rounded-full bg-white/5 border-4 border-white/10 shadow-2xl overflow-hidden mb-6">
                         {% if player.photo %}
-                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                            <img src="{{ player.photo.url }}" class="w-full h-full object-cover">
                         {% else %}
                             <div class="w-full h-full flex items-center justify-center text-5xl opacity-30"><i class="fas fa-user"></i></div>
                         {% endif %}
                     </div>
                     
                     <h2 class="text-2xl font-black mb-1">{{ player.first_name }} {{ player.last_name }}</h2>
+                    {% if player.first_name_fr or player.last_name_fr %}
+                    <div class="text-xs font-mono font-bold text-amber-300 uppercase tracking-widest mb-2">
+                        {{ player.last_name_fr }} {{ player.first_name_fr }}
+                    </div>
+                    {% endif %}
                     <h5 class="text-primary font-bold mb-4">{{ player.category.name }}</h5>
                     
                     <div class="flex justify-center gap-3">
@@ -99,6 +118,12 @@
                         <div class="text-xs opacity-60 mb-1">تاريخ ومكان الميلاد</div>
                         <div class="font-bold">{{ player.date_of_birth|date:"d M Y" }} <span class="opacity-50 mx-1">|</span> {{ player.place_of_birth|default:"-" }}</div>
                     </div>
+                    {% if player.first_name_fr or player.last_name_fr %}
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
+                        <div class="text-xs opacity-60 mb-1">الاسم واللقب باللغة الفرنسية (Nom et Prénom FR)</div>
+                        <div class="font-bold font-mono text-amber-300 text-sm uppercase">{{ player.last_name_fr }} {{ player.first_name_fr }}</div>
+                    </div>
+                    {% endif %}
                     <div class="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-center justify-between">
                         <div>
                             <div class="text-xs opacity-60 mb-1">الزمرة الدموية</div>
@@ -114,20 +139,40 @@
                         <div class="text-xs opacity-60 mb-1">رقم البطاقة التسلسلي</div>
                         <div class="font-mono text-xs">{{ player.card_number }}</div>
                     </div>
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-center justify-between md:col-span-2">
+                        <div>
+                            <div class="text-xs opacity-60 mb-1">بطاقة التعريف الوطنية</div>
+                            {% if player.id_card %}
+                                <a href="{{ player.id_card.url }}" target="_blank" class="font-bold text-emerald-400 hover:underline flex items-center gap-2">
+                                    <i class="fas fa-file-download me-1"></i> معاينة / تحميل بطاقة التعريف
+                                </a>
+                            {% else %}
+                                <div class="text-xs opacity-50">غير محملة</div>
+                            {% endif %}
+                        </div>
+                        <i class="fas fa-id-card text-3xl opacity-20 text-emerald-400"></i>
+                    </div>
                 </div>
             </div>
 
             <!-- Subscriptions -->
             {% if player.category and player.category.name in "U15,U16,U17,U19,U21,Seniors,Veterans" %}
             <div class="card rounded-3xl p-6 border border-emerald-500/30 bg-emerald-500/10 backdrop-blur-md">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl font-black shrink-0">
-                        <i class="fas fa-id-card"></i>
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl font-black shrink-0">
+                            <i class="fas fa-id-card"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-white text-base mb-1">منخرط في الرابطة الرسمية (فئة {{ player.category.name }})</h4>
+                            <p class="text-sm text-emerald-200/80 mb-0">تم إعفاء لاعبي هذه الفئة كلياً من سجل الاشتراكات المالية الشهرية نظراً لانخراطهم الرسمي في الرابطة.</p>
+                        </div>
                     </div>
-                    <div>
-                        <h4 class="font-bold text-white text-base mb-1">منخرط في الرابطة الرسمية (فئة {{ player.category.name }})</h4>
-                        <p class="text-sm text-emerald-200/80 mb-0">تم إعفاء لاعبي هذه الفئة كلياً من سجل الاشتراكات المالية الشهرية نظراً لانخراطهم الرسمي في الرابطة.</p>
-                    </div>
+                    {% if player.id_card %}
+                    <a href="{{ player.id_card.url }}" target="_blank" class="btn btn-sm bg-emerald-500 text-slate-950 font-bold hover:bg-emerald-400 rounded-xl px-4 py-2 shrink-0">
+                        <i class="fas fa-id-card me-2"></i>عرض بطاقة التعريف
+                    </a>
+                    {% endif %}
                 </div>
             </div>
             {% else %}

@@ -8,13 +8,15 @@
 <div class="w-full max-w-7xl mx-auto space-y-8 animate-in">
 
     <!-- ─── WORLD-CLASS HERO BANNER ─── -->
-    <div class="relative overflow-hidden rounded-3xl p-6 sm:p-8 lg:p-10 shadow-2xl border border-white/10" 
+    <div class="relative z-30 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-2xl border border-white/10" 
          style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 50%, rgba(12, 35, 64, 0.95) 100%); backdrop-filter: blur(20px);">
         
-        <!-- Ambient Mesh Background Glows -->
-        <div class="absolute -top-24 -right-24 w-96 h-96 bg-amber-500/15 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-500/15 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute top-0 right-0 left-0 h-px bg-gradient-to-r from-transparent via-amber-400/40 to-transparent"></div>
+        <!-- Ambient Mesh Background Glows (contained in background wrapper to prevent clipping of dropdowns) -->
+        <div class="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
+            <div class="absolute -top-24 -right-24 w-96 h-96 bg-amber-500/15 rounded-full blur-3xl"></div>
+            <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-500/15 rounded-full blur-3xl"></div>
+            <div class="absolute top-0 right-0 left-0 h-px bg-gradient-to-r from-transparent via-amber-400/40 to-transparent"></div>
+        </div>
 
         <div class="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6">
             
@@ -25,11 +27,17 @@
                     <i class="fas fa-users text-amber-400 text-2xl sm:text-3xl"></i>
                 </div>
                 <div>
-                    <div class="flex items-center gap-3 mb-1">
+                    <div class="flex items-center gap-3 mb-1 flex-wrap">
                         <h1 class="text-2xl sm:text-3xl font-black text-white tracking-wide font-cairo">لاعبي النادي</h1>
                         <span class="px-3 py-1 text-xs font-bold rounded-full bg-amber-400/10 text-amber-300 border border-amber-400/20">
-                            {{ players|length }} لاعب
+                            <span id="players-count-badge">{{ players|length }}</span> لاعب
                         </span>
+                        {% if search_query %}
+                        <span class="text-xs font-bold text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/20 flex items-center gap-1.5">
+                            <i class="fas fa-search text-[10px]"></i>
+                            <span>بحث: "{{ search_query }}"</span>
+                        </span>
+                        {% endif %}
                     </div>
                     <p class="text-slate-400 text-sm sm:text-base font-medium mb-0">إدارة قائمة اللاعبين، الأرشيف، وطباعة البطاقات الرياضية الاحترافية</p>
                 </div>
@@ -41,21 +49,151 @@
                    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-slate-200 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 shadow-md transition-all hover:-translate-y-0.5">
                     <i class="fas fa-arrow-right text-xs"></i> الرجوع للوحة التحكم
                 </a>
+                <a href="{% url 'clubs:staff_list' %}" 
+                   class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm text-slate-200 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 shadow-md transition-all hover:-translate-y-0.5"
+                   title="إدارة وعرض قائمة الطاقم الفني والإداري">
+                    <i class="fas fa-user-tie text-amber-400"></i>
+                    <span>قائمة الطاقم</span>
+                </a>
                 <a href="{% url 'clubs:player_cards_print' %}?{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.position %}position={{ request.GET.position }}{% endif %}" 
                    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-slate-900 bg-amber-400 hover:bg-amber-300 shadow-lg shadow-amber-400/20 transition-all hover:-translate-y-0.5" 
                    target="_blank">
                     <i class="fas fa-id-card"></i> طباعة البطاقات
                 </a>
-                <a href="{% url 'clubs:player_list_print' %}?{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.position %}position={{ request.GET.position }}{% endif %}" 
-                   class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/20 transition-all hover:-translate-y-0.5" 
-                   target="_blank">
-                    <i class="fas fa-print"></i> طباعة القائمة
-                </a>
-                <a href="{% url 'clubs:player_list_print' %}?blank=1{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" 
-                   class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-emerald-700 hover:bg-emerald-600 border border-emerald-600/60 shadow-lg shadow-emerald-700/20 transition-all hover:-translate-y-0.5" 
-                   target="_blank">
-                    <i class="fas fa-file-signature"></i> قائمة فارغة
-                </a>
+                <!-- زر طباعة قائمة اللاعبين مع قائمة منسدلة للفئات -->
+                <div class="relative group" x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false">
+                    <button type="button"
+                            @click="open = !open"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/20 transition-all hover:-translate-y-0.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400/50">
+                        <i class="fas fa-print"></i>
+                        <span>طباعة قائمة اللاعبين</span>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
+                    </button>
+                    <div :class="{ 'block': open, 'hidden': !open }"
+                         class="absolute left-0 mt-2 w-64 bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl p-2 group-hover:block hover:block z-50 backdrop-blur-xl">
+                        <div class="px-3 py-1.5 text-xs font-bold text-slate-400 border-b border-slate-800">
+                            اختر فئة اللاعبين للطباعة:
+                        </div>
+                        <a href="{% url 'clubs:player_list_print' %}?category=U15" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-white hover:bg-slate-800 transition-all mt-1">
+                            <i class="fas fa-futbol text-emerald-400"></i>
+                            <span>قائمة لاعبي U15</span>
+                        </a>
+                        <a href="{% url 'clubs:player_list_print' %}?category=U17" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-white hover:bg-slate-800 transition-all">
+                            <i class="fas fa-futbol text-emerald-400"></i>
+                            <span>قائمة لاعبي U17</span>
+                        </a>
+                        <a href="{% url 'clubs:player_list_print' %}?category=U20" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-white hover:bg-slate-800 transition-all">
+                            <i class="fas fa-futbol text-emerald-400"></i>
+                            <span>قائمة لاعبي U20</span>
+                        </a>
+                        {% for cat in categories %}
+                            {% if cat.name != 'U15' and cat.name != 'U17' and cat.name != 'U20' %}
+                            <a href="{% url 'clubs:player_list_print' %}?category={{ cat.name }}" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-white hover:bg-slate-800 transition-all">
+                                <i class="fas fa-futbol text-blue-400"></i>
+                                <span>قائمة لاعبي {{ cat.name }}</span>
+                            </a>
+                            {% endif %}
+                        {% endfor %}
+                        <div class="border-t border-slate-800 my-1"></div>
+                        <a href="{% url 'clubs:player_list_print' %}?category=all" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-slate-300 hover:bg-slate-800 transition-all">
+                            <i class="fas fa-users text-sky-400"></i>
+                            <span>القائمة الشاملة لكافة الفئات</span>
+                        </a>
+                        <a href="{% url 'clubs:player_list_print' %}?blank=1" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-amber-300 hover:bg-slate-800 transition-all">
+                            <i class="fas fa-file-signature text-amber-400"></i>
+                            <span>استمارة فارغة (25 لاعب)</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- زر جديد: طباعة قائمة بسيطة (بدون إمضاءات) -->
+                <div class="relative group" x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false">
+                    <button type="button"
+                            @click="open = !open"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-teal-600 hover:bg-teal-500 shadow-lg shadow-teal-600/25 transition-all hover:-translate-y-0.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-400/50"
+                            title="طباعة قائمة بسيطة (العنوان، الشعار، ومعلومات اللاعبين فقط)">
+                        <i class="fas fa-file-alt"></i>
+                        <span>قائمة بسيطة</span>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
+                    </button>
+                    <div :class="{ 'block': open, 'hidden': !open }"
+                         class="absolute left-0 mt-2 w-64 bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl p-2 group-hover:block hover:block z-50 backdrop-blur-xl">
+                        <div class="px-3 py-1.5 text-xs font-bold text-slate-400 border-b border-slate-800">
+                            طباعة قائمة بسيطة (بدون إمضاء):
+                        </div>
+                        {% if request.GET.category %}
+                        <a href="{% url 'clubs:player_simple_list_print' %}?category={{ request.GET.category }}" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-teal-300 hover:bg-slate-800 transition-all mt-1">
+                            <i class="fas fa-filter text-teal-400"></i>
+                            <span>الفئة المحددة حالياً</span>
+                        </a>
+                        <div class="border-t border-slate-800 my-1"></div>
+                        {% endif %}
+                        <a href="{% url 'clubs:player_simple_list_print' %}?category=U15" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-white hover:bg-slate-800 transition-all mt-1">
+                            <i class="fas fa-file-alt text-teal-400"></i>
+                            <span>قائمة بسيطة U15</span>
+                        </a>
+                        <a href="{% url 'clubs:player_simple_list_print' %}?category=U17" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-white hover:bg-slate-800 transition-all">
+                            <i class="fas fa-file-alt text-teal-400"></i>
+                            <span>قائمة بسيطة U17</span>
+                        </a>
+                        <a href="{% url 'clubs:player_simple_list_print' %}?category=U20" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-white hover:bg-slate-800 transition-all">
+                            <i class="fas fa-file-alt text-teal-400"></i>
+                            <span>قائمة بسيطة U20</span>
+                        </a>
+                        {% for cat in categories %}
+                            {% if cat.name != 'U15' and cat.name != 'U17' and cat.name != 'U20' %}
+                            <a href="{% url 'clubs:player_simple_list_print' %}?category={{ cat.name }}" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-white hover:bg-slate-800 transition-all">
+                                <i class="fas fa-file-alt text-teal-400"></i>
+                                <span>قائمة بسيطة {{ cat.name }}</span>
+                            </a>
+                            {% endif %}
+                        {% endfor %}
+                        <div class="border-t border-slate-800 my-1"></div>
+                        <a href="{% url 'clubs:player_simple_list_print' %}?category=all" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-teal-300 hover:bg-slate-800 transition-all">
+                            <i class="fas fa-users text-teal-400"></i>
+                            <span>القائمة البسيطة لكافة الفئات</span>
+                        </a>
+                        <div class="border-t border-slate-800 my-1"></div>
+                        <a href="{% url 'clubs:player_simple_list_print' %}?category=staff" target="_blank" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-amber-300 hover:bg-slate-800 transition-all">
+                            <i class="fas fa-user-tie text-amber-400"></i>
+                            <span>قائمة الطاقم الفني والإداري</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- زر جوازات اللاعبين (U15, U17, U20) -->
+                <div class="relative group" x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false">
+                    <button type="button"
+                            @click="open = !open" 
+                            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-purple-600 hover:bg-purple-500 shadow-lg shadow-purple-600/25 transition-all hover:-translate-y-0.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400/50">
+                        <i class="fas fa-passport"></i>
+                        <span>جوازات اللاعبين</span>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
+                    </button>
+                    <div :class="{ 'block': open, 'hidden': !open }"
+                         class="absolute left-0 mt-2 w-64 bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl p-2 group-hover:block hover:block z-50 backdrop-blur-xl">
+                        <div class="px-3 py-1.5 text-xs font-bold text-slate-400 border-b border-slate-800">
+                            جواز اللاعب (Ligue Tipaza):
+                        </div>
+                        <a href="{% url 'clubs:player_passport_list' %}?category=U15" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-white hover:bg-slate-800 transition-all mt-1">
+                            <i class="fas fa-passport text-purple-400"></i>
+                            <span>جوازات فئة U15</span>
+                        </a>
+                        <a href="{% url 'clubs:player_passport_list' %}?category=U17" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-white hover:bg-slate-800 transition-all">
+                            <i class="fas fa-passport text-purple-400"></i>
+                            <span>جوازات فئة U17</span>
+                        </a>
+                        <a href="{% url 'clubs:player_passport_list' %}?category=U20" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-white hover:bg-slate-800 transition-all">
+                            <i class="fas fa-passport text-purple-400"></i>
+                            <span>جوازات فئة U20</span>
+                        </a>
+                        <div class="border-t border-slate-800 my-1"></div>
+                        <a href="{% url 'clubs:player_passport_list' %}" @click="open = false" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-purple-300 hover:bg-slate-800 transition-all">
+                            <i class="fas fa-th-list text-purple-400"></i>
+                            <span>عرض كافة الجوازات</span>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -71,9 +209,18 @@
                     <i class="fas fa-search absolute right-4 text-slate-400 pointer-events-none z-10"></i>
                     <input type="text" 
                            name="q" 
-                           class="w-full pr-11 pl-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700/80 text-white placeholder-slate-400 text-sm font-semibold focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all" 
-                           placeholder="ابحث عن لاعب (الاسم، اللقب، أو المركز)..." 
-                           value="{{ request.GET.q }}">
+                           id="player-search-input"
+                           class="w-full pr-11 pl-10 py-3 rounded-xl bg-slate-900/80 border border-slate-700/80 text-white placeholder-slate-400 text-sm font-semibold focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all" 
+                           placeholder="ابحث بذكاء (الاسم، اللقب بالعربية أو الفرنسية، المركز، القميص...)" 
+                           value="{{ search_query|default:'' }}"
+                           autocomplete="off">
+                    {% if search_query %}
+                    <a href="?{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.position %}position={{ request.GET.position }}{% endif %}" 
+                       class="absolute left-3 text-slate-400 hover:text-white text-xs bg-slate-800 hover:bg-slate-700 w-6 h-6 rounded-full flex items-center justify-center transition-colors shadow-sm" 
+                       title="مسح البحث">
+                        <i class="fas fa-times"></i>
+                    </a>
+                    {% endif %}
                 </div>
             </div>
             
@@ -132,6 +279,9 @@
             <table class="w-full text-right border-collapse">
                 <thead>
                     <tr class="border-b border-white/10 bg-slate-900/60 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                        <th scope="col" class="py-4 px-4 text-center w-12">
+                            <input type="checkbox" id="select-all-players" class="w-4 h-4 rounded text-amber-500 bg-slate-800 border-slate-600 focus:ring-amber-400 cursor-pointer" title="تحديد جميع اللاعبين">
+                        </th>
                         <th scope="col" class="py-4 px-6">معلومات اللاعب</th>
                         <th scope="col" class="py-4 px-6 text-center">الفئة</th>
                         <th scope="col" class="py-4 px-6 text-center">تاريخ الميلاد</th>
@@ -142,8 +292,15 @@
                 </thead>
                 <tbody class="divide-y divide-white/5 text-sm">
                     {% for player in players %}
-                    <tr class="hover:bg-slate-800/40 transition-colors duration-150 group">
+                    <tr class="hover:bg-slate-800/40 transition-colors duration-150 group player-row" 
+                        data-player-id="{{ player.id }}"
+                        data-search="{{ player.first_name }} {{ player.last_name }} {{ player.last_name }} {{ player.first_name }} {{ player.position|default:'' }} {{ player.category.name|default:'' }} {{ player.jersey_number|default:'' }} {{ player.passport.full_name_fr|default:'' }} {{ player.player_phone|default:'' }} {{ player.parent_phone|default:'' }} {{ player.date_of_birth|date:'Y'|default:'' }}">
                         
+                        <!-- Checkbox -->
+                        <td class="py-4 px-4 text-center">
+                            <input type="checkbox" class="player-select-checkbox w-4 h-4 rounded text-amber-500 bg-slate-800 border-slate-600 focus:ring-amber-400 cursor-pointer" value="{{ player.id }}" onchange="handlePlayerSelectChange()">
+                        </td>
+
                         <!-- Player Info -->
                         <td class="py-4 px-6">
                             <div class="flex items-center gap-4">
@@ -151,7 +308,7 @@
                                     {% if player.photo %}
                                         <img src="{{ player.photo.url }}" 
                                              class="w-12 h-12 rounded-full object-cover shadow-md border-2 border-amber-400/40 group-hover:border-amber-400 transition-all" 
-                                             alt="{{ player.first_name }}" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                                             alt="{{ player.first_name }}">
                                     {% else %}
                                         <div class="w-12 h-12 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-slate-400 text-lg shadow-md group-hover:border-amber-400/50 transition-all">
                                             <i class="fas fa-user"></i>
@@ -167,6 +324,11 @@
                                     <h3 class="font-bold text-white text-base group-hover:text-amber-400 transition-colors mb-0.5">
                                         {{ player.first_name }} {{ player.last_name }}
                                     </h3>
+                                    {% if player.first_name_fr or player.last_name_fr %}
+                                    <div class="text-[11px] font-mono font-bold text-amber-300/80 uppercase tracking-wider mb-0.5">
+                                        {{ player.last_name_fr }} {{ player.first_name_fr }}
+                                    </div>
+                                    {% endif %}
                                     <span class="text-xs text-slate-400 font-medium">
                                         <i class="fas fa-futbol text-[10px] ml-1 text-slate-500"></i>{{ player.position|default:"لاعب" }}
                                     </span>
@@ -236,6 +398,23 @@
                         <!-- Actions -->
                         <td class="py-4 px-6 text-left whitespace-nowrap">
                             <div class="flex items-center justify-end gap-2">
+                                {% if player.is_passport_eligible %}
+                                <a href="{% url 'clubs:player_passport' player.id %}" 
+                                   class="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 hover:bg-purple-500 hover:text-white border border-purple-500/20 flex items-center justify-center transition-all shadow-sm" 
+                                   title="جواز اللاعب (Passeport du Joueur)">
+                                    <i class="fas fa-passport text-xs"></i>
+                                </a>
+                                <a href="{% url 'clubs:player_license_form' player.id %}" 
+                                   class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-slate-950 border border-amber-500/20 flex items-center justify-center transition-all shadow-sm" 
+                                   title="طلب رخصة اللاعب + رخصة أبوية">
+                                    <i class="fas fa-id-card text-xs"></i>
+                                </a>
+                                <a href="{% url 'clubs:player_medical_certificate' player.id %}" 
+                                   class="w-9 h-9 rounded-xl bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500 hover:text-white border border-cyan-500/20 flex items-center justify-center transition-all shadow-sm" 
+                                   title="شهادة الأهلية الطبية + تعهد النادي">
+                                    <i class="fas fa-file-medical text-xs"></i>
+                                </a>
+                                {% endif %}
                                 <a href="{% url 'clubs:player_detail' player.id %}" 
                                    class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white border border-blue-500/20 flex items-center justify-center transition-all shadow-sm" 
                                    title="عرض التفاصيل">
@@ -258,7 +437,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" class="py-16 text-center">
+                        <td colspan="7" class="py-16 text-center">
                             <div class="w-20 h-20 rounded-full bg-slate-800/80 border border-slate-700/50 flex items-center justify-center mx-auto mb-4 text-slate-500 text-2xl shadow-inner">
                                 <i class="fas fa-users-slash"></i>
                             </div>
@@ -272,4 +451,247 @@
         </div>
     </div>
 </div>
+
+<!-- ─── FLOATING BULK ACTIONS BAR (شريط الإجراءات للبطاقات المحددة) ─── -->
+<div id="bulk-action-bar" 
+     class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 transform translate-y-32 opacity-0 pointer-events-none"
+     style="min-width: 320px; max-width: 95vw;">
+    <div class="bg-slate-900/95 backdrop-blur-xl border border-amber-400/40 shadow-2xl rounded-2xl px-5 py-3.5 flex items-center justify-between gap-4 text-white shadow-amber-500/10">
+        <div class="flex items-center gap-2.5 font-bold text-sm text-amber-300">
+            <span class="w-8 h-8 rounded-full bg-amber-400/20 border border-amber-400/50 flex items-center justify-center text-amber-400 text-xs font-black shadow-inner" id="bulk-selected-count">0</span>
+            <span>لاعب محدد</span>
+        </div>
+        
+        <div class="h-6 w-px bg-slate-700 hidden sm:block"></div>
+        
+        <div class="flex items-center gap-2">
+            <!-- Print Cards Button -->
+            <button type="button" 
+                    onclick="printSelectedPlayerCards()" 
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md shadow-amber-400/25 transition-all hover:scale-105 cursor-pointer">
+                <i class="fas fa-id-card"></i>
+                <span>طباعة بطاقات المحددين (<span id="bulk-cards-count">0</span>)</span>
+            </button>
+            
+            <!-- Clear Selection -->
+            <button type="button" 
+                    onclick="clearPlayerSelection()" 
+                    class="text-xs font-bold text-slate-400 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer">
+                <i class="fas fa-times ml-1"></i> إلغاء
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function handlePlayerSelectChange() {
+        const checkedCbs = document.querySelectorAll('.player-select-checkbox:checked');
+        const count = checkedCbs.length;
+        const bar = document.getElementById('bulk-action-bar');
+        const countSpan = document.getElementById('bulk-selected-count');
+        const cardsCountSpan = document.getElementById('bulk-cards-count');
+        const selectAllCb = document.getElementById('select-all-players');
+
+        if (countSpan) countSpan.textContent = count;
+        if (cardsCountSpan) cardsCountSpan.textContent = count;
+
+        if (count > 0) {
+            bar.classList.remove('translate-y-32', 'opacity-0', 'pointer-events-none');
+            bar.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
+        } else {
+            bar.classList.add('translate-y-32', 'opacity-0', 'pointer-events-none');
+            bar.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
+        }
+
+        const allCbs = document.querySelectorAll('.player-select-checkbox');
+        if (selectAllCb) {
+            selectAllCb.checked = allCbs.length > 0 && count === allCbs.length;
+            selectAllCb.indeterminate = count > 0 && count < allCbs.length;
+        }
+
+        // Highlight selected rows
+        document.querySelectorAll('.player-row').forEach(row => {
+            const cb = row.querySelector('.player-select-checkbox');
+            if (cb && cb.checked) {
+                row.classList.add('bg-amber-400/10');
+            } else {
+                row.classList.remove('bg-amber-400/10');
+            }
+        });
+    }
+
+    // ─── SMART CLIENT-SIDE SEARCH WITH ARABIC NORMALIZATION ───
+    function normalizeArabicClient(str) {
+        if (!str) return '';
+        let s = str.toString().trim().toLowerCase();
+        // Remove Tashkeel & Tatweel
+        s = s.replace(/[\u064B-\u065F\u0670\u0640]/g, '');
+        // Unify Alef variants
+        s = s.replace(/[إأآٱا]/g, 'ا');
+        // Unify Yaa & Alef Maqsura
+        s = s.replace(/[ىي]/g, 'ي');
+        // Unify Taa Marbuta & Haa
+        s = s.replace(/[ةه]/g, 'ه');
+        // Unify Hamzas
+        s = s.replace(/[ؤ]/g, 'و').replace(/[ئ]/g, 'ي').replace(/[ء]/g, '');
+        return s;
+    }
+
+    function latinToArClient(latinStr) {
+        if (!latinStr) return '';
+        let s = latinStr.toLowerCase().trim();
+        s = s.replace(/\bbou\b/g, 'بو ').replace(/\bben\b/g, 'بن ').replace(/\babdel\b/g, 'عبد ال');
+        const replacements = [
+            ['ch', 'ش'], ['sh', 'ش'], ['kh', 'خ'], ['gh', 'غ'],
+            ['dj', 'ج'], ['dh', 'ض'], ['th', 'ث'], ['ou', 'و'],
+            ['oo', 'و'], ['ee', 'ي'], ['ai', 'ي'], ['ei', 'ي'], ['ph', 'ف']
+        ];
+        replacements.forEach(([lat, ar]) => { s = s.split(lat).join(ar); });
+        const map = {
+            'a': 'ا', 'b': 'ب', 'c': 'ك', 'd': 'د', 'e': 'ي', 'f': 'ف',
+            'g': 'ج', 'h': 'ه', 'i': 'ي', 'j': 'ج', 'k': 'ك', 'l': 'ل',
+            'm': 'م', 'n': 'ن', 'o': 'و', 'p': 'ب', 'q': 'ق', 'r': 'ر',
+            's': 'س', 't': 'ت', 'u': 'و', 'v': 'ف', 'w': 'و', 'x': 'كس',
+            'y': 'ي', 'z': 'ز'
+        };
+        let out = '';
+        for (let ch of s) { out += map[ch] || ch; }
+        return normalizeArabicClient(out);
+    }
+
+    function liveFilterPlayers(query) {
+        const raw = (query || '').trim();
+        const tokens = raw.split(/[\s,\-_/]+/).filter(Boolean);
+        const rows = document.querySelectorAll('.player-row');
+        const countBadge = document.getElementById('players-count-badge');
+        let visibleCount = 0;
+
+        if (!tokens.length) {
+            rows.forEach(r => r.style.display = '');
+            if (countBadge) countBadge.textContent = rows.length;
+            const noMatchRow = document.getElementById('live-no-match-row');
+            if (noMatchRow) noMatchRow.style.display = 'none';
+            return;
+        }
+
+        rows.forEach(row => {
+            const searchData = row.dataset.search || row.textContent;
+            const rawLower = searchData.toLowerCase();
+            const normData = normalizeArabicClient(searchData);
+            const compactNorm = normData.replace(/\s+/g, '');
+
+            let allTokensMatch = true;
+
+            for (let tok of tokens) {
+                const tokNorm = normalizeArabicClient(tok);
+                const tokCompact = tokNorm.replace(/\s+/g, '');
+                const tokLower = tok.toLowerCase();
+                const tokLatinAr = /[a-zA-Z]/.test(tok) ? latinToArClient(tok) : '';
+
+                let match = false;
+                // Direct or normalized Arabic match
+                if (tokNorm && (normData.includes(tokNorm) || compactNorm.includes(tokCompact))) {
+                    match = true;
+                }
+                // Raw Latin match (e.g. passport full_name_fr)
+                else if (tokLower && rawLower.includes(tokLower)) {
+                    match = true;
+                }
+                // Phonetic Latin -> Arabic match
+                else if (tokLatinAr && (compactNorm.includes(tokLatinAr) || normData.includes(tokLatinAr))) {
+                    match = true;
+                }
+                // Jersey number
+                else if (/^\d+$/.test(tok) && rawLower.includes(tok)) {
+                    match = true;
+                }
+
+                if (!match) {
+                    allTokensMatch = false;
+                    break;
+                }
+            }
+
+            if (allTokensMatch) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        if (countBadge) countBadge.textContent = visibleCount;
+
+        // Dynamic no-match message in table if 0 rows visible
+        let noMatchRow = document.getElementById('live-no-match-row');
+        const tbody = document.querySelector('tbody');
+        if (visibleCount === 0 && tbody) {
+            if (!noMatchRow) {
+                noMatchRow = document.createElement('tr');
+                noMatchRow.id = 'live-no-match-row';
+                noMatchRow.innerHTML = `
+                    <td colspan="7" class="py-12 text-center text-slate-400">
+                        <i class="fas fa-search text-2xl text-slate-500 mb-2 block"></i>
+                        <p class="font-bold text-sm">لم يتم العثور على أي لاعب يطابق: "${raw}"</p>
+                        <p class="text-xs text-slate-500 mt-1">تأكد من كتابة الاسم أو جرب البحث بجزء منه</p>
+                    </td>
+                `;
+                tbody.appendChild(noMatchRow);
+            } else {
+                noMatchRow.style.display = '';
+                const p = noMatchRow.querySelector('p');
+                if (p) p.textContent = `لم يتم العثور على أي لاعب يطابق: "${raw}"`;
+            }
+        } else if (noMatchRow) {
+            noMatchRow.style.display = 'none';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const selectAllCb = document.getElementById('select-all-players');
+        if (selectAllCb) {
+            selectAllCb.addEventListener('change', (e) => {
+                const isChecked = e.target.checked;
+                document.querySelectorAll('.player-select-checkbox').forEach(cb => {
+                    const row = cb.closest('tr');
+                    if (!row || row.style.display !== 'none') {
+                        cb.checked = isChecked;
+                    }
+                });
+                handlePlayerSelectChange();
+            });
+        }
+
+        // Setup real-time live search listener
+        const searchInput = document.getElementById('player-search-input');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                liveFilterPlayers(this.value);
+            });
+        }
+    });
+
+    function clearPlayerSelection() {
+        document.querySelectorAll('.player-select-checkbox').forEach(cb => {
+            cb.checked = false;
+        });
+        const selectAllCb = document.getElementById('select-all-players');
+        if (selectAllCb) {
+            selectAllCb.checked = false;
+            selectAllCb.indeterminate = false;
+        }
+        handlePlayerSelectChange();
+    }
+
+    function printSelectedPlayerCards() {
+        const checkedValues = Array.from(document.querySelectorAll('.player-select-checkbox:checked')).map(cb => cb.value);
+        if (!checkedValues.length) {
+            alert('الرجاء تحديد لاعب واحد على الأقل للطباعة.');
+            return;
+        }
+        const ids = checkedValues.join(',');
+        const url = "{% url 'clubs:player_cards_print' %}?ids=" + ids;
+        window.open(url, '_blank');
+    }
+</script>
 {% endblock %}

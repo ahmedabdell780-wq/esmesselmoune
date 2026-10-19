@@ -1,4 +1,3 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -396,29 +395,205 @@
             border-top: 1px solid #cbd5e1;
             padding-top: 1.5mm;
         }
+
+        /* ─── OFFICIAL STAMP ESM (ختم الوفاق الرسمي) ─── */
+        .official-stamp-container {
+            position: absolute;
+            bottom: 1.5mm;
+            right: 17.5mm;
+            width: 19mm;
+            height: 19mm;
+            z-index: 25;
+            cursor: move;
+            user-select: none;
+            touch-action: none;
+            mix-blend-mode: multiply;
+            transform: rotate(-5deg);
+            transform-origin: center center;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .official-stamp-container:hover {
+            box-shadow: 0 0 0 1.5px #0d9488, 0 2px 8px rgba(0,0,0,0.15);
+            border-radius: 50%;
+        }
+
+        .official-stamp-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: contrast(180%) brightness(1.05);
+            pointer-events: none;
+            display: block;
+        }
+
+        .stamp-resizer {
+            position: absolute;
+            right: -2px;
+            bottom: -2px;
+            width: 10px;
+            height: 10px;
+            background-color: #0d9488;
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: se-resize;
+            z-index: 30;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+        }
+
+        .stamp-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(15, 23, 42, 0.85);
+            color: #fff;
+            font-size: 7px;
+            font-weight: 800;
+            padding: 2px 5px;
+            border-radius: 4px;
+            display: none;
+            pointer-events: none;
+            white-space: nowrap;
+            border: 0.5px solid rgba(255,255,255,0.3);
+            backdrop-filter: blur(2px);
+        }
+
+        .official-stamp-container:hover .stamp-overlay {
+            display: block;
+        }
+
+        .card-quick-exclude-btn {
+            position: absolute;
+            top: 2mm;
+            left: 2mm;
+            width: 6.5mm;
+            height: 6.5mm;
+            background: #ef4444;
+            color: white;
+            border: 1.5px solid white;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.8mm;
+            cursor: pointer;
+            z-index: 35;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transition: all 0.15s ease;
+        }
+
+        .card.front:hover .card-quick-exclude-btn {
+            display: flex;
+        }
+
+        .card-quick-exclude-btn:hover {
+            background: #b91c1c;
+            transform: scale(1.15);
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @media print {
+            .stamp-resizer, 
+            .stamp-overlay, 
+            .no-print,
+            .card-quick-exclude-btn,
+            #card-selection-modal,
+            .stamp-master-toolbar {
+                display: none !important;
+            }
+            .official-stamp-container {
+                cursor: default !important;
+                box-shadow: none !important;
+                border: none !important;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <div class="no-print" style="text-align: center; margin-bottom: 20px; display: flex; justify-content: center; gap: 15px;">
-        <button onclick="window.print()" style="background-color: #0f766e; color: white; border: none; padding: 10px 25px; font-size: 16px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; font-family: 'Changa', sans-serif; font-weight: 700; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s;">
-            <i class="fas fa-print"></i>
-            طباعة البطاقات
-        </button>
-        <button onclick="saveAsPDF()" style="background-color: #dc2626; color: white; border: none; padding: 10px 25px; font-size: 16px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; font-family: 'Changa', sans-serif; font-weight: 700; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s;">
-            <i class="fas fa-file-pdf"></i>
-            حفظ كـ PDF
-        </button>
+    <!-- ─── FLOATING MASTER TOOLBAR ─── -->
+    <div class="no-print stamp-master-toolbar" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border: 1px solid rgba(255,255,255,0.15); border-radius: 16px; padding: 12px 20px; margin: 0 auto 20px auto; max-width: 1100px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; color: #f8fafc; font-family: 'Tajawal', sans-serif;">
+        <!-- Left: Print, PDF & Selection Buttons -->
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <a href="{% url 'clubs:player_list' %}" style="background: rgba(255,255,255,0.1); color: #e2e8f0; text-decoration: none; padding: 8px 16px; font-size: 14px; border-radius: 10px; display: inline-flex; align-items: center; gap: 8px; font-weight: 700; transition: all 0.2s;">
+                <i class="fas fa-arrow-right"></i> قائمة اللاعبين
+            </a>
+            <button onclick="window.print()" style="background-color: #0d9488; color: white; border: none; padding: 8px 20px; font-size: 14px; border-radius: 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-weight: 800; box-shadow: 0 4px 10px rgba(13,148,136,0.3); transition: all 0.2s;">
+                <i class="fas fa-print"></i> طباعة البطاقات
+            </button>
+            <button onclick="saveAsPDF()" style="background-color: #dc2626; color: white; border: none; padding: 8px 18px; font-size: 14px; border-radius: 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-weight: 800; box-shadow: 0 4px 10px rgba(220,38,38,0.3); transition: all 0.2s;">
+                <i class="fas fa-file-pdf"></i> حفظ كـ PDF
+            </button>
+            <button type="button" onclick="openCardSelectionModal()" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; border: none; padding: 8px 18px; font-size: 14px; border-radius: 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-weight: 800; box-shadow: 0 4px 10px rgba(37,99,235,0.3); transition: all 0.2s;">
+                <i class="fas fa-tasks"></i> تحديد البطاقات (<span id="btn-selected-cards-count">{{ total_selected_count }}</span>)
+            </button>
+            {% if request.GET.ids %}
+            <a href="?{% if request.GET.category %}category={{ request.GET.category }}{% endif %}" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); text-decoration: none; padding: 8px 14px; font-size: 13px; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; transition: all 0.2s;" title="إلغاء التحديد وعرض كافة بطاقات الفئة">
+                <i class="fas fa-undo"></i> استعادة الكل ({{ all_category_players|length }})
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- Right: Stamp Controls -->
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: rgba(0,0,0,0.25); padding: 6px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; color: #fbbf24;">
+                <i class="fas fa-stamp text-amber-400"></i> ختم الوفاق:
+            </div>
+
+            <!-- Toggle Stamp Visibility -->
+            <button id="toggle-stamp-btn" onclick="toggleAllStamps()" style="background: #334155; color: #f1f5f9; border: 1px solid #475569; padding: 6px 12px; font-size: 12px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: 700;">
+                <i class="fas fa-eye" id="toggle-stamp-icon"></i> <span id="toggle-stamp-text">إخفاء الختم</span>
+            </button>
+
+            <!-- Sync All Stamps -->
+            <button onclick="syncFirstStampToAll()" style="background: #1e3a8a; color: #93c5fd; border: 1px solid #3b82f6; padding: 6px 12px; font-size: 12px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: 700;" title="تطبيق موضع وحجم الختم الأول على جميع البطاقات">
+                <i class="fas fa-arrows-alt"></i> تعميم الموضع للكل
+            </button>
+
+            <!-- Change Stamp for All -->
+            <label style="background: #065f46; color: #a7f3d0; border: 1px solid #10b981; padding: 6px 12px; font-size: 12px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; margin: 0;">
+                <i class="fas fa-upload"></i> تغيير صورة الختم
+                <input type="file" id="global-stamp-input" accept="image/*" style="display: none;" onchange="loadGlobalStamp(this)">
+            </label>
+
+            <!-- Size Slider -->
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700;">
+                <label for="stamp-size-slider">الحجم:</label>
+                <input type="range" id="stamp-size-slider" min="14" max="28" value="19" step="0.5" style="width: 70px; accent-color: #fbbf24; cursor: pointer;" oninput="changeAllStampsSize(this.value)">
+                <span id="stamp-size-val" style="font-size: 11px; color: #94a3b8; width: 28px;">19mm</span>
+            </div>
+
+            <!-- Rotation Slider -->
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700;">
+                <label for="stamp-rotate-slider">الميلان:</label>
+                <input type="range" id="stamp-rotate-slider" min="-30" max="30" value="-5" step="1" style="width: 65px; accent-color: #fbbf24; cursor: pointer;" oninput="changeAllStampsRotation(this.value)">
+                <span id="stamp-rotate-val" style="font-size: 11px; color: #94a3b8; width: 24px;">-5°</span>
+            </div>
+
+            <!-- Reset Button -->
+            <button onclick="resetAllStamps()" style="background: transparent; color: #94a3b8; border: 1px solid #475569; padding: 6px 10px; font-size: 12px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-weight: 700;" title="إعادة ضبط مواضع وأحجام الأختام">
+                <i class="fas fa-undo"></i> إعادة ضبط
+            </button>
+        </div>
     </div>
 
-    <script>
-        function saveAsPDF() {
-            alert("تنبيه هام:\n\nبسبب استخدام اللغة العربية المعقدة والتصميم عالي الدقة (SVG)، أدوات التحميل المباشر تقوم بتشويه الحروف والألوان كما رأيت.\n\nلذلك، الطريقة الوحيدة والصحيحة لحفظ البطاقات بجودة المطبعة هي:\n1. ستفتح لك الآن نافذة الطباعة.\n2. قم بتغيير خيار 'الوجهة' (Destination) أو الطابعة إلى 'حفظ بتنسيق PDF' (Save as PDF).\n3. اضغط حفظ.\n\nهذه هي الطريقة الاحترافية المعتمدة.");
-            setTimeout(function() {
-                window.print();
-            }, 500);
-        }
-    </script>
+    {% if not player_pages %}
+        <div class="no-print" style="max-width: 650px; margin: 50px auto; text-align: center; background: rgba(15, 23, 42, 0.85); border: 2px dashed rgba(255,255,255,0.2); border-radius: 20px; padding: 40px 20px; color: #f8fafc; font-family: 'Tajawal', sans-serif; backdrop-filter: blur(10px);">
+            <div style="width: 70px; height: 70px; background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; font-size: 28px; color: #60a5fa;">
+                <i class="fas fa-id-card"></i>
+            </div>
+            <h2 style="margin: 0 0 10px 0; font-size: 20px; font-weight: 800;">لم يتم تحديد أي بطاقة للطباعة</h2>
+            <p style="margin: 0 0 20px 0; font-size: 14px; color: #94a3b8;">يرجى فتح نافذة التحديد لاختيار بطاقات اللاعبين المراد طباعتها.</p>
+            <button onclick="openCardSelectionModal()" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; border: none; padding: 10px 24px; font-size: 15px; border-radius: 12px; cursor: pointer; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(37,99,235,0.4);">
+                <i class="fas fa-tasks"></i> فتح نافذة تحديد البطاقات
+            </button>
+        </div>
+    {% endif %}
 
     {% for page in player_pages %}
         <!-- الصفحة الأمامية (Front Sides - 8 cards max per page) -->
@@ -429,7 +604,13 @@
             <div class="cards-grid-8">
                 {% for player in page %}
                     <!-- FRONT SIDE -->
-                    <div class="card front" style="margin: 0;">
+                    <div class="card front" style="margin: 0; position: relative;">
+                        <!-- Quick Exclude Button (Non-print) -->
+                        <button class="no-print card-quick-exclude-btn" 
+                                onclick="excludeSingleCard('{{ player.pk }}', event)" 
+                                title="استبعاد هذه البطاقة من الطباعة">
+                            <i class="fas fa-times"></i>
+                        </button>
                         <svg class="bg-svg" viewBox="0 0 850 540" preserveAspectRatio="none">
                             <defs>
                                 <linearGradient id="grad_{{ player.id }}" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -443,14 +624,39 @@
                         </svg>
 
                         <div class="watermark" style="left: 65%;">
-                            <img src="{% static 'img/logo.png' %}" alt="Logo" class="w-full h-full object-contain rounded-full">
+                            {% if settings.logo %}
+                                <img src="{{ settings.logo.url }}" alt="Watermark">
+                            {% endif %}
+                        </div>
+
+                        <!-- ─── OFFICIAL STAMP (ختم الوفاق الرسمي) ─── -->
+                        <div class="official-stamp-container draggable-stamp" 
+                             id="draggable-stamp-{{ player.pk }}"
+                             data-player-id="{{ player.pk }}"
+                             title="اسحب باليسار لتحريك الختم، واستخدم عجلة الماوس لتكبيره/تصغيره، واضغط لتغيير الصورة">
+                            <img src="/media/logos/stamp_esm_v2.png" 
+                                 class="official-stamp-img" 
+                                 id="official-stamp-img-{{ player.pk }}"
+                                 alt="ختم الوفاق الرسمي"
+                                 crossorigin="anonymous"
+                                 onerror="this.src='/media/logos/stamp_esm.png'; this.onerror=null;"
+                                 draggable="false">
+                            <div class="stamp-overlay no-print">
+                                <span><i class="fas fa-camera"></i> تغيير</span>
+                            </div>
+                            <div class="stamp-resizer no-print" id="stamp-resizer-handle-{{ player.pk }}"></div>
+                            <input type="file" id="stamp-file-input-{{ player.pk }}" accept="image/*" style="display: none;" onchange="loadCustomCardStamp(this, '{{ player.pk }}')">
                         </div>
                         
                         <div class="content">
                             <div class="right-col" style="padding: 2.5mm 2mm 2.5mm 3mm;">
                                 <div class="header-row" style="margin-bottom: 1mm; display: flex; align-items: center;">
                                     <div class="club-logo" style="position: relative; top: 0; right: 0; margin-left: 2mm; width: 13mm; height: 13mm; display: flex; justify-content: center; align-items: center;">
-                                        <img src="{% static 'img/logo.png' %}" alt="Logo" class="w-full h-full object-contain rounded-full">
+                                        {% if settings.logo %}
+                                            <img src="{{ settings.logo.url }}" alt="Logo">
+                                        {% else %}
+                                            <span>{{ settings.club_abbreviation|default:"WRM" }}</span>
+                                        {% endif %}
                                     </div>
                                     <div style="flex: 1; min-width: 0;">
                                         <div style="font-size: 3.1mm; font-weight: 900; color: var(--primary-dark); line-height: 1.1; white-space: nowrap; letter-spacing: -0.2px; margin-top: -1mm;">الوفاق الرياضي مسلمون</div>
@@ -496,7 +702,7 @@
                                     </div>
                                     <div style="width: 55%; border-bottom: 1.5px dashed var(--primary); position: relative; height: 100%; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 1mm; z-index: 1;">
                                         {% if settings.signature %}
-                                            <img src="{{ settings.signature.url }}" style="height: 12mm; mix-blend-mode: multiply; margin-bottom: -1mm;" alt="Signature" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                                            <img src="{{ settings.signature.url }}" style="height: 12mm; mix-blend-mode: multiply; margin-bottom: -1mm;" alt="Signature">
                                         {% endif %}
                                     </div>
                                 </div>
@@ -508,7 +714,7 @@
                                     <div class="photo-inner-border">
                                         <div class="player-photo">
                                             {% if player.photo %}
-                                                <img src="{{ player.photo.url }}" alt="{{ player.first_name }}" onerror="this.onerror=null; this.src='/static/img/app_logo.png';">
+                                                <img src="{{ player.photo.url }}" alt="{{ player.first_name }}">
                                             {% else %}
                                                 <i class="fas fa-user"></i>
                                             {% endif %}
@@ -518,6 +724,9 @@
                                 <div style="text-align: center; margin-top: 1.5mm; line-height: 1.1; width: 100%; word-wrap: break-word; font-family: 'Cairo', sans-serif;">
                                     <div style="font-size: 3.8mm; font-weight: 900; color: #fbbf24; text-shadow: 0 1px 2px rgba(0,0,0,0.4);">{{ player.first_name }}</div>
                                     <div style="font-size: 3.8mm; font-weight: 900; color: #fbbf24; text-shadow: 0 1px 2px rgba(0,0,0,0.4);">{{ player.last_name }}</div>
+                                    {% if player.first_name_fr or player.last_name_fr %}
+                                    <div style="font-size: 2.1mm; font-weight: 700; color: rgba(255,255,255,0.85); font-family: 'Changa', sans-serif; text-transform: uppercase; margin-top: 0.5mm; letter-spacing: 0.2px;">{{ player.last_name_fr }} {{ player.first_name_fr }}</div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -551,12 +760,18 @@
 
                         <!-- Intersecting Logo -->
                         <div style="position: absolute; top: 9mm; left: 50%; transform: translateX(-50%); width: 11mm; height: 11mm; background: white; border-radius: 50%; border: 0.4mm solid #ca8a04; display: flex; align-items: center; justify-content: center; z-index: 3; box-shadow: 0 2px 4px rgba(0,0,0,0.2); overflow: hidden;">
-                            <img src="{% static 'img/logo.png' %}" alt="Logo" class="w-full h-full object-contain rounded-full">
+                            {% if settings.logo %}
+                                <img src="{{ settings.logo.url }}" alt="Logo" style="width: 85%; height: 85%; object-fit: contain;">
+                            {% else %}
+                                <span style="font-size: 2mm; font-weight: 900; color: var(--primary);">ESM</span>
+                            {% endif %}
                         </div>
 
                         <!-- Watermark -->
                         <div class="watermark" style="left: 50%; top: 55%; width: 45mm; height: 45mm; opacity: 0.08;">
-                            <img src="{% static 'img/logo.png' %}" alt="Logo" class="w-full h-full object-contain rounded-full">
+                            {% if settings.logo %}
+                                <img src="{{ settings.logo.url }}" alt="Watermark">
+                            {% endif %}
                         </div>
 
                         <!-- Content Area -->
@@ -612,5 +827,531 @@
             </div>
         </div>
     {% endfor %}
+
+    <!-- ─── JAVASCRIPT FOR INTERACTIVE STAMPS & MASTER CONTROLS ─── -->
+    <script>
+        function saveAsPDF() {
+            alert("تنبيه هام:\n\nلحفظ البطاقات بأعلى جودة:\n1. ستفتح لك الآن نافذة الطباعة.\n2. قم بتغيير خيار 'الوجهة' (Destination) إلى 'حفظ بتنسيق PDF' (Save as PDF).\n3. اختر المقاس A4 واضغط حفظ.");
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        }
+
+        // Automatic background removal for stamp images
+        function removeWhiteBackground(imgElement) {
+            if (!imgElement) return;
+            if (imgElement.dataset.bgRemoved === 'true') return;
+            
+            const proceed = () => {
+                if (imgElement.dataset.bgRemoved === 'true') return;
+                try {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                    let natWidth = imgElement.naturalWidth || imgElement.width || 300;
+                    let natHeight = imgElement.naturalHeight || imgElement.height || 300;
+                    
+                    const maxDim = Math.max(natWidth, natHeight);
+                    const width = maxDim;
+                    const height = maxDim;
+                    const dx = (width - natWidth) / 2;
+                    const dy = (height - natHeight) / 2;
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    ctx.drawImage(imgElement, dx, dy, natWidth, natHeight);
+                    const imgData = ctx.getImageData(0, 0, width, height);
+                    const data = imgData.data;
+                    
+                    let removedAny = false;
+                    for (let i = 0; i < data.length; i += 4) {
+                        const r = data[i];
+                        const g = data[i+1];
+                        const b = data[i+2];
+                        // If near white or very light gray background
+                        if ((r + g + b) / 3 > 145) {
+                            data[i + 3] = 0;
+                            removedAny = true;
+                        }
+                    }
+                    
+                    if (removedAny) {
+                        ctx.putImageData(imgData, 0, 0);
+                        imgElement.dataset.bgRemoved = 'true';
+                        imgElement.src = canvas.toDataURL('image/png');
+                    }
+                } catch (e) {
+                    console.warn('Cannot process cross-origin stamp image:', e);
+                }
+            };
+
+            if (imgElement.complete && imgElement.naturalWidth) {
+                proceed();
+            } else {
+                imgElement.addEventListener('load', proceed, { once: true });
+            }
+        }
+
+        // --- MASTER TOOLBAR FUNCTIONS ---
+        let stampsVisible = true;
+        function toggleAllStamps() {
+            stampsVisible = !stampsVisible;
+            document.querySelectorAll('.official-stamp-container').forEach(stamp => {
+                stamp.style.display = stampsVisible ? 'block' : 'none';
+            });
+            const textEl = document.getElementById('toggle-stamp-text');
+            const iconEl = document.getElementById('toggle-stamp-icon');
+            if (textEl && iconEl) {
+                textEl.textContent = stampsVisible ? 'إخفاء الختم' : 'إظهار الختم';
+                iconEl.className = stampsVisible ? 'fas fa-eye' : 'fas fa-eye-slash';
+            }
+        }
+
+        function changeAllStampsSize(val) {
+            document.querySelectorAll('.official-stamp-container').forEach(stamp => {
+                stamp.style.width = `${val}mm`;
+                stamp.style.height = `${val}mm`;
+            });
+            const lbl = document.getElementById('stamp-size-val');
+            if (lbl) lbl.textContent = `${val}mm`;
+        }
+
+        function changeAllStampsRotation(val) {
+            document.querySelectorAll('.official-stamp-container').forEach(stamp => {
+                stamp.style.transform = `rotate(${val}deg)`;
+            });
+            const lbl = document.getElementById('stamp-rotate-val');
+            if (lbl) lbl.textContent = `${val}°`;
+        }
+
+        function syncFirstStampToAll() {
+            const firstStamp = document.querySelector('.draggable-stamp');
+            if (!firstStamp) return;
+            
+            const computed = window.getComputedStyle(firstStamp);
+            const w = firstStamp.style.width || computed.width;
+            const h = firstStamp.style.height || computed.height;
+            const l = firstStamp.style.left;
+            const t = firstStamp.style.top;
+            const r = firstStamp.style.right;
+            const b = firstStamp.style.bottom;
+            const tr = firstStamp.style.transform;
+            const op = firstStamp.style.opacity;
+            
+            document.querySelectorAll('.draggable-stamp').forEach(s => {
+                s.style.width = w;
+                s.style.height = h;
+                if (l && t && l !== 'auto' && t !== 'auto') {
+                    s.style.left = l;
+                    s.style.top = t;
+                    s.style.right = 'auto';
+                    s.style.bottom = 'auto';
+                } else {
+                    s.style.right = r || '17.5mm';
+                    s.style.bottom = b || '1.5mm';
+                    s.style.left = 'auto';
+                    s.style.top = 'auto';
+                }
+                if (tr) s.style.transform = tr;
+                if (op) s.style.opacity = op;
+            });
+
+            alert('تم تطبيق موضع وحجم ختم البطاقة الأولى على جميع البطاقات بنجاح!');
+        }
+
+        function loadGlobalStamp(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const newSrc = e.target.result;
+                    document.querySelectorAll('.official-stamp-img').forEach(img => {
+                        delete img.dataset.bgRemoved;
+                        img.src = newSrc;
+                        removeWhiteBackground(img);
+                    });
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function loadCustomCardStamp(input, pk) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById(`official-stamp-img-${pk}`);
+                    if (img) {
+                        delete img.dataset.bgRemoved;
+                        img.src = e.target.result;
+                        removeWhiteBackground(img);
+                    }
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function resetAllStamps() {
+            document.querySelectorAll('.official-stamp-container').forEach(stamp => {
+                stamp.style.width = '19mm';
+                stamp.style.height = '19mm';
+                stamp.style.right = '17.5mm';
+                stamp.style.bottom = '1.5mm';
+                stamp.style.left = 'auto';
+                stamp.style.top = 'auto';
+                stamp.style.transform = 'rotate(-5deg)';
+                stamp.style.opacity = '1';
+                stamp.style.display = 'block';
+            });
+            document.querySelectorAll('.official-stamp-img').forEach(img => {
+                delete img.dataset.bgRemoved;
+                img.src = '/media/logos/stamp_esm_v2.png';
+            });
+
+            const sizeSlider = document.getElementById('stamp-size-slider');
+            if (sizeSlider) sizeSlider.value = 19;
+            const sizeLbl = document.getElementById('stamp-size-val');
+            if (sizeLbl) sizeLbl.textContent = '19mm';
+
+            const rotSlider = document.getElementById('stamp-rotate-slider');
+            if (rotSlider) rotSlider.value = -5;
+            const rotLbl = document.getElementById('stamp-rotate-val');
+            if (rotLbl) rotLbl.textContent = '-5°';
+
+            stampsVisible = true;
+            const textEl = document.getElementById('toggle-stamp-text');
+            const iconEl = document.getElementById('toggle-stamp-icon');
+            if (textEl && iconEl) {
+                textEl.textContent = 'إخفاء الختم';
+                iconEl.className = 'fas fa-eye';
+            }
+        }
+
+        // --- DRAG, RESIZE & WHEEL ZOOM LOGIC ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Apply background removal to stamps
+            document.querySelectorAll('.official-stamp-img').forEach(img => removeWhiteBackground(img));
+
+            let activeEl = null;
+            let activeAction = null;
+            let startX = 0, startY = 0;
+            let startLeft = 0, startTop = 0;
+            let startWidth = 0;
+
+            function setupStamp(stamp) {
+                const pk = stamp.dataset.playerId;
+                const resizer = document.getElementById(`stamp-resizer-handle-${pk}`);
+                const fileInput = document.getElementById(`stamp-file-input-${pk}`);
+
+                // Dragging
+                const dragStart = (e) => {
+                    if (e.target === resizer || e.target.classList.contains('stamp-resizer')) return;
+                    activeEl = stamp;
+                    activeAction = 'drag';
+                    activeEl.dataset.dragged = 'false';
+
+                    const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+                    startX = clientX;
+                    startY = clientY;
+
+                    // Convert position to left/top relative to parent .card
+                    startLeft = stamp.offsetLeft;
+                    startTop = stamp.offsetTop;
+
+                    stamp.style.right = 'auto';
+                    stamp.style.bottom = 'auto';
+                    stamp.style.left = `${startLeft}px`;
+                    stamp.style.top = `${startTop}px`;
+                    stamp.style.cursor = 'grabbing';
+                };
+
+                stamp.addEventListener('mousedown', dragStart);
+                stamp.addEventListener('touchstart', dragStart, { passive: true });
+
+                // Click to change image
+                stamp.addEventListener('click', (e) => {
+                    if (stamp.dataset.dragged === 'true') return;
+                    if (e.target === resizer || e.target.classList.contains('stamp-resizer')) return;
+                    if (fileInput) fileInput.click();
+                });
+
+                // Mouse wheel zoom
+                stamp.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    const currentW = stamp.offsetWidth;
+                    const delta = e.deltaY < 0 ? 2 : -2;
+                    const newW = Math.max(30, Math.min(140, currentW + delta));
+                    stamp.style.width = `${newW}px`;
+                    stamp.style.height = `${newW}px`;
+                }, { passive: false });
+
+                // Resizing
+                if (resizer) {
+                    const resizeStart = (e) => {
+                        activeEl = stamp;
+                        activeAction = 'resize';
+                        const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+                        startX = clientX;
+                        startWidth = stamp.offsetWidth;
+                        e.stopPropagation();
+                        if (e.type === 'mousedown') e.preventDefault();
+                    };
+
+                    resizer.addEventListener('mousedown', resizeStart);
+                    resizer.addEventListener('touchstart', resizeStart, { passive: true });
+                }
+            }
+
+            document.querySelectorAll('.draggable-stamp').forEach(setupStamp);
+
+            const handleMove = (e) => {
+                if (!activeEl) return;
+                const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+                const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+
+                if (activeAction === 'drag') {
+                    const dx = clientX - startX;
+                    const dy = clientY - startY;
+                    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+                        activeEl.dataset.dragged = 'true';
+                    }
+                    activeEl.style.left = `${startLeft + dx}px`;
+                    activeEl.style.top = `${startTop + dy}px`;
+                    if (e.cancelable) e.preventDefault();
+                } else if (activeAction === 'resize') {
+                    const dx = clientX - startX;
+                    const newWidth = Math.max(30, Math.min(140, startWidth + dx));
+                    activeEl.style.width = `${newWidth}px`;
+                    activeEl.style.height = `${newWidth}px`;
+                    if (e.cancelable) e.preventDefault();
+                }
+            };
+
+            document.addEventListener('mousemove', handleMove);
+            document.addEventListener('touchmove', handleMove, { passive: false });
+
+            const handleRelease = () => {
+                if (activeEl) {
+                    activeEl.style.cursor = 'move';
+                    setTimeout(() => {
+                        if (activeEl) activeEl.dataset.dragged = 'false';
+                        activeEl = null;
+                        activeAction = null;
+                    }, 50);
+                }
+            };
+
+            document.addEventListener('mouseup', handleRelease);
+            document.addEventListener('touchend', handleRelease);
+        });
+
+        // ─── CARD SELECTION MODAL & FILTER FUNCTIONS ───
+        function openCardSelectionModal() {
+            const modal = document.getElementById('card-selection-modal');
+            if (modal) {
+                modal.style.display = 'flex';
+                updateModalCount();
+            }
+        }
+
+        function closeCardSelectionModal() {
+            const modal = document.getElementById('card-selection-modal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function normalizeArModal(str) {
+            if (!str) return '';
+            let s = str.toString().trim().toLowerCase();
+            s = s.replace(/[\u064B-\u065F\u0670\u0640]/g, '');
+            s = s.replace(/[إأآٱا]/g, 'ا');
+            s = s.replace(/[ىي]/g, 'ي');
+            s = s.replace(/[ةه]/g, 'ه');
+            s = s.replace(/[ؤ]/g, 'و').replace(/[ئ]/g, 'ي').replace(/[ء]/g, '');
+            return s;
+        }
+
+        function filterModalPlayers(term) {
+            const raw = (term || '').trim();
+            const tokens = raw.split(/[\s,\-_/]+/).filter(Boolean);
+            document.querySelectorAll('.modal-player-item').forEach(item => {
+                const searchData = item.dataset.name || item.textContent;
+                const rawLower = searchData.toLowerCase();
+                const normData = normalizeArModal(searchData);
+                const compactNorm = normData.replace(/\s+/g, '');
+
+                if (!tokens.length) {
+                    item.style.display = 'flex';
+                    return;
+                }
+
+                let allTokensMatch = true;
+                for (let tok of tokens) {
+                    const tokNorm = normalizeArModal(tok);
+                    const tokCompact = tokNorm.replace(/\s+/g, '');
+                    const tokLower = tok.toLowerCase();
+
+                    let match = false;
+                    if (tokNorm && (normData.includes(tokNorm) || compactNorm.includes(tokCompact))) {
+                        match = true;
+                    } else if (tokLower && rawLower.includes(tokLower)) {
+                        match = true;
+                    }
+
+                    if (!match) {
+                        allTokensMatch = false;
+                        break;
+                    }
+                }
+
+                item.style.display = allTokensMatch ? 'flex' : 'none';
+            });
+        }
+
+        function selectAllModalPlayers(selectAll) {
+            document.querySelectorAll('.modal-player-item').forEach(item => {
+                if (item.style.display !== 'none') {
+                    const cb = item.querySelector('.modal-player-checkbox');
+                    if (cb) cb.checked = selectAll;
+                }
+            });
+            updateModalCount();
+        }
+
+        function invertModalSelection() {
+            document.querySelectorAll('.modal-player-item').forEach(item => {
+                if (item.style.display !== 'none') {
+                    const cb = item.querySelector('.modal-player-checkbox');
+                    if (cb) cb.checked = !cb.checked;
+                }
+            });
+            updateModalCount();
+        }
+
+        function updateModalCount() {
+            const checked = document.querySelectorAll('.modal-player-checkbox:checked').length;
+            const summary = document.getElementById('modal-selected-summary');
+            const pagesEst = document.getElementById('modal-pages-estimate');
+            if (summary) summary.textContent = checked;
+            if (pagesEst) pagesEst.textContent = Math.ceil(checked / 8);
+        }
+
+        function applyModalSelection() {
+            const checkedCbs = Array.from(document.querySelectorAll('.modal-player-checkbox:checked'));
+            if (!checkedCbs.length) {
+                alert('الرجاء اختيار لاعب واحد على الأقل للطباعة.');
+                return;
+            }
+            const ids = checkedCbs.map(cb => cb.value).join(',');
+            const url = new URL(window.location.href);
+            url.searchParams.set('ids', ids);
+            window.location.href = url.toString();
+        }
+
+        function excludeSingleCard(playerId, event) {
+            if (event) event.stopPropagation();
+            const currentCards = Array.from(document.querySelectorAll('.draggable-stamp')).map(el => el.dataset.playerId).filter(Boolean);
+            const remaining = currentCards.filter(id => String(id) !== String(playerId));
+            if (remaining.length === 0) {
+                alert('لا يمكن استبعاد كافة البطاقات.');
+                return;
+            }
+            const url = new URL(window.location.href);
+            url.searchParams.set('ids', remaining.join(','));
+            window.location.href = url.toString();
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeCardSelectionModal();
+        });
+    </script>
+
+    <!-- ─── CARD SELECTION MODAL (نافذة تحديد البطاقات للطباعة) ─── -->
+    <div id="card-selection-modal" class="no-print" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px); z-index: 99999; align-items: center; justify-content: center; padding: 15px; font-family: 'Tajawal', sans-serif;" onclick="if(event.target === this) closeCardSelectionModal()">
+        <div style="background: #0f172a; border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; width: 100%; max-width: 900px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8); overflow: hidden; color: #f8fafc; animation: modalFadeIn 0.25s ease-out;">
+            
+            <!-- Modal Header -->
+            <div style="padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: space-between; background: rgba(30, 41, 59, 0.7);">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(59,130,246,0.2); border: 1px solid rgba(59,130,246,0.4); display: flex; align-items: center; justify-content: center; color: #60a5fa; font-size: 20px;">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: #f8fafc;">تحديد بطاقات اللاعبين للطباعة</h3>
+                        <p style="margin: 2px 0 0 0; font-size: 12px; color: #94a3b8;">
+                            {% if current_category %}الفئة الحالية: <strong style="color: #fbbf24;">{{ current_category.name }}</strong> | {% endif %}
+                            إجمالي اللاعبين المتاحين: <strong>{{ all_category_players|length }}</strong>
+                        </p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeCardSelectionModal()" style="background: transparent; border: none; color: #94a3b8; font-size: 20px; cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#94a3b8'">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Filter & Quick Select Toolbar -->
+            <div style="padding: 14px 24px; background: rgba(15, 23, 42, 0.95); border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;">
+                <!-- Search -->
+                <div style="position: relative; flex: 1; min-width: 220px;">
+                    <i class="fas fa-search" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 13px;"></i>
+                    <input type="text" id="player-filter-input" placeholder="بحث باسم اللاعب أو مركزه أو رقمه..." oninput="filterModalPlayers(this.value)" style="width: 100%; padding: 8px 34px 8px 12px; background: #1e293b; border: 1px solid #334155; border-radius: 10px; color: #fff; font-size: 13px; font-family: inherit; outline: none; box-sizing: border-box;">
+                </div>
+
+                <!-- Quick Select Buttons -->
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <button onclick="selectAllModalPlayers(true)" type="button" style="background: #1e293b; color: #93c5fd; border: 1px solid #3b82f6; padding: 6px 14px; font-size: 12px; border-radius: 8px; cursor: pointer; font-weight: 700; transition: all 0.2s;">
+                        <i class="fas fa-check-double ml-1"></i> تحديد الكل
+                    </button>
+                    <button onclick="selectAllModalPlayers(false)" type="button" style="background: #1e293b; color: #f87171; border: 1px solid #ef4444; padding: 6px 14px; font-size: 12px; border-radius: 8px; cursor: pointer; font-weight: 700; transition: all 0.2s;">
+                        <i class="fas fa-times ml-1"></i> إلغاء التحديد
+                    </button>
+                    <button onclick="invertModalSelection()" type="button" style="background: #1e293b; color: #fbbf24; border: 1px solid #f59e0b; padding: 6px 14px; font-size: 12px; border-radius: 8px; cursor: pointer; font-weight: 700; transition: all 0.2s;">
+                        <i class="fas fa-exchange-alt ml-1"></i> عكس التحديد
+                    </button>
+                </div>
+            </div>
+
+            <!-- Players Grid -->
+            <div id="modal-players-container" style="padding: 16px 24px; overflow-y: auto; max-height: 52vh; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px;">
+                {% for p in all_category_players %}
+                <label class="modal-player-item" data-name="{{ p.first_name }} {{ p.last_name }} {{ p.position }} {{ p.jersey_number }}" style="display: flex; align-items: center; gap: 10px; background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255,255,255,0.08); padding: 8px 12px; border-radius: 12px; cursor: pointer; user-select: none; transition: all 0.15s ease;">
+                    <input type="checkbox" class="modal-player-checkbox" value="{{ p.id }}" {% if p.id in selected_ids_list %}checked{% endif %} onchange="updateModalCount()" style="width: 18px; height: 18px; accent-color: #3b82f6; cursor: pointer;">
+                    {% if p.photo %}
+                        <img src="{{ p.photo.url }}" alt="{{ p.first_name }}" style="width: 36px; height: 36px; border-radius: 8px; object-fit: cover; border: 1px solid rgba(255,255,255,0.2);">
+                    {% else %}
+                        <div style="width: 36px; height: 36px; border-radius: 8px; background: #334155; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 14px;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    {% endif %}
+                    <div style="flex: 1; min-width: 0; text-align: right;">
+                        <div style="font-size: 13px; font-weight: 800; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            {{ p.first_name }} {{ p.last_name }}
+                        </div>
+                        <div style="font-size: 11px; color: #94a3b8; display: flex; align-items: center; justify-content: space-between;">
+                            <span>{{ p.position|default:"لاعب" }}</span>
+                            {% if p.jersey_number %}
+                                <span style="background: rgba(59,130,246,0.2); color: #93c5fd; padding: 1px 6px; border-radius: 4px; font-weight: 800; font-size: 10px;">#{{ p.jersey_number }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </label>
+                {% endfor %}
+            </div>
+
+            <!-- Modal Footer -->
+            <div style="padding: 16px 24px; background: rgba(30, 41, 59, 0.8); border-top: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                <div style="font-size: 13px; color: #e2e8f0;">
+                    تم اختيار <strong id="modal-selected-summary" style="color: #60a5fa; font-size: 16px;">{{ total_selected_count }}</strong> بطاقة
+                    <span style="color: #94a3b8; font-size: 12px;">(<span id="modal-pages-estimate">{% widthratio total_selected_count 8 1 %}</span> ورقة A4 بوجهين تقريباً)</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" onclick="closeCardSelectionModal()" style="background: #334155; color: #f8fafc; border: 1px solid #475569; padding: 8px 18px; font-size: 13px; border-radius: 10px; cursor: pointer; font-weight: 700;">
+                        إلغاء
+                    </button>
+                    <button type="button" onclick="applyModalSelection()" style="background: linear-gradient(135deg, #0d9488 0%, #059669 100%); color: white; border: none; padding: 9px 24px; font-size: 14px; border-radius: 10px; cursor: pointer; font-weight: 800; box-shadow: 0 4px 12px rgba(13,148,136,0.4); display: inline-flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-check"></i> تطبيق وطباعة المحددين
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

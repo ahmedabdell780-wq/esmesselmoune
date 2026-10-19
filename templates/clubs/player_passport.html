@@ -1,0 +1,649 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passeport du Joueur — {{ passport.full_name_fr }}</title>
+    
+    <!-- Bootstrap 5 CSS & FontAwesome -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bs-body-font-family: Arial, Helvetica, 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background-color: #0f172a;
+            color: #000000;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, 'Segoe UI', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ─── Control Toolbar (On-Screen Only) ─── */
+        .screen-toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            z-index: 1050;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            color: #ffffff;
+            direction: rtl; /* For Arabic controls */
+            font-family: 'Cairo', Arial, sans-serif;
+        }
+
+        .passport-workspace {
+            padding-top: 75px;
+            padding-bottom: 50px;
+            display: flex;
+            justify-content: center;
+            background: #0b1120;
+            min-height: 100vh;
+        }
+
+        /* ─── The Official Passport Sheet (Matching the Image) ─── */
+        .passport-sheet {
+            width: 297mm;
+            min-height: 210mm;
+            background: #ffffff;
+            color: #000000;
+            padding: 12mm 16mm 10mm 16mm;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            box-sizing: border-box;
+            position: relative;
+            display: block;
+            direction: ltr; /* Official document is in French LTR */
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        /* Official Header */
+        .passport-header {
+            position: relative;
+            margin-bottom: 12px;
+            min-height: 60px;
+        }
+
+        .passport-logo {
+            position: absolute;
+            top: -2px;
+            left: 0;
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            image-rendering: -webkit-optimize-contrast;
+        }
+
+        .passport-header-title {
+            text-align: center;
+        }
+
+        .passport-header-title h4 {
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0;
+            color: #000000;
+            letter-spacing: -0.2px;
+        }
+
+        .passport-header-title h5 {
+            font-size: 14px;
+            font-weight: 800;
+            margin: 6px 0 0 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #000000;
+        }
+
+        /* Player Details Section */
+        .player-info-container {
+            margin-bottom: 10px;
+            font-size: 13.5px;
+            line-height: 1.55;
+            color: #000000;
+        }
+
+        .info-row {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 2px;
+        }
+
+        .info-label {
+            font-weight: 700;
+            color: #000000;
+            white-space: nowrap;
+        }
+
+        .info-val {
+            font-weight: 700;
+            color: #000000;
+        }
+
+        /* ─── Official Passport Table ─── */
+        .passport-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #000000;
+            margin-bottom: 10px;
+            table-layout: fixed;
+            empty-cells: show;
+        }
+
+        .passport-table th,
+        .passport-table td {
+            border: 1px solid #000000;
+            text-align: center;
+            vertical-align: middle;
+            padding: 3px 4px;
+            font-size: 12px;
+            line-height: 1.2;
+            color: #000000;
+        }
+
+        .passport-table th {
+            font-weight: 700;
+            background-color: #ffffff;
+            height: 38px;
+        }
+
+        .passport-table th .sub-label {
+            font-size: 10.5px;
+            font-weight: 400;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .passport-table td {
+            height: 25.5px;
+            font-size: 12px;
+        }
+
+        .passport-table td.age-cell {
+            font-weight: 700;
+        }
+
+        /* Editable inputs */
+        .edit-input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-size: 12px;
+            color: #000000;
+            padding: 0;
+            margin: 0;
+            font-family: inherit;
+        }
+
+        .edit-input:focus {
+            outline: 2px solid #2563eb;
+            background: #eff6ff;
+            border-radius: 2px;
+        }
+
+        .edit-info-input {
+            border: 1px dashed #94a3b8;
+            background: #f8fafc;
+            padding: 1px 6px;
+            font-size: 13.5px;
+            font-weight: 700;
+            border-radius: 4px;
+            color: #000000;
+        }
+
+        .edit-info-input:focus {
+            outline: 2px solid #2563eb;
+            background: #ffffff;
+        }
+
+        .edit-mode-active .passport-table td {
+            background-color: #fbfcfe;
+        }
+
+        .edit-mode-active .passport-table td:hover {
+            background-color: #f0f7ff;
+        }
+
+        /* Official Footer Declaration */
+        .passport-footer {
+            font-size: 11.5px;
+            line-height: 1.45;
+            color: #000000;
+            text-align: justify;
+            margin-top: 14px;
+        }
+
+        .passport-footer strong {
+            font-weight: 800;
+        }
+
+        /* ─── PRINT MEDIA QUERY (Strict A4 Landscape, 1 Page) ─── */
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 8mm 12mm;
+            }
+
+            html, body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+            }
+
+            .screen-toolbar,
+            .no-print {
+                display: none !important;
+            }
+
+            .passport-workspace {
+                padding: 0 !important;
+                background: #ffffff !important;
+                min-height: auto !important;
+                display: block !important;
+            }
+
+            .passport-sheet {
+                width: 100% !important;
+                height: auto !important;
+                min-height: auto !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+                display: block !important;
+                page-break-after: avoid !important;
+                page-break-inside: avoid !important;
+            }
+
+            .passport-table {
+                border: 1.2px solid #000000 !important;
+            }
+
+            .passport-table th,
+            .passport-table td {
+                border: 1px solid #000000 !important;
+                background: transparent !important;
+            }
+
+            .edit-input {
+                outline: none !important;
+                background: transparent !important;
+            }
+
+            .edit-info-input {
+                border: none !important;
+                background: transparent !important;
+                padding: 0 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── TOP CONTROL TOOLBAR (Screen Only) ─── -->
+    <div class="screen-toolbar no-print">
+        
+        <!-- Right side: Player selection & navigation -->
+        <div class="d-flex align-items-center gap-2">
+            <a href="{% url 'clubs:player_list' %}" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-bold">
+                <i class="fas fa-arrow-right ms-1"></i> قائمة اللاعبين
+            </a>
+            
+            <a href="{% url 'clubs:player_passport_list' %}?category={{ player.category.name }}" class="btn btn-dark btn-sm rounded-pill px-3 fw-bold border border-slate-700">
+                <i class="fas fa-passport ms-1 text-warning"></i> جوازات {{ player.category.name }}
+            </a>
+
+            <!-- Player select dropdown -->
+            <div class="dropdown me-2">
+                <select onchange="window.location.href=this.value" class="form-select form-select-sm rounded-pill bg-slate-800 text-white border-slate-700 fw-bold px-3" style="min-width: 220px;">
+                    {% for p in siblings %}
+                        <option value="{% url 'clubs:player_passport' p.id %}" {% if p.id == player.id %}selected{% endif %}>
+                            {{ forloop.counter }}. {{ p.last_name }} {{ p.first_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Prev / Next buttons -->
+            <div class="btn-group btn-group-sm">
+                {% if prev_player %}
+                <a href="{% url 'clubs:player_passport' prev_player.id %}" class="btn btn-secondary" title="اللاعب السابق: {{ prev_player.last_name }} {{ prev_player.first_name }}">
+                    <i class="fas fa-chevron-right"></i> السابق
+                </a>
+                {% else %}
+                <button class="btn btn-secondary opacity-50" disabled><i class="fas fa-chevron-right"></i> السابق</button>
+                {% endif %}
+
+                {% if next_player %}
+                <a href="{% url 'clubs:player_passport' next_player.id %}" class="btn btn-secondary" title="اللاعب التالي: {{ next_player.last_name }} {{ next_player.first_name }}">
+                    التالي <i class="fas fa-chevron-left"></i>
+                </a>
+                {% else %}
+                <button class="btn btn-secondary opacity-50" disabled>التالي <i class="fas fa-chevron-left"></i></button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Left side: Actions (Edit, Save, Print, PDF) -->
+        <div class="d-flex align-items-center gap-2">
+            <!-- Edit Mode Toggle -->
+            <button id="btn-toggle-edit" onclick="toggleEditMode()" class="btn btn-warning btn-sm rounded-pill px-3 fw-bold shadow-sm">
+                <i class="fas fa-edit me-1"></i> <span id="edit-btn-text">تعديل البيانات</span>
+            </button>
+
+            <!-- Save Changes Button (shown when edit mode is on) -->
+            <button id="btn-save" onclick="savePassportData()" class="btn btn-success btn-sm rounded-pill px-3 fw-bold shadow-sm" style="display: none;">
+                <i class="fas fa-save me-1"></i> حفظ التعديلات
+            </button>
+
+            <!-- Print Button -->
+            <button onclick="window.print()" class="btn btn-light btn-sm rounded-pill px-4 fw-bold shadow-sm">
+                <i class="fas fa-print me-1 text-dark"></i> طباعة الجواز
+            </button>
+
+            <!-- Download PDF Button -->
+            <button id="btn-pdf-export" onclick="exportToPDF()" class="btn btn-danger btn-sm rounded-pill px-3 fw-bold shadow-sm">
+                <i class="fas fa-file-pdf me-1"></i> تحميل PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- ─── PASSPORT WORKSPACE ─── -->
+    <div class="passport-workspace">
+        <form id="passport-form" method="post" action="{% url 'clubs:player_passport' player.id %}" onsubmit="return false;">
+            {% csrf_token %}
+            
+            <div id="passport-capture-area" class="passport-sheet {% if is_edit_mode %}edit-mode-active{% endif %}">
+                
+                <!-- TOP HEADER -->
+                <div>
+                    <div class="passport-header">
+                        <!-- Ligue Wilaya Tipaza Logo -->
+                        <img src="{% static 'img/ligue_tipaza_logo.png' %}" alt="Ligue Tipaza" class="passport-logo" onerror="this.src='/static/img/trophy.png';">
+                        
+                        <div class="passport-header-title">
+                            <h4>Ligue Wilaya de Football – Tipaza</h4>
+                            <h5>PASSEPORT DU JOUEUR</h5>
+                        </div>
+                    </div>
+
+                    <!-- PLAYER INFORMATION BLOCK -->
+                    <div class="player-info-container">
+                        <!-- Nom et Prénom -->
+                        <div class="info-row">
+                            <span class="info-label">Nom et Prénom du Joueur :</span>
+                            <span class="info-view-field fw-bold text-uppercase" id="view-fullname">{{ passport.full_name_fr }}</span>
+                            <input type="text" name="full_name_fr" id="input-fullname" class="info-edit-field edit-info-input text-uppercase" style="display: none; min-width: 320px;" value="{{ passport.full_name_fr }}">
+                        </div>
+
+                        <!-- Numéro de Licence -->
+                        <div class="info-row">
+                            <span class="info-label">Numéro de Licence :</span>
+                            <span class="info-view-field fw-bold" id="view-license">{{ passport.license_number|default:"" }}</span>
+                            <input type="text" name="license_number" id="input-license" class="info-edit-field edit-info-input" style="display: none; min-width: 200px;" value="{{ passport.license_number|default:'' }}" placeholder="Numéro de licence...">
+                        </div>
+
+                        <!-- Date et lieu de Naissance -->
+                        <div class="info-row">
+                            <span class="info-label">Date et lieu de Naissance :</span>
+                            <span class="info-view-field fw-bold" id="view-dob">{{ passport.date_of_birth|date:"d/m/Y" }}</span>
+                            <input type="date" name="date_of_birth" id="input-dob" class="info-edit-field edit-info-input" style="display: none;" value="{{ passport.date_of_birth|date:'Y-m-d' }}">
+                            
+                            <span class="info-label">&nbsp; à &nbsp;</span>
+                            
+                            <span class="info-view-field fw-bold text-uppercase" id="view-pob">{{ passport.place_of_birth_fr }}</span>
+                            <input type="text" name="place_of_birth_fr" id="input-pob" class="info-edit-field edit-info-input text-uppercase" style="display: none; min-width: 180px;" value="{{ passport.place_of_birth_fr }}" placeholder="Lieu de naissance...">
+                        </div>
+
+                        <!-- Nationalité -->
+                        <div class="info-row">
+                            <span class="info-label">Nationalité :</span>
+                            <span class="info-view-field fw-bold" id="view-nationality">{{ passport.nationality|default:"Algérienne" }}</span>
+                            <input type="text" name="nationality" id="input-nationality" class="info-edit-field edit-info-input" style="display: none; min-width: 180px;" value="{{ passport.nationality|default:'Algérienne' }}">
+                        </div>
+                    </div>
+
+                    <!-- 12-ROW TABLE (12 ANS to 23 ANS) -->
+                    <table class="passport-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 7%;">Année</th>
+                                <th style="width: 10%;">Saison</th>
+                                <th style="width: 28%;">
+                                    Statut du Joueur
+                                    <span class="sub-label">(amateur ou professionnel)</span>
+                                </th>
+                                <th style="width: 15%;">prêt ou permanent</th>
+                                <th style="width: 10%;">Période</th>
+                                <th style="width: 15%;">Nom du Club</th>
+                                <th style="width: 15%;">Nom de la Ligue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in rows %}
+                            <tr>
+                                <!-- Année (12 ans, 13 ans...) -->
+                                <td class="age-cell">
+                                    <span class="row-view-text">{{ r.age }}</span>
+                                    <input type="text" name="row_{{ forloop.counter0 }}_age" class="row-edit-input edit-input fw-bold" style="display: none;" value="{{ r.age }}">
+                                </td>
+
+                                <!-- Saison (e.g. 2023/2024) -->
+                                <td>
+                                    <span class="row-view-text">{{ r.season }}</span>
+                                    <input type="text" name="row_{{ forloop.counter0 }}_season" class="row-edit-input edit-input" style="display: none;" value="{{ r.season }}">
+                                </td>
+
+                                <!-- Statut du Joueur (Amateur / Professionnel) -->
+                                <td>
+                                    <span class="row-view-text">{{ r.status }}</span>
+                                    <input type="text" name="row_{{ forloop.counter0 }}_status" class="row-edit-input edit-input" style="display: none;" value="{{ r.status }}">
+                                </td>
+
+                                <!-- Prêt ou Permanent -->
+                                <td>
+                                    <span class="row-view-text">{{ r.loan_permanent }}</span>
+                                    <input type="text" name="row_{{ forloop.counter0 }}_loan_permanent" class="row-edit-input edit-input" style="display: none;" value="{{ r.loan_permanent }}">
+                                </td>
+
+                                <!-- Période -->
+                                <td>
+                                    <span class="row-view-text">{{ r.period }}</span>
+                                    <input type="text" name="row_{{ forloop.counter0 }}_period" class="row-edit-input edit-input" style="display: none;" value="{{ r.period }}">
+                                </td>
+
+                                <!-- Nom du Club -->
+                                <td>
+                                    <span class="row-view-text">{{ r.club }}</span>
+                                    <input type="text" name="row_{{ forloop.counter0 }}_club" class="row-edit-input edit-input" style="display: none;" value="{{ r.club }}">
+                                </td>
+
+                                <!-- Nom de la Ligue -->
+                                <td>
+                                    <span class="row-view-text">{{ r.league }}</span>
+                                    <input type="text" name="row_{{ forloop.counter0 }}_league" class="row-edit-input edit-input" style="display: none;" value="{{ r.league }}">
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- OFFICIAL FOOTER DECLARATION -->
+                <div class="passport-footer">
+                    <span id="view-declaration">
+                        Je soussigné, président du club <strong>{{ passport.club_name|default:"ES Messelmoun" }}</strong>, me suis efforcé dans la mesure du possible de produire une histoire chronologique aussi complète que possible de l'histoire d'enregistrement du joueur susmentionné depuis la saison de son 12ème anniversaire et déclare, au nom du club <strong>{{ passport.club_name|default:"ES Messelmoun" }}</strong> que les détails fournis dans ce document sont à ma connaissance fiable et exactes.
+                    </span>
+                    <textarea name="declaration_text" id="input-declaration" class="form-control form-control-sm mt-1" style="display: none; font-size: 11px;" rows="2">{{ passport.declaration_text }}</textarea>
+                </div>
+
+            </div>
+        </form>
+    </div>
+
+    <!-- html2pdf Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        var isEditMode = false;
+
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            var sheet = document.getElementById('passport-capture-area');
+            var btnToggle = document.getElementById('btn-toggle-edit');
+            var btnText = document.getElementById('edit-btn-text');
+            var btnSave = document.getElementById('btn-save');
+
+            var viewFields = document.querySelectorAll('.info-view-field, .row-view-text');
+            var editFields = document.querySelectorAll('.info-edit-field, .row-edit-input');
+            var declView = document.getElementById('view-declaration');
+            var declInput = document.getElementById('input-declaration');
+
+            if (isEditMode) {
+                sheet.classList.add('edit-mode-active');
+                btnToggle.classList.replace('btn-warning', 'btn-outline-warning');
+                btnText.innerText = 'إلغاء وضع التعديل';
+                btnSave.style.display = 'inline-flex';
+
+                viewFields.forEach(function(el) { el.style.display = 'none'; });
+                editFields.forEach(function(el) { el.style.display = 'inline-block'; });
+                if (declView && declInput) {
+                    declView.style.display = 'none';
+                    declInput.style.display = 'block';
+                }
+            } else {
+                sheet.classList.remove('edit-mode-active');
+                btnToggle.classList.replace('btn-outline-warning', 'btn-warning');
+                btnText.innerText = 'تعديل البيانات';
+                btnSave.style.display = 'none';
+
+                viewFields.forEach(function(el) { el.style.display = 'inline-block'; });
+                editFields.forEach(function(el) { el.style.display = 'none'; });
+                if (declView && declInput) {
+                    declView.style.display = 'block';
+                    declInput.style.display = 'none';
+                }
+            }
+        }
+
+        function savePassportData() {
+            var form = document.getElementById('passport-form');
+            var btnSave = document.getElementById('btn-save');
+            var oldHtml = btnSave.innerHTML;
+            btnSave.disabled = true;
+            btnSave.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> جاري الحفظ...';
+
+            var formData = new FormData(form);
+
+            fetch(form.action + '?ajax=1', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                btnSave.disabled = false;
+                btnSave.innerHTML = oldHtml;
+                if (data.status === 'success') {
+                    // Update view fields with new values
+                    document.getElementById('view-fullname').innerText = document.getElementById('input-fullname').value;
+                    document.getElementById('view-license').innerText = document.getElementById('input-license').value;
+                    
+                    var dobVal = document.getElementById('input-dob').value;
+                    if (dobVal) {
+                        var parts = dobVal.split('-');
+                        if (parts.length === 3) {
+                            document.getElementById('view-dob').innerText = parts[2] + '/' + parts[1] + '/' + parts[0];
+                        }
+                    }
+                    document.getElementById('view-pob').innerText = document.getElementById('input-pob').value;
+                    document.getElementById('view-nationality').innerText = document.getElementById('input-nationality').value;
+
+                    // Update table cells view texts
+                    var rows = document.querySelectorAll('.passport-table tbody tr');
+                    rows.forEach(function(row) {
+                        var inputs = row.querySelectorAll('.row-edit-input');
+                        var spans = row.querySelectorAll('.row-view-text');
+                        for (var i = 0; i < inputs.length; i++) {
+                            if (spans[i]) {
+                                spans[i].innerText = inputs[i].value;
+                            }
+                        }
+                    });
+
+                    // Turn off edit mode
+                    toggleEditMode();
+
+                    // Alert
+                    alert('✓ تم حفظ جميع تعديلات جواز اللاعب بنجاح!');
+                } else {
+                    alert('حدث خطأ أثناء حفظ التعديلات.');
+                }
+            })
+            .catch(function(err) {
+                btnSave.disabled = false;
+                btnSave.innerHTML = oldHtml;
+                console.error(err);
+                alert('تم إرسال التعديل وسيتم تحديث الصفحة.');
+                form.submit();
+            });
+        }
+
+        function exportToPDF() {
+            var btn = document.getElementById('btn-pdf-export');
+            var oldHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> جاري الإنشاء...';
+
+            // Ensure edit mode is off for clean PDF
+            if (isEditMode) {
+                toggleEditMode();
+            }
+
+            var element = document.getElementById('passport-capture-area');
+            var playerName = "{{ passport.full_name_fr|default:'Joueur'|escapejs }}".replace(/[^a-zA-Z0-9_-]/g, '_');
+            var filename = 'Passeport_' + playerName + '.pdf';
+
+            var opt = {
+                margin:       [8, 10, 8, 10],
+                filename:     filename,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2.5, useCORS: true, logging: false },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(function() {
+                btn.disabled = false;
+                btn.innerHTML = oldHtml;
+            }).catch(function(e) {
+                console.error(e);
+                btn.disabled = false;
+                btn.innerHTML = oldHtml;
+                window.print();
+            });
+        }
+    </script>
+</body>
+</html>

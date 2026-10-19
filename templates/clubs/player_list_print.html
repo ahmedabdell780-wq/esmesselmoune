@@ -23,27 +23,43 @@
 
         @page {
             size: A4 portrait;
-            margin: 10mm;
+            margin: 5mm 8mm;
         }
         
         body {
-            background-color: #f8fafc;
+            background-color: #e2e8f0;
             color: #0f172a;
             font-family: 'Amiri', 'Traditional Arabic', 'Times New Roman', serif;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
-            font-size: 15px;
-            word-spacing: 0.15em;
+            font-size: 13px;
+            word-spacing: 0.1em;
             letter-spacing: 0px !important;
+            margin: 0;
+            padding: 0;
         }
 
-        .print-container {
-            max-width: 100%;
-            margin: 0 auto;
+        .print-page {
+            width: 210mm;
+            min-height: 297mm;
+            box-sizing: border-box;
+            margin: 20px auto;
             background: #ffffff;
-            padding: 15px 20px;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            padding: 6mm 9mm 6mm 9mm;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            page-break-after: always;
+            break-after: page;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .print-page:last-child {
+            page-break-after: auto;
+            break-after: auto;
+            margin-bottom: 40px;
         }
 
         /* Header Style */
@@ -51,25 +67,22 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 3px double #0f172a;
-            padding-bottom: 12px;
-            margin-bottom: 15px;
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-            page-break-after: avoid !important;
-            break-after: avoid !important;
+            border-bottom: 2px double #0f172a;
+            padding-bottom: 4px;
+            margin-bottom: 4px;
+            page-break-inside: avoid;
         }
 
         .header-brand {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
             width: 35%;
         }
 
         .header-brand img {
-            width: 80px;
-            height: 80px;
+            width: 48px;
+            height: 48px;
             object-fit: contain;
         }
 
@@ -85,264 +98,1253 @@
         }
 
         .season-badge {
-            border: 2px solid #0f172a;
-            border-radius: 12px;
-            padding: 8px 16px;
+            border: 1.5px solid #0f172a;
+            border-radius: 8px;
+            padding: 2px 10px;
             background-color: #f8fafc;
             text-align: center;
-            min-width: 150px;
+            min-width: 120px;
+        }
+
+        /* Meta Info Bar */
+        .page-meta-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+            font-weight: 700;
+            padding: 0 2px;
+            font-size: 12px;
+            page-break-inside: avoid;
         }
 
         /* Table Design */
         .premium-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 25px;
-            border: 1px solid #cbd5e1;
-            page-break-inside: auto;
-        }
-
-        .premium-table tr {
+            margin-bottom: 4px;
+            border: 1.5px solid #0f172a;
+            table-layout: fixed;
             page-break-inside: avoid;
-            page-break-after: auto;
         }
 
         .premium-table th {
             background-color: #0f172a !important;
             color: #ffffff !important;
-            padding: 10px 12px;
+            padding: 3px 4px;
             font-weight: 700;
             text-align: center;
             border: 1px solid #0f172a;
-            font-size: 15px;
+            font-size: 12.5px;
             font-family: 'Times New Roman', 'Traditional Arabic', 'Amiri', serif;
             letter-spacing: normal !important;
+            line-height: 1.15;
         }
 
         .premium-table td {
-            padding: 8px 12px;
-            border: 1px solid #e2e8f0;
+            padding: 4px 5px;
+            border: 1px solid #cbd5e1;
             vertical-align: middle;
             text-align: center;
+            line-height: 1.25;
+            font-size: 13px;
+            font-weight: 600;
         }
 
         .premium-table tbody tr:nth-child(even) {
             background-color: #f8fafc !important;
         }
 
-        .jersey-badge {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background-color: #0f172a;
-            color: #ffffff;
+        .premium-table tbody tr.empty-row td {
+            color: #94a3b8;
+            background-color: #ffffff !important;
+        }
+
+        .hide-empty-rows tr.empty-row {
+            display: none !important;
+        }
+
+        /* ========================================================
+           DUAL SIGNATURES SECTION (إمضاء المدرب وإمضاء رئيس النادي)
+           ======================================================== */
+        .signatures-wrapper {
+            margin-top: 14px;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+
+        .hide-signatures .signatures-wrapper {
+            display: none !important;
+        }
+
+        .signatures-meta-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: #334155;
+            padding: 0 4px 3px 4px;
+            border-bottom: 1px dashed #cbd5e1;
+            margin-bottom: 6px;
+        }
+
+        .dual-signatures-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 16px;
+        }
+
+        .signature-card {
+            flex: 1;
+            border: 1.5px solid #0f172a;
+            border-radius: 8px;
+            background-color: #ffffff;
+            padding: 6px 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 96px;
+            position: relative;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            transition: all 0.2s ease;
+        }
+
+        .hide-coach-sig .signature-coach {
+            display: none !important;
+        }
+
+        .hide-president-sig .signature-president {
+            display: none !important;
+        }
+
+        .signature-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 3px;
+            margin-bottom: 3px;
+        }
+
+        .sig-title-ar {
+            font-weight: 800;
+            color: #0f172a;
+            font-size: 13.5px;
+        }
+
+        .sig-title-fr {
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .signature-person-info {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 3px;
+            font-size: 12px;
+        }
+
+        .badge-role {
+            font-weight: 700;
+            color: #475569;
+        }
+
+        .person-name {
+            font-weight: 800;
+            color: #0f172a;
+            font-size: 13px;
+        }
+
+        .signature-drawing-zone {
+            position: relative;
+            height: 54px;
+            border: 1.2px dashed #cbd5e1;
+            border-radius: 6px;
+            background-color: #fafbfc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-top: 2px;
+        }
+
+        .sig-img {
+            max-height: 48px;
+            max-width: 140px;
+            object-fit: contain;
+            mix-blend-mode: multiply;
+            z-index: 2;
+        }
+
+        .president-stamp-img {
+            position: absolute;
+            left: 20px;
+            top: 2px;
+            height: 50px;
+            width: 50px;
+            object-fit: contain;
+            opacity: 0.85;
+            mix-blend-mode: multiply;
+            z-index: 1;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .hide-stamp .president-stamp-img {
+            display: none !important;
+        }
+
+        .sig-placeholder {
+            font-size: 11px;
+            color: #94a3b8;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Hover Actions Bar on Signature Box (No-Print) */
+        .sig-actions-bar {
+            position: absolute;
+            bottom: -13px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 4px;
+            background: #0f172a;
+            padding: 2px 6px;
+            border-radius: 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+
+        .signature-card:hover .sig-actions-bar {
+            opacity: 1;
+            visibility: visible;
+            bottom: -11px;
+        }
+
+        .btn-sig-action {
+            background: transparent;
+            border: none;
+            color: #e2e8f0;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 12px;
+            cursor: pointer;
             display: inline-flex;
             align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 12px;
+            gap: 3px;
+            transition: all 0.15s;
         }
 
-        /* Signatures */
-        .signature-section {
-            margin-top: 30px;
+        .btn-sig-action:hover {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+        }
+
+        /* Contenteditable Hover cues */
+        .editable-field {
+            cursor: text;
+            border-radius: 3px;
+            padding: 0 2px;
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+
+        .editable-field:hover {
+            background-color: #fef08a;
+            box-shadow: 0 0 0 1px #eab308;
+        }
+
+        .editable-field:focus {
+            outline: none;
+            background-color: #fef9c3;
+            box-shadow: 0 0 0 1.5px #ca8a04;
+        }
+
+        /* Navigation Bar Controls */
+        .category-switcher {
             display: flex;
-            justify-content: space-around;
-            page-break-inside: avoid;
-        }
-
-        .signature-box {
-            text-align: center;
-            width: 260px;
-        }
-
-        .signature-box h6 {
-            font-weight: 800;
-            margin-bottom: 4px;
-            color: #0f172a;
-            font-size: 16px;
-        }
-
-        .signature-space {
-            height: 90px;
-            border: 2px dashed #94a3b8;
-            border-radius: 12px;
-            display: flex;
+            gap: 6px;
             align-items: center;
-            justify-content: center;
-            background-color: #fafafa;
-            color: #64748b;
-            margin-top: 10px;
+            background: rgba(15, 23, 42, 0.90);
+            backdrop-filter: blur(10px);
+            padding: 6px 14px;
+            border-radius: 40px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            max-width: 95vw;
+            overflow-x: auto;
+        }
+        .category-switcher a {
+            text-decoration: none;
+            color: #e2e8f0;
+            font-size: 13px;
             font-weight: 700;
-            font-size: 12px;
+            padding: 5px 14px;
+            border-radius: 30px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .category-switcher a:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+        .category-switcher a.active {
+            background: #10b981;
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Toolbar Actions */
+        .toolbar-actions-bar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* PDF Export Mode */
+        .print-page.pdf-export-mode {
+            margin: 0 auto 20px auto !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            min-height: auto !important;
+            height: auto !important;
+            width: 210mm !important;
+            box-sizing: border-box !important;
+            padding: 5mm 8mm !important;
+            background: #ffffff !important;
         }
 
         @media print {
-            .no-print { display: none !important; }
-            body { background: #fff !important; padding: 0 !important; }
-            .print-container { box-shadow: none !important; border-radius: 0 !important; padding: 0 !important; }
+            .no-print, .sig-actions-bar { display: none !important; }
+            .screen-wrapper {
+                margin-top: 0 !important;
+                padding-top: 0 !important;
+            }
+            html, body {
+                background: #fff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+            }
+            .print-page {
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                margin: 0 !important;
+                padding: 5mm 8mm !important;
+                width: 100% !important;
+                height: auto !important;
+                min-height: 280mm !important;
+                max-height: none !important;
+                page-break-after: always !important;
+                break-after: page !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: flex-start !important;
+                overflow: visible !important;
+            }
+            .print-page:last-child {
+                page-break-after: auto !important;
+                break-after: auto !important;
+            }
             .premium-table th { background-color: #000 !important; color: #fff !important; }
-            .signature-space { border-color: #000 !important; background: transparent !important; }
+            .signature-card { border-color: #000 !important; box-shadow: none !important; }
+            .signature-drawing-zone { border-color: #64748b !important; }
+            .editable-field:hover, .editable-field:focus { background-color: transparent !important; box-shadow: none !important; }
         }
     </style>
 </head>
 <body>
     
-    <!-- Controls -->
-    <div class="no-print position-fixed top-0 start-50 translate-middle-x mt-3 d-flex gap-2 z-3">
-        <button onclick="window.print()" class="btn btn-dark shadow-lg px-4 rounded-pill fw-bold">
-            <i class="fas fa-print me-2"></i> طباعة القائمة
-        </button>
-        <button id="btn-pdf-export" onclick="generatePDF()" class="btn btn-danger shadow-lg px-4 rounded-pill fw-bold">
-            <i class="fas fa-file-pdf me-2"></i> تحميل ملف PDF
-        </button>
-        <button onclick="window.close()" class="btn btn-light shadow-lg px-4 rounded-pill fw-bold border">
-            إغلاق
-        </button>
+    <!-- Controls Toolbar (No-Print) -->
+    <div class="no-print position-fixed top-0 start-50 translate-middle-x mt-2 d-flex flex-column align-items-center gap-1.5 z-3" style="max-width: 98vw;">
+        <!-- Filter & Capacity Bars -->
+        <div class="d-flex align-items-center gap-2 flex-wrap justify-content-center">
+            <!-- Category Filter Pills -->
+            <div class="category-switcher">
+                <span class="text-white opacity-75 text-xs px-2"><i class="fas fa-filter me-1"></i>الفئة:</span>
+                {% for cat in categories %}
+                <a href="?category={{ cat.name }}{% if page_size %}&page_size={{ page_size }}{% endif %}{% if require_birth %}&require_birth=1{% endif %}" class="{% if selected_filter == cat.name %}active{% endif %}">
+                    <i class="fas fa-futbol me-1"></i> فئة {{ cat.name }}
+                </a>
+                {% endfor %}
+                <a href="?category=all{% if page_size %}&page_size={{ page_size }}{% endif %}{% if require_birth %}&require_birth=1{% endif %}" class="{% if selected_filter == 'all' and not is_blank %}active{% endif %}">
+                    <i class="fas fa-users me-1"></i> كافة الفئات
+                </a>
+                <a href="?blank=1{% if selected_category %}&category={{ selected_category.name }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="{% if is_blank %}active{% endif %}">
+                    <i class="fas fa-file-signature me-1"></i> استمارة فارغة
+                </a>
+            </div>
+
+            <!-- Page Size / Capacity Switcher -->
+            <div class="category-switcher" style="padding: 4px 10px;">
+                <span class="text-white opacity-75 text-xs px-1"><i class="fas fa-layer-group me-1"></i>سعة الصفحة:</span>
+                <a href="?{% if selected_filter != 'all' %}category={{ selected_filter }}&{% endif %}{% if is_blank %}blank=1&{% endif %}page_size=30{% if require_birth %}&require_birth=1{% endif %}" class="{% if page_size == 30 or not page_size %}active{% endif %}" title="30 لاعباً في الصفحة (تنسيق ممتلئ ومثالي)">
+                    30 لاعباً
+                </a>
+                <a href="?{% if selected_filter != 'all' %}category={{ selected_filter }}&{% endif %}{% if is_blank %}blank=1&{% endif %}page_size=32{% if require_birth %}&require_birth=1{% endif %}" class="{% if page_size == 32 %}active{% endif %}" title="32 لاعباً في الصفحة">
+                    32 لاعباً
+                </a>
+                <a href="?{% if selected_filter != 'all' %}category={{ selected_filter }}&{% endif %}{% if is_blank %}blank=1&{% endif %}page_size=35{% if require_birth %}&require_birth=1{% endif %}" class="{% if page_size == 35 %}active{% endif %}" title="35 لاعباً في الصفحة">
+                    35 لاعباً
+                </a>
+                <a href="?{% if selected_filter != 'all' %}category={{ selected_filter }}&{% endif %}{% if is_blank %}blank=1&{% endif %}page_size=25{% if require_birth %}&require_birth=1{% endif %}" class="{% if page_size == 25 %}active{% endif %}" title="25 لاعباً في الصفحة">
+                    25 لاعباً
+                </a>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="toolbar-actions-bar">
+            <!-- Print Button -->
+            <button onclick="window.print()" class="btn btn-dark shadow-lg px-3 py-1.5 rounded-pill fw-bold" style="font-size: 13px;">
+                <i class="fas fa-print me-1.5 text-warning"></i> طباعة القائمة
+            </button>
+
+            <!-- PDF Export Button -->
+            <button id="btn-pdf-export" onclick="generatePDF()" class="btn btn-danger shadow-lg px-3 py-1.5 rounded-pill fw-bold" style="font-size: 13px;">
+                <i class="fas fa-file-pdf me-1.5"></i> تحميل PDF
+            </button>
+
+            <!-- Optional Filter: Exclude Incomplete Birth Info -->
+            <a href="?{% if selected_filter != 'all' %}category={{ selected_filter }}&{% endif %}{% if is_blank %}blank=1&{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}{% if not require_birth %}&require_birth=1{% endif %}" 
+               class="btn {% if require_birth %}btn-success shadow-lg border border-light{% else %}btn-dark shadow-sm text-light border border-secondary{% endif %} px-3 py-1.5 rounded-pill fw-bold" 
+               style="font-size: 13px;"
+               title="شرط اختياري: استبعاد أي لاعب ليس لديه تاريخ ومكان الازدياد">
+                <i class="fas {% if require_birth %}fa-check-circle text-white{% else %}fa-id-card-clip text-warning{% endif %} me-1.5"></i>
+                <span>{% if require_birth %}فقط مكتملي الازدياد{% else %}استبعاد ناقصي تاريخ/مكان الازدياد{% endif %}</span>
+                {% if not require_birth and incomplete_birth_count > 0 %}
+                <span class="badge bg-danger rounded-pill ms-1 px-1.5 py-0.5" style="font-size: 10px;">{{ incomplete_birth_count }} ناقص</span>
+                {% endif %}
+            </a>
+
+            <!-- Master Toggle Signatures Visibility -->
+            <button id="btn-toggle-all-sigs" onclick="toggleAllSignatures()" class="btn btn-warning shadow-lg px-3 py-1.5 rounded-pill fw-bold" style="font-size: 13px;">
+                <i class="fas fa-eye-slash me-1.5" id="toggle-sigs-icon"></i> <span id="toggle-sigs-label">إخفاء الإمضاءات</span>
+            </button>
+
+            <!-- Edit Signatures Modal Button -->
+            <button onclick="openSignatureSettingsModal()" class="btn btn-primary shadow-lg px-3 py-1.5 rounded-pill fw-bold" style="font-size: 13px;">
+                <i class="fas fa-signature me-1.5"></i> تعديل الإمضاءات
+            </button>
+
+            <!-- Toggle Empty Rows -->
+            <button id="btn-toggle-empty-rows" onclick="toggleEmptyRows()" class="btn btn-light shadow-lg px-3 py-1.5 rounded-pill fw-bold border" style="font-size: 13px;">
+                <i class="fas fa-table-cells me-1.5 text-primary"></i> <span id="toggle-rows-label">إخفاء الأسطر الفارغة</span>
+            </button>
+
+            <!-- Back & Close -->
+            <a href="{% url 'clubs:player_list' %}" class="btn btn-light shadow-lg px-3 py-1.5 rounded-pill fw-bold border" style="font-size: 13px;">
+                العودة
+            </a>
+            <button onclick="window.close()" class="btn btn-secondary shadow-lg px-3 py-1.5 rounded-pill fw-bold" style="font-size: 13px;">
+                إغلاق
+            </button>
+        </div>
     </div>
 
-    <div class="print-container pt-5 pt-print-0" id="pdf-content">
-        <!-- Official Header -->
-        <div class="official-header">
-            <!-- Logo & Club Info -->
-            <div class="header-brand">
-                <img src="{% static 'img/logo.png' %}" alt="Logo" class="w-full h-full object-contain rounded-full">
-                <div>
-                    <h4 class="mb-1 fw-bold text-dark" style="font-size: 20px;">{{ settings.club_name }}</h4>
-                    <p class="mb-0 text-secondary" style="font-size: 14px; font-weight: 600;">{{ settings.club_subtitle }}</p>
-                </div>
-            </div>
-
-            <!-- Title -->
-            <div class="header-title">
-                <h2 class="fw-bold mb-2" style="font-size: 25px; color: #0f172a; border-bottom: 3px solid #0f172a; display: inline-block; padding-bottom: 4px;">
-                    قائمة&nbsp;اللاعبين&nbsp;المنخرطين
-                </h2>
-                <div class="mt-1 fw-bold text-dark" style="font-size: 16px;">
-                    {% if selected_category %}
-                        فئة&nbsp;<span class="badge bg-dark px-3 py-1 rounded-pill" style="font-size: 14px;">{{ selected_category.name }}</span>
-                    {% else %}
-                        جميع&nbsp;الفئات&nbsp;العمرية
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Season Meta Box -->
-            <div class="header-meta">
-                <div class="season-badge shadow-sm">
-                    <div class="text-muted fw-bold mb-1" style="font-size: 12px; letter-spacing: normal;">الموسم&nbsp;الرياضي</div>
-                    <div class="fw-bold text-dark" style="font-size: 15px;" dir="ltr">2026 / 2027</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Meta Info Bar -->
-        <div class="d-flex justify-content-between align-items-center mb-3 fw-bold px-2" style="font-size: 14px; page-break-inside: avoid; break-inside: avoid; page-break-after: avoid; break-after: avoid;">
-            <div class="d-flex align-items-center gap-2">
-                <span>العدد&nbsp;الإجمالي:</span>
-                {% if is_blank %}
-                <span class="badge bg-dark rounded-pill px-3 py-1 fs-6">......&nbsp;لاعب</span>
-                {% else %}
-                <span class="badge bg-dark rounded-pill px-3 py-1 fs-6">{{ players|length }}&nbsp;لاعب</span>
-                {% endif %}
-            </div>
-            <div class="text-secondary d-flex align-items-center gap-2" dir="rtl">
-                <span>تاريخ&nbsp;الاستخراج:</span>
-                <span class="text-dark bg-light px-2 py-1 rounded border" style="font-weight: 700;">{% now "Y-m-d" %}</span>
-            </div>
-        </div>
-
-        <!-- Players Table -->
-        <table class="premium-table">
-            <thead>
-                <tr>
-                    <th style="width: 5%;">#</th>
-                    <th style="width: 30%; text-align: right; padding-right: 12px;">الاسم&nbsp;واللقب</th>
-                    <th style="width: 15%;">تاريخ&nbsp;الميلاد</th>
-                    <th style="width: 15%;">مكان&nbsp;الميلاد</th>
-                    <th style="width: 12%;">فصيلة&nbsp;الدم</th>
-                    {% if not selected_category %}
-                    <th style="width: 8%;">الفئة</th>
-                    {% endif %}
-                    <th style="width: 20%;">المركز&nbsp;/&nbsp;رقم&nbsp;القميص</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if is_blank %}
-                    {% for i in blank_rows %}
-                    <tr style="height: 30px;">
-                        <td class="fw-bold text-secondary">{{ i }}</td>
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>
-                        {% if not selected_category %}
-                        <td>&nbsp;</td>
+    <!-- Screen Content Wrapper -->
+    <div class="screen-wrapper pt-5 pt-print-0" style="margin-top: 58px;" id="main-container">
+        <div id="pdf-content">
+        {% for page in player_pages %}
+        <div class="print-page" data-page-num="{{ page.page_num }}">
+            <!-- TOP CONTAINER (Header + Table) -->
+            <div>
+                <!-- Official Header -->
+                <div class="official-header">
+                    <!-- Logo & Club Info -->
+                    <div class="header-brand">
+                        {% if settings.logo %}
+                        <img src="{{ settings.logo.url }}" alt="Logo" onerror="this.style.display='none';">
                         {% endif %}
-                        <td>&nbsp;</td>
-                    </tr>
-                    {% endfor %}
-                {% else %}
-                    {% for player in players %}
-                    <tr>
-                        <td class="fw-bold text-secondary">{{ forloop.counter }}</td>
-                        <td style="text-align: right; padding-right: 15px;">
-                            <span class="fw-bold text-dark fs-6">{{ player.last_name }}&nbsp;{{ player.first_name }}</span>
-                        </td>
-                        <td class="fw-bold" dir="ltr" style="font-size: 14px;">{{ player.date_of_birth|date:"Y-m-d"|default:"-" }}</td>
-                        <td style="font-weight: 600;">{{ player.place_of_birth|default:"-" }}</td>
-                        <td class="fw-bold text-danger">{{ player.blood_type|default:"-" }}</td>
-                        {% if not selected_category %}
-                        <td class="fw-bold">{{ player.category.name|default:"-" }}</td>
+                        <div>
+                            <h4 class="mb-0 fw-bold text-dark" style="font-size: 16px;">نادي الوفاق الرياضي مسلمون</h4>
+                            {% if selected_category.name == 'U9' or selected_category.name == 'U11' or selected_category.name == 'U13' %}
+                            <p class="mb-0 text-secondary" style="font-size: 11.5px; font-weight: 600;">أكاديمية كرة القدم - مسلمون</p>
+                            {% else %}
+                            <p class="mb-0 text-secondary" style="font-size: 11px; font-weight: 600;">رابطة ولاية تيبازة لكرة القدم</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Title -->
+                    <div class="header-title">
+                        <h2 class="fw-bold mb-0" style="font-size: 19px; color: #0f172a; border-bottom: 2px solid #0f172a; display: inline-block; padding-bottom: 1px;">
+                            قائمة&nbsp;اللاعبين&nbsp;المنخرطين
+                        </h2>
+                        <div class="mt-0 fw-bold text-dark" style="font-size: 13px;">
+                            {% if selected_category %}
+                                فئة&nbsp;<span class="badge bg-dark px-2 py-0.5 rounded-pill" style="font-size: 12px;">{{ selected_category.name }}</span>
+                            {% else %}
+                                جميع&nbsp;الفئات&nbsp;العمرية
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Season Meta Box -->
+                    <div class="header-meta">
+                        <div class="season-badge shadow-sm">
+                            <div class="text-muted fw-bold mb-0" style="font-size: 10px; letter-spacing: normal;">الموسم&nbsp;الرياضي</div>
+                            <div class="fw-bold text-dark" style="font-size: 13px;" dir="ltr">2026 / 2027</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Meta Info Bar -->
+                <div class="page-meta-bar">
+                    <div class="d-flex align-items-center gap-2">
+                        <span>العدد الإجمالي:</span>
+                        {% if is_blank %}
+                        <span class="badge bg-dark rounded-pill px-2 py-0.5">{{ page_size|default:30 }} لاعب (استمارة بيضاء)</span>
+                        {% else %}
+                        <span class="badge bg-dark rounded-pill px-2 py-0.5">{{ total_players_count }} لاعب مسجل</span>
                         {% endif %}
-                        <td>
-                            <div class="d-flex align-items-center justify-content-center gap-2">
-                                <span class="fw-bold">{{ player.position|default:"-" }}</span>
-                                {% if player.jersey_number %}
-                                <span class="jersey-badge">{{ player.jersey_number }}</span>
-                                {% endif %}
+                        {% if require_birth %}
+                        <span class="badge bg-success rounded-pill px-2 py-0.5" style="font-size: 11px;">
+                            <i class="fas fa-check-double me-1"></i> مكتملي تاريخ ومكان الازدياد فقط
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <span class="badge bg-secondary rounded-pill px-2 py-0.5">ورقة {{ page.page_num }} من {{ page.total_pages }}</span>
+                    </div>
+                </div>
+
+                <!-- Players Table (25 Lines Fully Populated) -->
+                <table class="premium-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 6%;">الرقم</th>
+                            <th style="width: 8%;">رقم&nbsp;القميص</th>
+                            <th style="width: 36%; text-align: right; padding-right: 10px;">الاسم&nbsp;واللقب</th>
+                            <th style="width: 30%;">تاريخ&nbsp;ومكان&nbsp;الازدياد</th>
+                            <th style="width: 20%;">المنصب&nbsp;/&nbsp;الملاحظة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in page.items %}
+                        <tr class="player-row {% if item.is_empty_row %}empty-row{% endif %}">
+                            <td class="fw-bold text-secondary">{{ item.counter }}</td>
+                            {% if item.player %}
+                                <td class="fw-bold text-dark" style="font-size: 12.5px;">
+                                    {% if item.player.jersey_number %}
+                                        <span class="badge bg-dark rounded-pill px-1.5 py-0.5" style="font-size: 11px;">#{{ item.player.jersey_number }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td style="text-align: right; padding-right: 10px;">
+                                    <span class="fw-bold text-dark" style="font-size: 13px;">{{ item.player.last_name }}&nbsp;{{ item.player.first_name }}</span>
+                                </td>
+                                <td style="font-size: 12px; font-weight: 600;">
+                                    {% if item.player.date_of_birth or item.player.place_of_birth %}
+                                        <span dir="ltr">{{ item.player.date_of_birth|date:"Y-m-d"|default:"-" }}</span>
+                                        {% if item.player.place_of_birth %}
+                                            <span>– {{ item.player.place_of_birth }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td style="font-size: 11.5px; color: #475569;">
+                                    {% if item.player.position %}
+                                        <span class="fw-bold text-dark">{{ item.player.get_position_display|default:item.player.position }}</span>
+                                        {% if item.player.notes %} - {{ item.player.notes }}{% endif %}
+                                    {% else %}
+                                        {{ item.player.notes|default:"-" }}
+                                    {% endif %}
+                                </td>
+                            {% else %}
+                                <td class="text-muted">-</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- BOTTOM CONTAINER: DUAL SIGNATURES (إمضاء المدرب وإمضاء رئيس النادي) -->
+            <!-- Placed ONLY at the end of the table on the final page! -->
+            {% if page.is_last_page %}
+            <div class="signatures-wrapper">
+                <!-- Location & League Meta Bar -->
+                <div class="signatures-meta-bar">
+                    <span class="editable-field location-date-display" contenteditable="true" spellcheck="false" title="انقر لتعديل مكان وتاريخ التحرير">
+                        حرر بـ : مسلمون في {% now "Y-m-d" %}
+                    </span>
+                    <span class="text-secondary opacity-75">
+                        رابطة ولاية تيبازة لكرة القدم - الاتحاد الجزائري لكرة القدم
+                    </span>
+                </div>
+
+                <!-- Dual Signature Cards -->
+                <div class="dual-signatures-container">
+                    <!-- 1. Coach Signature Box (يمين) -->
+                    <div class="signature-card signature-coach">
+                        <div class="signature-card-header">
+                            <span class="sig-title-ar editable-field coach-title-display" contenteditable="true" spellcheck="false" title="انقر لتعديل مسمى المدرب">
+                                إمضاء وختم المدرب
+                            </span>
+                            <span class="sig-title-fr">L'Entraîneur</span>
+                        </div>
+                        
+                        <div class="signature-card-body">
+                            <div class="signature-person-info">
+                                <span class="badge-role">المدرب:</span>
+                                <span class="person-name editable-field coach-name-display" contenteditable="true" spellcheck="false" title="انقر لتعديل اسم المدرب">
+                                    {{ coach_name|default:"........................" }}
+                                </span>
                             </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="7" class="py-5 text-center text-muted fw-bold fs-5">لا يوجد لاعبين مسجلين في هذه القائمة.</td>
-                    </tr>
-                    {% endfor %}
-                {% endif %}
-            </tbody>
-        </table>
 
-        <!-- Signatures -->
-        <div class="signature-section">
-            <div class="signature-box">
-                <h6>إمضاء ومواكبة المدرب</h6>
-                {% if selected_category and selected_category.coach_display != '-' and selected_category.coach_display != 'غير محدد' %}
-                    <p class="mb-0 fw-bold text-dark fs-6">{{ selected_category.coach_display }}</p>
-                {% elif coach %}
-                    <p class="mb-0 fw-bold text-dark fs-6">{{ coach.first_name }}&nbsp;{{ coach.last_name }}</p>
-                {% else %}
-                    <p class="mb-0 fw-bold text-secondary fs-6">المدرب الفني للفئة</p>
-                {% endif %}
-                <div class="signature-space">
-                    <span>الختم والتوقيع الرسمي</span>
+                            <!-- Signature Zone -->
+                            <div class="signature-drawing-zone">
+                                <img src="" class="sig-img coach-sig-img" style="display: none;" alt="إمضاء المدرب">
+                                <div class="sig-placeholder coach-placeholder text-muted">
+                                    <i class="fas fa-file-signature me-1 opacity-50"></i>
+                                    <span>(توقيع المدرب)</span>
+                                </div>
+                            </div>
+
+                            <!-- Inline Hover Actions (No-Print) -->
+                            <div class="sig-actions-bar no-print">
+                                <button type="button" class="btn-sig-action" onclick="triggerUpload('coach')" title="رفع صورة إمضاء">
+                                    <i class="fas fa-upload"></i> صورة
+                                </button>
+                                <button type="button" class="btn-sig-action" onclick="openSignatureDrawModal('coach')" title="رسم إمضاء رقمي">
+                                    <i class="fas fa-pen-nib"></i> توقيع
+                                </button>
+                                <button type="button" class="btn-sig-action text-danger" onclick="clearSignature('coach')" title="مسح التوقيع">
+                                    <i class="fas fa-eraser"></i> مسح
+                                </button>
+                                <button type="button" class="btn-sig-action text-warning" onclick="toggleSingleBox('coach')" title="إخفاء إمضاء المدرب">
+                                    <i class="fas fa-eye-slash"></i> إخفاء
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Club President Signature & Stamp Box (يسار) -->
+                    <div class="signature-card signature-president">
+                        <div class="signature-card-header">
+                            <span class="sig-title-ar editable-field president-title-display" contenteditable="true" spellcheck="false" title="انقر لتعديل مسمى رئيس النادي">
+                                إمضاء وختم رئيس النادي
+                            </span>
+                            <span class="sig-title-fr">Le Président du Club</span>
+                        </div>
+                        
+                        <div class="signature-card-body">
+                            <div class="signature-person-info">
+                                <span class="badge-role">رئيس النادي:</span>
+                                <span class="person-name editable-field president-name-display" contenteditable="true" spellcheck="false" title="انقر لتعديل اسم رئيس النادي">
+                                    {{ settings.president_name|default:"بيرم نصرالدين" }}
+                                </span>
+                            </div>
+
+                            <!-- Stamp & Signature Zone -->
+                            <div class="signature-drawing-zone">
+                                <!-- Official Club Stamp -->
+                                <img src="/media/logos/stamp_esm_v2.png" 
+                                     class="president-stamp-img" 
+                                     alt="ختم النادي"
+                                     onerror="this.src='/media/logos/stamp_esm.png'; this.onerror=null;">
+                                <!-- President Signature -->
+                                <img src="/media/logos/signature_custom.jpg" 
+                                     class="sig-img president-sig-img" 
+                                     alt="إمضاء الرئيس"
+                                     onerror="this.style.display='none';">
+                                <div class="sig-placeholder president-placeholder text-muted" style="display: none;">
+                                    <i class="fas fa-stamp me-1 opacity-50"></i>
+                                    <span>(خاتم وتوقيع رئيس النادي)</span>
+                                </div>
+                            </div>
+
+                            <!-- Inline Hover Actions (No-Print) -->
+                            <div class="sig-actions-bar no-print">
+                                <button type="button" class="btn-sig-action" onclick="triggerUpload('president')" title="رفع صورة إمضاء">
+                                    <i class="fas fa-upload"></i> صورة
+                                </button>
+                                <button type="button" class="btn-sig-action" onclick="openSignatureDrawModal('president')" title="رسم إمضاء رقمي">
+                                    <i class="fas fa-pen-nib"></i> توقيع
+                                </button>
+                                <button type="button" class="btn-sig-action" onclick="toggleStampOnly()" title="إظهار / إخفاء الختم الدائري">
+                                    <i class="fas fa-stamp"></i> الختم
+                                </button>
+                                <button type="button" class="btn-sig-action text-danger" onclick="clearSignature('president')" title="مسح التوقيع">
+                                    <i class="fas fa-eraser"></i> مسح
+                                </button>
+                                <button type="button" class="btn-sig-action text-warning" onclick="toggleSingleBox('president')" title="إخفاء إمضاء الرئيس">
+                                    <i class="fas fa-eye-slash"></i> إخفاء
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="print-page text-center py-5">
+            <h4 class="text-muted fw-bold">لا يوجد لاعبين مسجلين في هذه الفئة</h4>
+        </div>
+        {% endfor %}
+        </div>
+    </div>
 
-            <div class="signature-box">
-                <h6>إمضاء رئيس النادي</h6>
-                <p class="mb-0 fw-bold text-dark fs-6">{{ settings.president_name|default:"بيرم نصرالدين" }}</p>
-                <div class="signature-space">
-                    <span>الختم والتوقيع الرسمي</span>
+    <!-- Hidden file inputs for uploading signatures -->
+    <input type="file" id="global-coach-upload" accept="image/*" style="display: none;" onchange="handleSigUpload(event, 'coach')">
+    <input type="file" id="global-president-upload" accept="image/*" style="display: none;" onchange="handleSigUpload(event, 'president')">
+
+    <!-- ========================================================
+         MODAL 1: EDIT SIGNATURES SETTINGS (نافذة تعديل الإمضاءات)
+         ======================================================== -->
+    <div class="modal fade" id="signatureSettingsModal" tabindex="-1" aria-labelledby="sigModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow-lg border-0 rounded-4">
+                <div class="modal-header bg-dark text-white rounded-top-4 px-4 py-3">
+                    <h5 class="modal-title fw-bold" id="sigModalLabel">
+                        <i class="fas fa-signature text-warning me-2"></i> تخصيص وتعديل إمضاءات القائمة
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-4">
+                        <!-- Coach Settings Column -->
+                        <div class="col-md-6 border-end">
+                            <div class="p-3 bg-light rounded-3 h-100">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="fw-bold mb-0 text-dark">
+                                        <i class="fas fa-user-tie text-primary me-1"></i> إمضاء المدرب
+                                    </h6>
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" id="modal-coach-enabled" checked onchange="updateModalToggles()">
+                                        <label class="form-check-label text-xs fw-bold" for="modal-coach-enabled">تفعيل</label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-xs fw-bold text-secondary">اسم المدرب:</label>
+                                    <input type="text" id="modal-coach-name" class="form-control form-control-sm fw-bold" placeholder="أدخل اسم المدرب">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-xs fw-bold text-secondary">المسمى الوظيفي:</label>
+                                    <input type="text" id="modal-coach-title" class="form-control form-control-sm" placeholder="إمضاء وختم المدرب">
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-dark w-50" onclick="triggerUpload('coach')">
+                                        <i class="fas fa-upload me-1"></i> رفع صورة
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary w-50" onclick="openSignatureDrawModal('coach')">
+                                        <i class="fas fa-pen-nib me-1"></i> رسم توقيع
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- President Settings Column -->
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded-3 h-100">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="fw-bold mb-0 text-dark">
+                                        <i class="fas fa-certificate text-danger me-1"></i> إمضاء وختم رئيس النادي
+                                    </h6>
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" id="modal-president-enabled" checked onchange="updateModalToggles()">
+                                        <label class="form-check-label text-xs fw-bold" for="modal-president-enabled">تفعيل</label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-xs fw-bold text-secondary">اسم رئيس النادي:</label>
+                                    <input type="text" id="modal-president-name" class="form-control form-control-sm fw-bold" placeholder="بيرم نصرالدين">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-xs fw-bold text-secondary">المسمى الوظيفي:</label>
+                                    <input type="text" id="modal-president-title" class="form-control form-control-sm" placeholder="إمضاء وختم رئيس النادي">
+                                </div>
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="modal-stamp-enabled" checked onchange="updateModalToggles()">
+                                    <label class="form-check-label text-xs fw-bold" for="modal-stamp-enabled">إظهار ختم الوفاق الدائري</label>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-dark w-50" onclick="triggerUpload('president')">
+                                        <i class="fas fa-upload me-1"></i> رفع صورة
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary w-50" onclick="openSignatureDrawModal('president')">
+                                        <i class="fas fa-pen-nib me-1"></i> رسم توقيع
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Meta Info Row -->
+                        <div class="col-12">
+                            <div class="p-3 bg-white border rounded-3">
+                                <div class="row align-items-center g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label text-xs fw-bold text-secondary">مكان وتاريخ التحرير:</label>
+                                        <input type="text" id="modal-location-date" class="form-control form-control-sm" placeholder="حرر بـ : مسلمون في ...">
+                                    </div>
+                                    <div class="col-md-6 d-flex flex-column gap-2 pt-2">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="modal-require-birth" {% if require_birth %}checked{% endif %} onchange="toggleRequireBirthFilter(this.checked)">
+                                            <label class="form-check-label text-xs fw-bold" for="modal-require-birth">
+                                                استبعاد غير مكتملي تاريخ ومكان الازدياد (اختياري)
+                                                {% if incomplete_birth_count > 0 and not require_birth %}
+                                                <span class="badge bg-danger rounded-pill px-1.5 py-0.5 ms-1">{{ incomplete_birth_count }} ناقص</span>
+                                                {% endif %}
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="modal-fill-rows" checked onchange="toggleEmptyRows()">
+                                            <label class="form-check-label text-xs fw-bold" for="modal-fill-rows">ملء الأسطر الشاغرة في الجدول</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light rounded-bottom-4 px-4 py-3 d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary px-3" onclick="resetToClubDefaults()">
+                        <i class="fas fa-rotate-left me-1"></i> استعادة الإعدادات الأصلية
+                    </button>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-dark px-4 fw-bold" data-bs-dismiss="modal" onclick="saveModalSettings()">
+                            <i class="fas fa-check me-1"></i> حفظ وتطبيق
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- html2pdf Library -->
+    <!-- ========================================================
+         MODAL 2: DRAW DIGITAL SIGNATURE (رسم التوقيع بالقلم)
+         ======================================================== -->
+    <div class="modal fade" id="signaturePadModal" tabindex="-1" aria-labelledby="padModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0 rounded-4">
+                <div class="modal-header bg-dark text-white rounded-top-4 px-4 py-3">
+                    <h5 class="modal-title fw-bold" id="padModalLabel">
+                        <i class="fas fa-pen-nib text-warning me-2"></i> <span id="draw-modal-title">رسم إمضاء رقمي</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <p class="text-muted small mb-2">استخدم الماوس أو إصبعك لرسم التوقيع بدقة داخل الصندوق:</p>
+                    <div class="position-relative d-inline-block border rounded-3 bg-white shadow-sm overflow-hidden" style="cursor: crosshair;">
+                        <canvas id="sig-canvas" width="440" height="180" style="touch-action: none; display: block;"></canvas>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light rounded-bottom-4 px-4 py-3 d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-danger" onclick="clearCanvas()">
+                        <i class="fas fa-eraser me-1"></i> مسح اللوحة
+                    </button>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="button" class="btn btn-primary px-4 fw-bold" onclick="saveDrawnSignature()">
+                            <i class="fas fa-save me-1"></i> تطبيق التوقيع
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle & html2pdf Library -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <script>
+        // Storage Key
+        const STORAGE_KEY = 'esm_player_list_sig_config_v1';
+        let currentDrawTarget = 'coach'; // 'coach' or 'president'
+        let drawingCanvas, canvasCtx, isDrawing = false;
+
+        // Default Values from Template
+        const defaultSettings = {
+            coachName: "{{ coach_name|default:''|escapejs }}",
+            coachTitle: "إمضاء وختم المدرب",
+            coachEnabled: true,
+            coachSigImg: "",
+            presidentName: "{{ settings.president_name|default:'بيرم نصرالدين'|escapejs }}",
+            presidentTitle: "إمضاء وختم رئيس النادي",
+            presidentEnabled: true,
+            presidentSigImg: "/media/logos/signature_custom.jpg",
+            stampEnabled: true,
+            locationDate: "حرر بـ : مسلمون في {% now 'Y-m-d' %}",
+            allSigsVisible: true,
+            fillRows: true
+        };
+
+        // Current Active Settings
+        let activeSettings = Object.assign({}, defaultSettings);
+
+        // Load Saved Settings on DOM ready
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSavedConfig();
+            setupLiveContentEditable();
+            setupCanvasDrawing();
+        });
+
+        function loadSavedConfig() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    activeSettings = Object.assign({}, defaultSettings, parsed);
+                }
+            } catch(e) {
+                console.warn("Could not load config from localStorage", e);
+            }
+            applyConfigToDOM();
+        }
+
+        function saveConfig() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(activeSettings));
+            } catch(e) {
+                console.warn("Could not save to localStorage", e);
+            }
+        }
+
+        // Apply Settings to all pages in DOM
+        function applyConfigToDOM() {
+            const container = document.getElementById('main-container');
+
+            // 1. All Signatures Visibility
+            if (activeSettings.allSigsVisible) {
+                container.classList.remove('hide-signatures');
+                document.getElementById('toggle-sigs-label').textContent = 'إخفاء الإمضاءات';
+                document.getElementById('toggle-sigs-icon').className = 'fas fa-eye-slash me-1.5';
+                document.getElementById('btn-toggle-all-sigs').className = 'btn btn-warning shadow-lg px-3 py-1.5 rounded-pill fw-bold';
+            } else {
+                container.classList.add('hide-signatures');
+                document.getElementById('toggle-sigs-label').textContent = 'إظهار الإمضاءات';
+                document.getElementById('toggle-sigs-icon').className = 'fas fa-eye me-1.5';
+                document.getElementById('btn-toggle-all-sigs').className = 'btn btn-success shadow-lg px-3 py-1.5 rounded-pill fw-bold';
+            }
+
+            // 2. Coach Box Visibility
+            if (activeSettings.coachEnabled) {
+                container.classList.remove('hide-coach-sig');
+            } else {
+                container.classList.add('hide-coach-sig');
+            }
+
+            // 3. President Box Visibility
+            if (activeSettings.presidentEnabled) {
+                container.classList.remove('hide-president-sig');
+            } else {
+                container.classList.add('hide-president-sig');
+            }
+
+            // 4. Circular Stamp Visibility
+            if (activeSettings.stampEnabled) {
+                container.classList.remove('hide-stamp');
+            } else {
+                container.classList.add('hide-stamp');
+            }
+
+            // 5. Empty Rows Fill
+            if (activeSettings.fillRows) {
+                container.classList.remove('hide-empty-rows');
+                document.getElementById('toggle-rows-label').textContent = 'إخفاء الأسطر الفارغة';
+            } else {
+                container.classList.add('hide-empty-rows');
+                document.getElementById('toggle-rows-label').textContent = 'ملء الجدول كاملاً';
+            }
+
+            // 6. Text values across all pages
+            document.querySelectorAll('.coach-name-display').forEach(el => {
+                el.textContent = activeSettings.coachName || '........................';
+            });
+            document.querySelectorAll('.coach-title-display').forEach(el => {
+                el.textContent = activeSettings.coachTitle || 'إمضاء وختم المدرب';
+            });
+            document.querySelectorAll('.president-name-display').forEach(el => {
+                el.textContent = activeSettings.presidentName || 'بيرم نصرالدين';
+            });
+            document.querySelectorAll('.president-title-display').forEach(el => {
+                el.textContent = activeSettings.presidentTitle || 'إمضاء وختم رئيس النادي';
+            });
+            document.querySelectorAll('.location-date-display').forEach(el => {
+                el.textContent = activeSettings.locationDate || 'حرر بـ : مسلمون في {% now "Y-m-d" %}';
+            });
+
+            // 7. Signatures images
+            document.querySelectorAll('.coach-sig-img').forEach(img => {
+                if (activeSettings.coachSigImg) {
+                    img.src = activeSettings.coachSigImg;
+                    img.style.display = 'block';
+                    const ph = img.nextElementSibling;
+                    if (ph) ph.style.display = 'none';
+                } else {
+                    img.style.display = 'none';
+                    const ph = img.nextElementSibling;
+                    if (ph) ph.style.display = 'flex';
+                }
+            });
+
+            document.querySelectorAll('.president-sig-img').forEach(img => {
+                if (activeSettings.presidentSigImg) {
+                    img.src = activeSettings.presidentSigImg;
+                    img.style.display = 'block';
+                } else {
+                    img.style.display = 'none';
+                }
+            });
+        }
+
+        // Live syncing for direct on-page editing
+        function setupLiveContentEditable() {
+            document.querySelectorAll('.editable-field').forEach(el => {
+                el.addEventListener('input', function() {
+                    const text = this.textContent;
+                    if (this.classList.contains('coach-name-display')) {
+                        activeSettings.coachName = text;
+                        document.querySelectorAll('.coach-name-display').forEach(item => { if (item !== this) item.textContent = text; });
+                    } else if (this.classList.contains('coach-title-display')) {
+                        activeSettings.coachTitle = text;
+                        document.querySelectorAll('.coach-title-display').forEach(item => { if (item !== this) item.textContent = text; });
+                    } else if (this.classList.contains('president-name-display')) {
+                        activeSettings.presidentName = text;
+                        document.querySelectorAll('.president-name-display').forEach(item => { if (item !== this) item.textContent = text; });
+                    } else if (this.classList.contains('president-title-display')) {
+                        activeSettings.presidentTitle = text;
+                        document.querySelectorAll('.president-title-display').forEach(item => { if (item !== this) item.textContent = text; });
+                    } else if (this.classList.contains('location-date-display')) {
+                        activeSettings.locationDate = text;
+                        document.querySelectorAll('.location-date-display').forEach(item => { if (item !== this) item.textContent = text; });
+                    }
+                    saveConfig();
+                });
+            });
+        }
+
+        // Master toggle for all signatures
+        function toggleAllSignatures() {
+            activeSettings.allSigsVisible = !activeSettings.allSigsVisible;
+            saveConfig();
+            applyConfigToDOM();
+        }
+
+        // Toggle single box (Coach or President)
+        function toggleSingleBox(role) {
+            if (role === 'coach') {
+                activeSettings.coachEnabled = !activeSettings.coachEnabled;
+            } else if (role === 'president') {
+                activeSettings.presidentEnabled = !activeSettings.presidentEnabled;
+            }
+            saveConfig();
+            applyConfigToDOM();
+        }
+
+        // Toggle Stamp only
+        function toggleStampOnly() {
+            activeSettings.stampEnabled = !activeSettings.stampEnabled;
+            saveConfig();
+            applyConfigToDOM();
+        }
+
+        // Toggle Empty Rows
+        function toggleEmptyRows() {
+            activeSettings.fillRows = !activeSettings.fillRows;
+            saveConfig();
+            applyConfigToDOM();
+        }
+
+        // Clear signature
+        function clearSignature(role) {
+            if (role === 'coach') {
+                activeSettings.coachSigImg = "";
+            } else if (role === 'president') {
+                activeSettings.presidentSigImg = "";
+            }
+            saveConfig();
+            applyConfigToDOM();
+        }
+
+        // Trigger Upload
+        function triggerUpload(role) {
+            if (role === 'coach') {
+                document.getElementById('global-coach-upload').click();
+            } else {
+                document.getElementById('global-president-upload').click();
+            }
+        }
+
+        function handleSigUpload(event, role) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const dataUrl = e.target.result;
+                if (role === 'coach') {
+                    activeSettings.coachSigImg = dataUrl;
+                    activeSettings.coachEnabled = true;
+                } else {
+                    activeSettings.presidentSigImg = dataUrl;
+                    activeSettings.presidentEnabled = true;
+                }
+                saveConfig();
+                applyConfigToDOM();
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        }
+
+        // Open Settings Modal
+        function openSignatureSettingsModal() {
+            document.getElementById('modal-coach-name').value = activeSettings.coachName;
+            document.getElementById('modal-coach-title').value = activeSettings.coachTitle;
+            document.getElementById('modal-coach-enabled').checked = activeSettings.coachEnabled;
+            document.getElementById('modal-president-name').value = activeSettings.presidentName;
+            document.getElementById('modal-president-title').value = activeSettings.presidentTitle;
+            document.getElementById('modal-president-enabled').checked = activeSettings.presidentEnabled;
+            document.getElementById('modal-stamp-enabled').checked = activeSettings.stampEnabled;
+            document.getElementById('modal-location-date').value = activeSettings.locationDate;
+            document.getElementById('modal-fill-rows').checked = activeSettings.fillRows;
+
+            const modal = new bootstrap.Modal(document.getElementById('signatureSettingsModal'));
+            modal.show();
+        }
+
+        function updateModalToggles() {
+            // Live feedback if wanted
+        }
+
+        function saveModalSettings() {
+            activeSettings.coachName = document.getElementById('modal-coach-name').value.trim();
+            activeSettings.coachTitle = document.getElementById('modal-coach-title').value.trim();
+            activeSettings.coachEnabled = document.getElementById('modal-coach-enabled').checked;
+            activeSettings.presidentName = document.getElementById('modal-president-name').value.trim();
+            activeSettings.presidentTitle = document.getElementById('modal-president-title').value.trim();
+            activeSettings.presidentEnabled = document.getElementById('modal-president-enabled').checked;
+            activeSettings.stampEnabled = document.getElementById('modal-stamp-enabled').checked;
+            activeSettings.locationDate = document.getElementById('modal-location-date').value.trim();
+            activeSettings.fillRows = document.getElementById('modal-fill-rows').checked;
+
+            saveConfig();
+            applyConfigToDOM();
+        }
+
+        function resetToClubDefaults() {
+            if (confirm("هل ترغب فعلاً في استعادة الإعدادات الأصلية للنادي؟")) {
+                activeSettings = Object.assign({}, defaultSettings);
+                saveConfig();
+                applyConfigToDOM();
+                const modal = bootstrap.Modal.getInstance(document.getElementById('signatureSettingsModal'));
+                if (modal) modal.hide();
+            }
+        }
+
+        // Signature Drawing Modal (Canvas)
+        function openSignatureDrawModal(role) {
+            currentDrawTarget = role;
+            document.getElementById('draw-modal-title').textContent = (role === 'coach') ? 'رسم إمضاء المدرب' : 'رسم إمضاء رئيس النادي';
+            const modal = new bootstrap.Modal(document.getElementById('signaturePadModal'));
+            modal.show();
+            setTimeout(clearCanvas, 250);
+        }
+
+        function setupCanvasDrawing() {
+            drawingCanvas = document.getElementById('sig-canvas');
+            if (!drawingCanvas) return;
+            canvasCtx = drawingCanvas.getContext('2d');
+            canvasCtx.strokeStyle = '#0f172a';
+            canvasCtx.lineWidth = 2.5;
+            canvasCtx.lineCap = 'round';
+            canvasCtx.lineJoin = 'round';
+
+            function getPos(e) {
+                const rect = drawingCanvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return {
+                    x: (clientX - rect.left) * (drawingCanvas.width / rect.width),
+                    y: (clientY - rect.top) * (drawingCanvas.height / rect.height)
+                };
+            }
+
+            function startDraw(e) {
+                isDrawing = true;
+                const pos = getPos(e);
+                canvasCtx.beginPath();
+                canvasCtx.moveTo(pos.x, pos.y);
+                e.preventDefault();
+            }
+
+            function drawMove(e) {
+                if (!isDrawing) return;
+                const pos = getPos(e);
+                canvasCtx.lineTo(pos.x, pos.y);
+                canvasCtx.stroke();
+                e.preventDefault();
+            }
+
+            function stopDraw() {
+                isDrawing = false;
+            }
+
+            drawingCanvas.addEventListener('mousedown', startDraw);
+            drawingCanvas.addEventListener('mousemove', drawMove);
+            window.addEventListener('mouseup', stopDraw);
+
+            drawingCanvas.addEventListener('touchstart', startDraw, { passive: false });
+            drawingCanvas.addEventListener('touchmove', drawMove, { passive: false });
+            window.addEventListener('touchend', stopDraw);
+        }
+
+        function clearCanvas() {
+            if (canvasCtx && drawingCanvas) {
+                canvasCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+            }
+        }
+
+        function saveDrawnSignature() {
+            if (!drawingCanvas) return;
+            const dataUrl = drawingCanvas.toDataURL('image/png');
+            if (currentDrawTarget === 'coach') {
+                activeSettings.coachSigImg = dataUrl;
+                activeSettings.coachEnabled = true;
+            } else {
+                activeSettings.presidentSigImg = dataUrl;
+                activeSettings.presidentEnabled = true;
+            }
+            saveConfig();
+            applyConfigToDOM();
+
+            const modal = bootstrap.Modal.getInstance(document.getElementById('signaturePadModal'));
+            if (modal) modal.hide();
+        }
+
+        // Optional filter toggle: Exclude incomplete birth data
+        function toggleRequireBirthFilter(checked) {
+            const url = new URL(window.location.href);
+            if (checked) {
+                url.searchParams.set('require_birth', '1');
+            } else {
+                url.searchParams.delete('require_birth');
+            }
+            window.location.href = url.toString();
+        }
+
+        // High quality PDF Export
         function generatePDF() {
             var btn = document.getElementById('btn-pdf-export');
             if (btn) {
@@ -350,17 +1352,25 @@
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> جاري التحميل...';
             }
 
+            var pages = document.querySelectorAll('.print-page');
+            pages.forEach(function(p) { p.classList.add('pdf-export-mode'); });
+
             var element = document.getElementById('pdf-content');
-            
+            var requireBirth = {{ require_birth|yesno:"true,false" }};
+            var catName = '{{ selected_category.name|default:"جميع_الفئات"|escapejs }}';
+            var safeTitle = 'قائمة_اللاعبين_' + catName.replace(/[\s\/\\?%*:|"<>]/g, '_') + (requireBirth ? '_مكتملي_الازدياد' : '') + '_2026_2027.pdf';
+
             var opt = {
-                margin:       [8, 8, 8, 8],
-                filename:     'قائمة_اللاعبين_{{ selected_category.name|default:"جميع_الفئات" }}.pdf',
+                margin:       0,
+                filename:     safeTitle,
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { 
                     scale: 2, 
-                    useCORS: true,
-                    allowTaint: true,
-                    logging: false
+                    useCORS: true, 
+                    allowTaint: true, 
+                    logging: false,
+                    scrollY: 0,
+                    scrollX: 0
                 },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak:    { mode: ['css', 'legacy'] }
@@ -368,16 +1378,18 @@
 
             var triggerSave = function() {
                 html2pdf().set(opt).from(element).save().then(function() {
+                    pages.forEach(function(p) { p.classList.remove('pdf-export-mode'); });
                     if (btn) {
                         btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-file-pdf me-2"></i> تحميل ملف PDF';
+                        btn.innerHTML = '<i class="fas fa-file-pdf me-2"></i> تحميل PDF';
                     }
                 }).catch(function(err) {
                     console.error("PDF Export Error:", err);
+                    pages.forEach(function(p) { p.classList.remove('pdf-export-mode'); });
                     window.print();
                     if (btn) {
                         btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-file-pdf me-2"></i> تحميل ملف PDF';
+                        btn.innerHTML = '<i class="fas fa-file-pdf me-2"></i> تحميل PDF';
                     }
                 });
             };
@@ -385,7 +1397,7 @@
             if (document.fonts && document.fonts.ready) {
                 document.fonts.ready.then(triggerSave);
             } else {
-                setTimeout(triggerSave, 300);
+                setTimeout(triggerSave, 250);
             }
         }
     </script>

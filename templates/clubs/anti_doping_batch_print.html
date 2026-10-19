@@ -1,0 +1,424 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>طباعة كشوف الكشف عن تعاطي المخدرات — {{ title_meta }} ({{ total_count }} استمارة)</title>
+    
+    <!-- Bootstrap 5 CSS & FontAwesome -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&family=Tajawal:wght@500;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #0b1120;
+            color: #0f172a;
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ─── SCREEN TOOLBAR (NOT PRINTED) ─── */
+        .screen-toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            z-index: 1050;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            color: #ffffff;
+            direction: rtl;
+        }
+
+        .batch-workspace {
+            padding-top: 75px;
+            padding-bottom: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+            background: #0b1120;
+        }
+
+        /* ─── MASTER A4 SHEET ─── */
+        .anti-doping-sheet {
+            position: relative;
+            width: 210mm;
+            height: 297mm;
+            background-color: #ffffff;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            box-sizing: border-box;
+            margin: 0 auto;
+            page-break-after: always;
+            page-break-inside: avoid;
+        }
+
+        .anti-doping-sheet:last-child {
+            page-break-after: auto;
+        }
+
+        /* Master Authentic Image Background */
+        .sheet-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: fill;
+            z-index: 1;
+            pointer-events: none;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        /* Dynamic Overlays Layer */
+        .sheet-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            direction: rtl;
+        }
+
+        /* Field Display Values */
+        .field-val {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+            font-weight: 700;
+            color: #0f172a;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.2;
+        }
+
+        /* Section 1: Laboratory Information */
+        .field-lab-name {
+            top: 22.1%;
+            right: 23.5%;
+            left: 12.0%;
+            height: 2.5%;
+            font-size: 13.5pt;
+            font-weight: 800;
+            color: #042f2e;
+        }
+
+        .field-lab-addr {
+            top: 24.7%;
+            right: 15.5%;
+            left: 12.0%;
+            height: 2.3%;
+            font-size: 12.0pt;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .field-lab-phone {
+            top: 27.2%;
+            left: 44.5%;
+            width: 21.0%;
+            height: 2.3%;
+            justify-content: center;
+            font-size: 13.0pt;
+            font-family: monospace, sans-serif;
+            font-weight: 800;
+            direction: ltr;
+            color: #0f172a;
+        }
+
+        .field-lab-email {
+            top: 27.2%;
+            left: 12.5%;
+            width: 27.5%;
+            height: 2.3%;
+            justify-content: flex-start;
+            font-size: 11.5pt;
+            font-family: monospace, sans-serif;
+            font-weight: 700;
+            direction: ltr;
+            color: #0f172a;
+        }
+
+        /* Section 2: Person Information */
+        .field-person-name {
+            top: 33.8%;
+            right: 21.0%;
+            left: 12.0%;
+            height: 2.6%;
+            font-size: 14.5pt;
+            font-weight: 900;
+            color: #022c22;
+        }
+
+        .field-person-dob-pob {
+            top: 36.7%;
+            right: 25.0%;
+            left: 12.0%;
+            height: 2.5%;
+            font-size: 13.0pt;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .field-sample-type {
+            top: 39.5%;
+            right: 19.8%;
+            left: 12.0%;
+            height: 2.4%;
+            font-size: 13.0pt;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .field-id-card {
+            top: 42.2%;
+            right: 33.5%;
+            left: 12.0%;
+            height: 2.4%;
+            font-size: 13.0pt;
+            font-family: monospace, sans-serif;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .field-requesting-party {
+            top: 45.0%;
+            right: 28.0%;
+            left: 12.0%;
+            height: 2.4%;
+            font-size: 13.0pt;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        /* Section 3: Examination Details */
+        .field-test-date {
+            top: 51.4%;
+            left: 33.5%;
+            width: 22.0%;
+            height: 2.4%;
+            justify-content: center;
+            font-size: 14.0pt;
+            font-weight: 900;
+            color: #022c22;
+        }
+
+        /* Section 4: Conclusion (Checkmark) */
+        .field-checkmark {
+            top: 63.8%;
+            left: 40.6%;
+            width: 3.8%;
+            height: 2.8%;
+            justify-content: center;
+            font-size: 26pt;
+            font-weight: 900;
+            color: #15803d;
+            line-height: 1;
+        }
+
+        /* Section 6: Dual Signatures */
+        .field-sig-president {
+            top: 86.0%;
+            left: 15.0%;
+            width: 26.0%;
+            text-align: center;
+            display: block !important;
+            font-size: 10pt;
+            color: #334155;
+        }
+
+        .field-sig-lab {
+            top: 86.0%;
+            right: 15.0%;
+            width: 26.0%;
+            text-align: center;
+            display: block !important;
+            font-size: 10pt;
+            color: #334155;
+        }
+
+        /* ─── PRINT RULES ─── */
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+
+        @media print {
+            html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #ffffff !important;
+                width: 210mm !important;
+            }
+
+            .screen-toolbar, .no-print {
+                display: none !important;
+            }
+
+            .batch-workspace {
+                padding: 0 !important;
+                margin: 0 !important;
+                background: transparent !important;
+                gap: 0 !important;
+                display: block !important;
+            }
+
+            .anti-doping-sheet {
+                width: 210mm !important;
+                height: 297mm !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+                page-break-after: always !important;
+                page-break-inside: avoid !important;
+            }
+
+            .anti-doping-sheet:last-child {
+                page-break-after: auto !important;
+            }
+
+            .sheet-bg {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── SCREEN TOOLBAR ─── -->
+    <div class="screen-toolbar no-print">
+        <div class="d-flex align-items-center gap-3">
+            {% if is_staff %}
+                <a href="{% url 'clubs:staff_list' %}" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-bold">
+                    <i class="fas fa-arrow-right ms-1"></i> قائمة المدربين
+                </a>
+            {% else %}
+                <a href="{% url 'clubs:player_passport_list' %}?category=U20" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-bold">
+                    <i class="fas fa-arrow-right ms-1"></i> وثائق U20
+                </a>
+            {% endif %}
+
+            <div class="fw-bold fs-6 text-warning">
+                <i class="fas fa-print ms-1"></i> طباعة كشوف الكشف عن تعاطي المخدرات — {{ title_meta }} ({{ total_count }} استمارة)
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <button onclick="window.print()" class="btn btn-warning btn-sm rounded-pill px-4 fw-bold">
+                <i class="fas fa-print ms-1"></i> طباعة الكل دفعة واحدة (A4)
+            </button>
+        </div>
+    </div>
+
+    <!-- ─── BATCH WORKSPACE ─── -->
+    <div class="batch-workspace">
+
+        {% for item in items %}
+        <div class="anti-doping-sheet">
+            <!-- Authentic Pre-rendered Vector Master Background -->
+            <img src="{% static 'img/anti_doping_template.png' %}" class="sheet-bg" alt="Official FAF Template" />
+
+            <!-- Dynamic Overlays Layer -->
+            <div class="sheet-overlay">
+                <!-- 1. Lab Name -->
+                <div class="field-val field-lab-name">
+                    {{ item.forms_data.labo_name|default:"مخبر التحاليل الطبية والبيولوجية المعتمد - ولاية تيبازة" }}
+                </div>
+
+                <!-- 2. Lab Address -->
+                <div class="field-val field-lab-addr">
+                    {{ item.forms_data.labo_address|default:"حي 05 جويلية، سيدي غيلاس - ولاية تيبازة" }}
+                </div>
+
+                <!-- 3. Lab Phone -->
+                <div class="field-val field-lab-phone">
+                    {{ item.forms_data.labo_phone|default:"024 43 12 89" }}
+                </div>
+
+                <!-- 4. Lab Email -->
+                <div class="field-val field-lab-email">
+                    {{ item.forms_data.labo_email|default:"contact@labo-tipaza.dz" }}
+                </div>
+
+                <!-- 5. Person Name -->
+                <div class="field-val field-person-name">
+                    {{ item.full_name }}
+                </div>
+
+                <!-- 6. Date & Place of Birth -->
+                <div class="field-val field-person-dob-pob">
+                    {{ item.dob }} بـ {{ item.pob|default:"سيدي غيلاس" }}
+                </div>
+
+                <!-- 7. Sample Type -->
+                <div class="field-val field-sample-type">
+                    {{ item.forms_data.sample_type|default:"بول (Urine)" }}
+                </div>
+
+                <!-- 8. ID Card / Passport -->
+                <div class="field-val field-id-card">
+                    {{ item.id_card|default:"........................" }}
+                </div>
+
+                <!-- 9. Requesting Party -->
+                <div class="field-val field-requesting-party">
+                    {{ item.forms_data.requesting_party|default:"النادي الرياضي الهاوي نجم مسلمون (ES Messelmoun)" }}
+                </div>
+
+                <!-- 10. Examination Date in details -->
+                <div class="field-val field-test-date">
+                    {{ item.forms_data.test_date|default:"15 / 10 / 2026" }}
+                </div>
+
+                <!-- 11. Conclusion Checkmark [✓] -->
+                <div class="field-val field-checkmark">
+                    {% if item.forms_data.doping_result != "positive" %}&#10004;{% endif %}
+                </div>
+
+                <!-- 12. President Signature Block (Left) -->
+                <div class="field-val field-sig-president">
+                    <div style="font-weight: 800; font-size: 11pt; color: #0f172a;">توقيع وختم رئيس النادي</div>
+                </div>
+
+                <!-- 13. Laboratory Stamp Block (Right) -->
+                <div class="field-val field-sig-lab">
+                    <div style="font-weight: 800; font-size: 11pt; color: #0f172a;">توقيع وختم المخبر الطبي</div>
+                    <div style="font-size: 9.5pt; color: #64748b; margin-top: 3px;">تأشيرة الطبيب المسؤول</div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-white text-center py-5">
+            <h4>لا توجد بيانات متاحة للطباعة</h4>
+        </div>
+        {% endfor %}
+
+    </div>
+
+</body>
+</html>
