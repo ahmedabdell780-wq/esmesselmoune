@@ -95,10 +95,6 @@ class Migration(migrations.Migration):
             name='last_name',
             field=models.CharField(max_length=50, verbose_name='Nom (اللقب بالعربية)'),
         ),
-        migrations.AddConstraint(
-            model_name='clubplayer',
-            constraint=models.UniqueConstraint(fields=('first_name', 'last_name', 'date_of_birth'), name='unique_club_player_identity'),
-        ),
         migrations.AddField(
             model_name='playerpassport',
             name='player',
