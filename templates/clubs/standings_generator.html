@@ -538,6 +538,31 @@
 .dlbar { max-width: 900px; margin: 0 auto 14px; display: flex; justify-content: flex-end; }
 .dlbar button { font-family: 'Cairo', sans-serif; font-weight: 800; font-size: 15px; padding: 10px 22px; border: 0; border-radius: 12px; background: #2563eb; color: #fff; cursor: pointer; box-shadow: 0 4px 14px rgba(37,99,235,0.3); transition: all 0.2s; }
 .dlbar button:hover { background: #1d4ed8; transform: translateY(-1px); }
+
+/* Mobile Responsive */
+@media (max-width: 640px) {
+  .wrap { border-radius: 12px; }
+  .lnfa { border-radius: 12px; }
+  .pn { padding: 14px; border-radius: 14px; }
+  .pn select, .pn input { font-size: 13px; padding: 7px 10px; }
+  .pn .pr { gap: 8px; }
+  .std2 { padding: 16px 12px; }
+  .std2 .lgname2 { font-size: 1.2rem; }
+  .std2 .pill2 { font-size: 1.2rem; padding: 8px 28px; }
+  .std2 .gr2 { grid-template-columns: 36px 1fr 36px 36px 36px 36px 44px; gap: 4px; }
+  .std2 .row2 > div { font-size: 0.95rem; min-height: 42px; }
+  .std2 .tm2 { font-size: 0.88rem !important; padding: 4px 6px 4px 4px !important; gap: 6px !important; }
+  .std2 .th2 { font-size: 0.78rem; padding: 8px 2px; }
+  .blogo2 { width: 52px !important; height: 52px !important; }
+  .res .sb-name { font-size: 0.85rem !important; }
+  .res .sb-container { height: 50px; margin-top: 18px; }
+  .res .sb-body { height: 50px; }
+  .res .sb-score-box { width: 48px; height: 50px; }
+  .res .sb-score-num { font-size: 1.6rem; }
+  .res .sb-center { width: 120px; min-width: 120px; max-width: 120px; }
+  .res .sb-center-box { width: 120px; }
+  .dlbar button { font-size: 13px; padding: 8px 16px; }
+}
 </style>
 {% endblock %}
 
@@ -563,12 +588,16 @@
         <div class="dlbar">
             <button data-a="dl" data-t="standings"><i class="fas fa-download me-2"></i>تحميل بطاقة الترتيب (PNG)</button>
         </div>
-        <div class="wrap" id="standings"></div>
+        <div class="overflow-x-auto w-full -mx-2 px-2">
+            <div class="wrap" id="standings" style="min-width: 320px;"></div>
+        </div>
         
         <div class="dlbar">
             <button data-a="dl" data-t="round"><i class="fas fa-download me-2"></i>تحميل بطاقة نتائج الجولة (PNG)</button>
         </div>
-        <div class="wrap" id="round"></div>
+        <div class="overflow-x-auto w-full -mx-2 px-2">
+            <div class="wrap" id="round" style="min-width: 320px;"></div>
+        </div>
     </div>
 </div>
 
