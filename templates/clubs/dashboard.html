@@ -1,277 +1,271 @@
-{% extends "base.html" %}
-{% load i18n %}
-
-{% block title %}Académie & Club - Wifaq{% endblock %}
-
-{% block content %}
-<div class="container-fluid py-4 max-w-7xl mx-auto">
-    
-    <!-- Hero Header -->
-    <div class="relative rounded-[2.5rem] overflow-hidden mb-8 shadow-2xl border border-white/10 group">
-        <!-- Background Image/Gradient -->
-        <div class="absolute inset-0 bg-gradient-to-br {{ settings.gradient_start|default:'from-primary/80' }} {{ settings.gradient_end|default:'to-black/90' }} z-0"></div>
-        {% if settings.cover_image %}
-        <div class="absolute inset-0 bg-[url('{{ settings.cover_image.url }}')] bg-cover bg-center mix-blend-overlay opacity-40 transition-transform duration-1000 group-hover:scale-105"></div>
-        {% else %}
-        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1518609878373-06d740f60d8b?q=80&w=2500&auto=format&fit=crop')] bg-cover bg-center mix-blend-overlay opacity-40 transition-transform duration-1000 group-hover:scale-105"></div>
-        {% endif %}
+{% load i18n static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>استمارة انخراط - {{ player.first_name }} {{ player.last_name }}</title>
+    <!-- Tailwind CSS (CDN for printing) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: white;
+            color: black;
+            font-size: 14px;
+        }
+        @media print {
+            body { font-size: 12px; }
+            .no-print { display: none !important; }
+            .page-break { page-break-before: always; }
+            @page { margin: 1cm; size: A4 portrait; }
+        }
         
-        <!-- Content -->
-        <div class="relative z-10 p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-6 backdrop-blur-sm">
-            <div class="flex items-center gap-6">
-                <div class="w-24 h-24 md:w-32 md:h-32 rounded-full bg-white border-4 border-white/40 shadow-2xl flex items-center justify-center backdrop-blur-md p-1.5 overflow-hidden shrink-0">
-                    {% if settings.logo %}
-                        <img src="{{ settings.logo.url }}" alt="Logo" class="w-full h-full object-contain rounded-full">
-                    {% else %}
-                        <span class="text-4xl md:text-6xl text-emerald-800 font-black drop-shadow-lg">{{ settings.club_abbreviation|default:'WRM' }}</span>
-                    {% endif %}
-                </div>
-                <div class="text-white">
-                    <h1 class="text-3xl md:text-5xl font-black mb-2 tracking-tight drop-shadow-lg" style="font-family: 'Tajawal', sans-serif;">{{ settings.club_name|default:'نادي الوفاق الرياضي' }}</h1>
-                    <p class="text-lg md:text-xl text-white/80 font-medium">{{ settings.club_subtitle|default:'أكاديمية كرة القدم - مسلمون' }}</p>
+        .form-container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .green-header { background-color: #047857 !important; color: white !important; font-weight: bold; padding: 6px 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; border: 1px solid #047857; margin-top: 15px; }
+        .field-box { border: 1px solid #e5e7eb; padding: 6px 12px; display: flex; align-items: center; gap: 8px; }
+        .field-label { font-weight: bold; color: #374151; white-space: nowrap; }
+        .field-value { font-weight: bold; color: black; flex-grow: 1; border-bottom: 1px dashed #9ca3af; padding-bottom: 2px; }
+        .checkbox-box { width: 14px; height: 14px; border: 1px solid black; display: inline-block; position: relative; top: 2px; }
+        .checkbox-checked::after { content: '✓'; position: absolute; top: -5px; left: 1px; font-weight: bold; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="no-print text-center py-4 bg-gray-100 mb-6 border-b">
+        <button onclick="window.print()" class="bg-blue-600 text-white px-6 py-2 rounded font-bold shadow hover:bg-blue-700">🖨️ طباعة الاستمارة / Imprimer</button>
+        <p class="text-sm mt-2 text-gray-600">يرجى طباعة الاستمارة على ورقة A4 وتوقيعها من الولي والطبيب.</p>
+    </div>
+
+    <!-- PAGE 1: RECTO -->
+    <div class="form-container">
+        <!-- HEADER -->
+        <div class="flex justify-between items-start border-b-2 border-emerald-700 pb-2 mb-2">
+            <div class="w-24 h-28 border border-dashed border-gray-400 flex items-center justify-center text-xs text-gray-400">
+                {% if player.photo %}<img src="{{ player.photo.url }}" class="w-full h-full object-cover">{% else %}Photo{% endif %}
+            </div>
+            <div class="text-center flex-1 px-4">
+                <h1 class="text-2xl font-black text-emerald-800">الوفاق الرياضي مسلمون</h1>
+                <h2 class="text-lg font-bold text-gray-700 uppercase">ESM FOOTBALL CLUB — EL WIFAK SPORTIF MESSELMOUN</h2>
+                <p class="text-xs font-bold mt-1">مدرسة كرة القدم والتربية الرياضية — فئات البراعم والمواهب الشابة (U-9 / U-11 / U-13)</p>
+                <div class="bg-emerald-800 text-white font-bold py-1 px-4 mt-2 inline-block rounded" style="-webkit-print-color-adjust: exact;">
+                    استمارة انخراط وتسجيل لاعب رسمي (الوجه الأول)
                 </div>
             </div>
-            
-            <div class="flex flex-wrap justify-center gap-3 mt-4 md:mt-0">
-                <a href="{% url 'clubs:standings_generator' %}" class="btn bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 rounded-2xl px-6 py-3 backdrop-blur-md transition-all font-bold">
-                    <i class="fas fa-magic me-2"></i>مولد الترتيب والنتائج
-                </a>
-                <a href="{% url 'clubs:staff_list' %}" class="btn bg-white/10 hover:bg-white/20 text-white border border-white/30 rounded-2xl px-6 py-3 backdrop-blur-md transition-all">
-                    <i class="fas fa-user-tie me-2"></i>{% trans "Staff" %} / الطاقم
-                </a>
-                <a href="{% url 'clubs:player_list' %}" class="btn bg-white/10 hover:bg-white/20 text-white border border-white/30 rounded-2xl px-6 py-3 backdrop-blur-md transition-all">
-                    <i class="fas fa-users me-2"></i>{% trans "Effectif" %} / التعداد
-                </a>
-                <a href="{% url 'clubs:settings' %}" class="btn bg-white/10 hover:bg-white/20 text-white border border-white/30 rounded-2xl px-4 py-3 backdrop-blur-md transition-all" title="إعدادات الأكاديمية">
-                    <i class="fas fa-cog"></i>
-                </a>
+            <div class="w-20">
+                {% if settings.logo %}<img src="{{ settings.logo.url }}" class="w-full">{% else %}<div class="w-16 h-16 bg-gray-200 rounded-full"></div>{% endif %}
             </div>
+        </div>
+
+        <div class="flex justify-between text-sm font-bold mb-4">
+            <div>رقم ملف الانخراط: ESM - B / ______ / 2026</div>
+            <div>الموسم الرياضي: 2026/2027</div>
+        </div>
+
+        <!-- 1. IDENTITE -->
+        <div class="green-header">1. معلومات الهوية والمسار الدراسي للاعب / IDENTITÉ DU JOUEUR</div>
+        <div class="grid grid-cols-2">
+            <div class="field-box"><span class="field-label">اللقب / Nom:</span> <span class="field-value">{{ player.last_name|upper }}</span></div>
+            <div class="field-box"><span class="field-label">الاسم / Prénom:</span> <span class="field-value">{{ player.first_name }}</span></div>
+            <div class="field-box"><span class="field-label">تاريخ الازدياد:</span> <span class="field-value">{{ player.date_of_birth|date:"Y / m / d" }}</span></div>
+            <div class="field-box"><span class="field-label">مكان الازدياد:</span> <span class="field-value">{{ player.place_of_birth|default:"____________________" }}</span></div>
+            <div class="field-box col-span-2"><span class="field-label">العنوان الشخصي:</span> <span class="field-value">{{ player.address|default:"________________________________________" }}</span></div>
+            <div class="field-box col-span-2"><span class="field-label">المؤسسة التعليمية (المستوى):</span> <span class="field-value">{{ player.school_level|default:"________________________________________" }}</span></div>
+        </div>
+
+        <!-- 2. PROFIL SPORTIF -->
+        <div class="green-header">2. الملف الفني والرياضي للاعب / PROFIL SPORTIF ET TECHNIQUE</div>
+        <div class="border border-gray-200 p-2 text-sm">
+            <div class="flex gap-4 mb-2">
+                <span class="field-label">الفئة العمرية:</span>
+                <span class="font-bold border-b border-dashed border-gray-400 flex-1">{{ player.category.name|default:"____________________" }}</span>
+            </div>
+            <div class="flex gap-4 mb-2">
+                <span class="field-label">المنصب التكتيكي:</span>
+                <span class="font-bold border-b border-dashed border-gray-400 flex-1">{{ player.position|default:"____________________" }}</span>
+                <span class="field-label ml-4">القدم المفضلة:</span>
+                <span class="font-bold border-b border-dashed border-gray-400 w-32">{{ player.preferred_foot|default:"__________" }}</span>
+            </div>
+            <div class="flex gap-4">
+                <span class="field-label">النادي أو المدرسة السابقة:</span>
+                <span class="font-bold border-b border-dashed border-gray-400 flex-1">{{ player.previous_club|default:"____________________" }}</span>
+                <span class="field-label ml-4">رقم القميص:</span>
+                <span class="font-bold border-b border-dashed border-gray-400 w-16 text-center">{{ player.jersey_number|default:"____" }}</span>
+            </div>
+        </div>
+
+        <!-- 3. TUTEUR LEGAL -->
+        <div class="green-header">3. معلومات الولي أو الوصي الشرعي / TUTEUR LÉGAL (PARENT)</div>
+        <div class="grid grid-cols-2">
+            <div class="field-box"><span class="field-label">اسم ولقب الولي:</span> <span class="field-value">{{ player.parent_name|default:"____________________" }}</span></div>
+            <div class="field-box"><span class="field-label">صلة القرابة:</span> <span class="field-value">{{ player.parent_relation|default:"____________________" }}</span></div>
+            <div class="field-box"><span class="field-label">رقم الهاتف الأساسي:</span> <span class="field-value" dir="ltr">{{ player.parent_phone|default:"____ __ __ __" }}</span></div>
+            <div class="field-box"><span class="field-label">هاتف الطوارئ:</span> <span class="field-value" dir="ltr">{{ player.emergency_phone|default:"____ __ __ __" }}</span></div>
+            <div class="field-box col-span-2"><span class="field-label">البريد الإلكتروني:</span> <span class="field-value">{{ player.parent_email|default:"________________________________________" }}</span></div>
+            <div class="field-box col-span-2"><span class="field-label">المهنة ومقر العمل:</span> <span class="field-value">{{ player.parent_profession|default:"________________________________________" }}</span></div>
+        </div>
+
+        <!-- 4. DOSSIER & COTISATION -->
+        <div class="green-header">4. الوثائق المطلوبة، حقوق الاشتراك والتصريح الأبوي / DOSSIER & COTISATION</div>
+        <div class="border border-gray-200 flex">
+            <div class="w-1/2 p-4 border-l border-gray-200">
+                <p class="font-bold mb-2">الوثائق الإدارية المرفقة بالملف:</p>
+                <div class="mb-1"><span class="checkbox-box"></span> شهادة ميلاد أصلية حديثة (عقد أصلي)</div>
+                <div class="mb-1"><span class="checkbox-box"></span> صورتان (02) شمسيتان حديثتان ملونتان</div>
+                <div class="mb-1"><span class="checkbox-box"></span> نسخة من بطاقة التعريف الوطنية للولي</div>
+                <div class="mb-3"><span class="checkbox-box"></span> الملف الطبي المعتمد في الصفحة 2</div>
+                
+                <p class="font-bold mb-1">وصل دفع حقوق الاشتراك المعتمد:</p>
+                <div class="mb-1 mr-4"><span class="checkbox-box"></span> الاشتراك السنوي: <span class="bg-emerald-100 px-2 rounded border border-emerald-200 text-emerald-800" style="-webkit-print-color-adjust: exact;">3000 دج</span></div>
+                <div class="mr-4"><span class="checkbox-box"></span> الاشتراك الشهري: <span class="bg-emerald-100 px-2 rounded border border-emerald-200 text-emerald-800" style="-webkit-print-color-adjust: exact;">500 دج</span></div>
+            </div>
+            <div class="w-1/2 p-4">
+                <p class="font-bold mb-2 text-center">تصريح وترخيص أبوي رسمي (Autorisation Parentale):</p>
+                <p class="text-xs text-justify leading-relaxed">
+                    أنا الموقع أسفله الولي الشرعي للطفل المصرح به أعلاه، أصرح بموافقتي الكاملة على انخراط ابني في صفوف مدرسة/نادي الوفاق الرياضي مسلمون (ESM) وأرخص له بالمشاركة في جميع الحصص التدريبية، التربصات، والمباريات الرسمية والودية والتنقلات المبرمجة، وأتعهد بدفع حقوق الاشتراك المحددة والامتثال للنظام الداخلي للنادي وميثاق الروح الرياضية.
+                </p>
+            </div>
+        </div>
+
+        <!-- SIGNATURES -->
+        <div class="flex border border-gray-200 mt-2 h-24">
+            <div class="w-1/3 border-l border-gray-200 p-2 text-center">
+                <p class="font-bold text-xs">توقيع ومصادقة الولي الشرعي</p>
+                <p class="text-[10px] text-gray-500">Signature du Parent / Tuteur</p>
+            </div>
+            <div class="w-1/3 border-l border-gray-200 p-2 text-center">
+                <p class="font-bold text-xs">موافقة ورأي الطاقم الفني والمؤطر</p>
+                <p class="text-[10px] text-gray-500">Avis de l'Entraîneur / Éducateur</p>
+            </div>
+            <div class="w-1/3 p-2 text-center">
+                <p class="font-bold text-xs">تأشيرة وختم إدارة النادي الرسمية</p>
+                <p class="text-[10px] text-gray-500">Visa & Cachet du Club (ESM)</p>
+            </div>
+        </div>
+
+        <div class="text-center mt-4 text-[10px] text-gray-500">
+            نادي الوفاق الرياضي مسلمون (ESM) — بلدية مسلمون، دائرة قوراية، ولاية تيبازة | استمارة الانخراط والتسجيل — فئة البراعم والمواهب الشابة (الصفحة 1/2)
         </div>
     </div>
 
-    <!-- Quick Actions (Control Panel) -->
-    <div class="mb-10">
-        <h3 class="text-xl font-bold mb-4 flex items-center gap-2" style="color:var(--text-light)">
-            <i class="fas fa-bolt text-primary"></i>لوحة التحكم السريعة
-        </h3>
-        
-        <!-- Main Standings Banner -->
-        <a href="{% url 'clubs:standings_generator' %}" class="group relative card rounded-3xl overflow-hidden border border-emerald-500/30 p-6 mb-4 hover:-translate-y-1 transition-all duration-300 block shadow-xl" style="background: color-mix(in srgb, var(--card) 85%, transparent);">
-            <div class="absolute inset-0 bg-gradient-to-r from-emerald-500/20 via-teal-500/10 to-primary/20 opacity-100 transition-opacity"></div>
-            <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
-                <div class="flex items-center gap-5">
-                    <div class="w-16 h-16 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-3xl shadow-lg border border-emerald-500/40 text-emerald-400 shrink-0">
-                        <i class="fas fa-magic"></i>
-                    </div>
-                    <div>
-                        <div class="font-black text-xl text-white mb-1">مولد بطاقات الترتيب ونتائج الجولات الاحترافي</div>
-                        <div class="text-sm text-emerald-200/90">تصميم وتصدير بطاقات الترتيب ونتائج المباريات الخاصة بفئات الأكاديمية كصور PNG عالية الدقة بضغطة زر</div>
-                    </div>
+    <!-- PAGE BREAK FOR PAGE 2 -->
+    <div class="page-break"></div>
+
+    <!-- PAGE 2: VERSO -->
+    <div class="form-container">
+        <!-- HEADER P2 -->
+        <div class="flex justify-between items-center border-b-2 border-emerald-700 pb-2 mb-4">
+            <div class="w-20 border border-emerald-800 text-emerald-800 text-center font-bold text-xs p-2">
+                الملف الطبي<br>الإجباري<br>DOSSIER<br>MÉDICAL
+            </div>
+            <div class="text-center flex-1 px-4">
+                <h1 class="text-2xl font-black text-emerald-800">الوفاق الرياضي مسلمون — الوحدة الطبية الرياضية</h1>
+                <h2 class="text-sm font-bold text-gray-700 uppercase">ESM FOOTBALL CLUB — EL WIFAK SPORTIF MESSELMOUN</h2>
+                <p class="text-xs font-bold mt-1">الملف الطبي الرياضي وشهادة القدرة البدنية لممارسة كرة القدم (الموسم 2026/2027)</p>
+                <div class="bg-emerald-800 text-white font-bold py-1 px-4 mt-2 inline-block rounded" style="-webkit-print-color-adjust: exact;">
+                    الملف الطبي المبسط وشهادة الأهلية الرياضية (الوجه الثاني)
                 </div>
-                <span class="btn bg-emerald-500 text-slate-950 font-bold rounded-2xl px-6 py-3 shadow-lg hover:bg-emerald-400 transition-all shrink-0">
-                    فتح المولد الآن <i class="fas fa-arrow-left me-2"></i>
+            </div>
+            <div class="w-16">
+                {% if settings.logo %}<img src="{{ settings.logo.url }}" class="w-full">{% endif %}
+            </div>
+        </div>
+
+        <div class="flex justify-between text-sm font-bold border border-gray-200 p-2 mb-4 bg-gray-50" style="-webkit-print-color-adjust: exact;">
+            <div class="flex-1 flex gap-2"><span class="text-gray-600">اسم ولقب اللاعب:</span> <span>{{ player.first_name }} {{ player.last_name|upper }}</span></div>
+            <div class="flex-1 border-r border-gray-300 pr-4 flex gap-2"><span class="text-gray-600">تاريخ الازدياد:</span> <span>{{ player.date_of_birth|date:"Y / m / d" }}</span></div>
+            <div class="w-32 border-r border-gray-300 pr-4 flex gap-2"><span class="text-gray-600">الفئة:</span> <span class="text-emerald-700">{{ player.category.name|default:"___" }}</span></div>
+        </div>
+
+        <!-- 1. BIOMETRIE -->
+        <div class="green-header">1. القياسات البيومترية وفصيلة الدم / BIOMÉTRIE & GROUPE SANGUIN</div>
+        <div class="grid grid-cols-3 border border-gray-200">
+            <div class="p-4 border-l border-gray-200 text-center">
+                <div class="font-bold text-gray-600 mb-2">القامة (Taille):</div>
+                <div class="text-xl font-black">{{ player.height|default:"___" }} <span class="text-sm font-normal">سم (cm)</span></div>
+            </div>
+            <div class="p-4 border-l border-gray-200 text-center">
+                <div class="font-bold text-gray-600 mb-2">الوزن (Poids):</div>
+                <div class="text-xl font-black">{{ player.weight|default:"___" }} <span class="text-sm font-normal">كغ (kg)</span></div>
+            </div>
+            <div class="p-4 text-center">
+                <div class="font-bold text-gray-600 mb-2">فصيلة الدم (Groupe sanguin):</div>
+                <div class="text-2xl font-black text-red-600">{{ player.blood_type|default:"___" }}</div>
+            </div>
+        </div>
+
+        <!-- 2. ANTECEDENTS -->
+        <div class="green-header">2. السوابق الصحية، الجراحية والأمراض المزمنة / ANTÉCÉDENTS MÉDICAUX</div>
+        <div class="border border-gray-200 p-4">
+            <div class="flex items-center gap-2 mb-3 font-bold text-lg">
+                <span class="checkbox-box {% if not player.medical_history %}checkbox-checked{% endif %}"></span>
+                لا توجد (اللاعب سليم تماماً معافى)
+            </div>
+            <div class="flex items-end gap-2 font-bold text-lg">
+                <span class="checkbox-box {% if player.medical_history %}checkbox-checked{% endif %}"></span>
+                <span class="whitespace-nowrap">نعم (تحدد بدقة إن وُجدت):</span>
+                <span class="border-b-2 border-dotted border-gray-500 flex-1 leading-none text-emerald-800 pb-1">
+                    {{ player.medical_history|default:"" }}
                 </span>
             </div>
-        </a>
+            <div class="border-b-2 border-dotted border-gray-500 w-full mt-8"></div>
+        </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <!-- Add Player -->
-            <a href="{% url 'clubs:player_add' %}" class="group relative card rounded-2xl overflow-hidden border border-white/10 p-5 hover:-translate-y-1 transition-all duration-300" style="background: color-mix(in srgb, var(--card) 60%, transparent);">
-                <div class="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div class="relative z-10 flex flex-col items-center text-center gap-3">
-                    <div class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-xl shadow-lg border border-blue-500/30">
-                        <i class="fas fa-user-plus" style="color: #60a5fa;"></i>
-                    </div>
-                    <div>
-                        <div class="font-bold text-sm">إضافة لاعب</div>
-                        <div class="text-[10px] opacity-60">Joueur du Club</div>
-                    </div>
-                </div>
-            </a>
+        <!-- 3. CERTIFICAT -->
+        <div class="green-header mt-8">3. شهادة التأهيل والأهلية الطبية الرياضية / CERTIFICAT D'APTITUDE SPORTIVE</div>
+        <div class="border border-green-600 p-6 rounded-lg mt-2 relative">
+            <div class="absolute inset-0 opacity-5 pointer-events-none flex items-center justify-center">
+                <img src="{{ settings.logo.url }}" class="w-64">
+            </div>
             
-            <!-- Add Category -->
-            <a href="{% url 'clubs:category_add' %}" class="group relative card rounded-2xl overflow-hidden border border-white/10 p-5 hover:-translate-y-1 transition-all duration-300" style="background: color-mix(in srgb, var(--card) 60%, transparent);">
-                <div class="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div class="relative z-10 flex flex-col items-center text-center gap-3">
-                    <div class="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center text-xl shadow-lg border border-green-500/30">
-                        <i class="fas fa-layer-group" style="color: #4ade80;"></i>
-                    </div>
-                    <div>
-                        <div class="font-bold text-sm">إضافة فئة</div>
-                        <div class="text-[10px] opacity-60">Catégorie</div>
-                    </div>
+            <div class="flex flex-col gap-6 relative z-10">
+                <div class="flex items-end gap-2 text-lg font-bold">
+                    <span class="whitespace-nowrap">أنا الطبيب(ة) الموقع(ة) أسفله الدكتور(ة):</span>
+                    <span class="border-b-2 border-dotted border-gray-500 flex-1"></span>
                 </div>
-            </a>
+                
+                <div class="flex items-end gap-2 text-lg font-bold">
+                    <span class="whitespace-nowrap">الممارس(ة) بـ / عيادة:</span>
+                    <span class="border-b-2 border-dotted border-gray-500 flex-1"></span>
+                </div>
+                
+                <p class="text-lg leading-relaxed font-bold mt-2">
+                    أشهد أنني قمت بالمعاينة الطبية والفحص السريري الدقيق للطفل(ة) المذكور(ة) أعلاه، وتبين بعد المعاينة والفحص الشامل أنه:
+                </p>
+            </div>
             
-            <!-- Add Training -->
-            <a href="{% url 'clubs:training_add' %}" class="group relative card rounded-2xl overflow-hidden border border-white/10 p-5 hover:-translate-y-1 transition-all duration-300" style="background: color-mix(in srgb, var(--card) 60%, transparent);">
-                <div class="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div class="relative z-10 flex flex-col items-center text-center gap-3">
-                    <div class="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center text-xl shadow-lg border border-orange-500/30">
-                        <i class="fas fa-running" style="color: #fb923c;"></i>
-                    </div>
-                    <div>
-                        <div class="font-bold text-sm">برمجة تدريب</div>
-                        <div class="text-[10px] opacity-60">Séance d'entraînement</div>
-                    </div>
+            <div class="flex flex-col items-center gap-4 my-8 relative z-10">
+                <div class="flex items-center gap-3 text-2xl font-black text-emerald-700">
+                    <div class="w-6 h-6 border-2 border-emerald-700 rounded"></div>
+                    مؤهل وقادر بدنياً لممارسة كرة القدم في التدريبات والمنافسات (APTE)
                 </div>
-            </a>
+                <div class="flex items-center gap-3 text-xl font-bold text-red-600">
+                    <div class="w-5 h-5 border-2 border-red-600 rounded"></div>
+                    غير مؤهل مؤقتاً / نهائياً (INAPTE)
+                </div>
+            </div>
             
-            <!-- Add Match -->
-            <a href="{% url 'clubs:match_add' %}" class="group relative card rounded-2xl overflow-hidden border border-white/10 p-5 hover:-translate-y-1 transition-all duration-300" style="background: color-mix(in srgb, var(--card) 60%, transparent);">
-                <div class="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div class="relative z-10 flex flex-col items-center text-center gap-3">
-                    <div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center text-xl shadow-lg border border-purple-500/30">
-                        <i class="fas fa-futbol" style="color: #c084fc;"></i>
-                    </div>
-                    <div>
-                        <div class="font-bold text-sm">تسجيل مباراة</div>
-                        <div class="text-[10px] opacity-60">Match du Club</div>
-                    </div>
+            <div class="mb-4 relative z-10">
+                <div class="flex items-end gap-2 text-lg font-bold">
+                    <span class="whitespace-nowrap">توصيات أو إرشادات وقائية خاصة باللاعب:</span>
+                    <span class="border-b-2 border-dotted border-gray-500 flex-1"></span>
                 </div>
-            </a>
+                <div class="border-b-2 border-dotted border-gray-500 w-full mt-8"></div>
+            </div>
+            
+            <div class="flex justify-between mt-12 relative z-10">
+                <div class="text-center w-1/2">
+                    <p class="text-lg font-bold">حرر بـمـسـلمـون فـي: _____ / _____ / 2026</p>
+                </div>
+                <div class="text-center w-1/2">
+                    <p class="font-bold text-lg">توقيع وختم الطبيب المعالج والفاحص الرسمي</p>
+                    <p class="text-sm text-gray-500">Signature & Cachet du Médecin Examinateur</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-8 text-[10px] text-gray-500">
+            نادي الوفاق الرياضي مسلمون (ESM) — بلدية مسلمون، دائرة قوراية، ولاية تيبازة | الملف الطبي الرياضي الإجباري — فئة البراعم والمواهب الشابة (الصفحة 2/2)
         </div>
     </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        
-        <!-- Stats & Categories -->
-        <div class="lg:col-span-1 space-y-6">
-            <!-- Main Stat -->
-            <div class="card rounded-3xl p-6 border border-white/10 relative overflow-hidden text-center" style="background: color-mix(in srgb, var(--card) 70%, transparent);">
-                <div class="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-[50px]"></div>
-                <h5 class="text-sm uppercase tracking-widest opacity-60 mb-2">إجمالي اللاعبين</h5>
-                <h2 class="text-6xl font-black text-primary drop-shadow-md">{{ total_players }}</h2>
-                <div class="mt-4 pt-4 border-t border-white/10 flex justify-around">
-                    <div class="text-center">
-                        <div class="text-xl font-bold">{{ categories.count }}</div>
-                        <div class="text-[10px] opacity-60 uppercase">فئات</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-xl font-bold">{{ upcoming_trainings.count }}</div>
-                        <div class="text-[10px] opacity-60 uppercase">تدريبات مبرمجة</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Categories List -->
-            <div class="card rounded-3xl p-6 border border-white/10" style="background: color-mix(in srgb, var(--card) 70%, transparent);">
-                <div class="flex justify-between items-center mb-4">
-                    <h5 class="font-bold m-0"><i class="fas fa-layer-group me-2 text-primary"></i>الفئات العمرية</h5>
-                    <a href="{% url 'clubs:category_add' %}" class="btn btn-ghost btn-sm text-xs rounded-lg p-1">إضافة +</a>
-                </div>
-                
-                <div class="space-y-2">
-                    {% for category in categories %}
-                    <div class="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 transition-all group">
-                        <a href="{% url 'clubs:player_list' %}?category={{ category.id }}" class="flex items-center gap-3 flex-grow text-white no-underline">
-                            <div class="w-2.5 h-2.5 rounded-full bg-primary flex-shrink-0"></div>
-                            <div>
-                                <div class="font-bold flex items-center gap-2">
-                                    {{ category.name }}
-                                </div>
-                                <div class="text-xs font-medium mt-0.5" style="color: rgba(255, 255, 255, 0.7);">
-                                    <i class="fas fa-user-tie text-[10px] text-amber-400 ms-1"></i>المدرب: <span class="text-amber-300 font-semibold">{{ category.coach_display }}</span>
-                                </div>
-                            </div>
-                        </a>
-                        <div class="flex items-center gap-2">
-                            <a href="{% url 'clubs:category_edit' category.id %}" class="text-slate-400 hover:text-amber-400 text-xs p-1" title="تعديل بيانات الفئة والمدرب">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <a href="{% url 'clubs:category_delete' category.id %}" class="text-slate-400 hover:text-rose-400 text-xs p-1" title="حذف الفئة العمرية">
-                                <i class="fas fa-trash-alt"></i>
-                            </a>
-                            <span class="badge bg-white/10 text-white group-hover:bg-primary transition-colors">{{ category.players.count }} لاعبين</span>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="text-center py-4 opacity-50 text-sm border border-dashed border-white/20 rounded-xl">
-                        لم يتم إضافة فئات عمرية بعد
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Agendas -->
-        <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            <!-- Training Schedule -->
-            <div class="card rounded-3xl p-6 border border-white/10 flex flex-col" style="background: color-mix(in srgb, var(--card) 70%, transparent);">
-                <div class="flex justify-between items-center mb-5 pb-3 border-b border-white/10">
-                    <h5 class="font-bold m-0"><i class="fas fa-clipboard-list me-2 text-orange-400"></i>جدول التدريبات</h5>
-                    <a href="{% url 'clubs:training_add' %}" class="btn btn-ghost btn-sm text-xs">إضافة +</a>
-                </div>
-                
-                <div class="flex-1 space-y-3">
-                    {% for training in upcoming_trainings %}
-                    <div class="flex gap-4 p-3 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all">
-                        <div class="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-card border border-white/10 flex-shrink-0">
-                            <span class="text-xs font-bold text-primary">{{ training.date|date:"M" }}</span>
-                            <span class="text-lg font-black">{{ training.date|date:"d" }}</span>
-                        </div>
-                        <div class="flex-1 flex flex-col justify-center">
-                            <div class="flex justify-between items-start">
-                                <span class="badge bg-white/10 text-[10px] text-white">{{ training.category.name }}</span>
-                                <span class="text-xs opacity-70"><i class="far fa-clock me-1"></i>{{ training.start_time|time:"H:i" }}</span>
-                            </div>
-                            <div class="text-sm font-bold mt-1"><i class="fas fa-map-marker-alt text-muted me-1"></i>{{ training.location }}</div>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="h-full flex flex-col items-center justify-center opacity-40 text-center p-6">
-                        <i class="fas fa-calendar-times text-4xl mb-3"></i>
-                        <p class="text-sm">لا توجد تدريبات مبرمجة</p>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            
-            <!-- Recent Matches -->
-            <div class="card rounded-3xl p-6 border border-white/10 flex flex-col" style="background: color-mix(in srgb, var(--card) 70%, transparent);">
-                <div class="flex justify-between items-center mb-5 pb-3 border-b border-white/10">
-                    <h5 class="font-bold m-0"><i class="fas fa-trophy me-2 text-purple-400"></i>سجل المباريات</h5>
-                    <a href="{% url 'clubs:match_add' %}" class="btn btn-ghost btn-sm text-xs">إضافة +</a>
-                </div>
-                
-                <div class="flex-1 space-y-3">
-                    {% for match in recent_matches %}
-                    <div class="p-3 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="badge bg-purple-500/20 text-purple-300 text-[10px]">{{ match.category.name }}</span>
-                            <span class="text-[10px] opacity-60">{{ match.date|date:"d M Y" }}</span>
-                        </div>
-                        <div class="flex justify-between items-center gap-2">
-                            <div class="flex-1 text-right font-bold text-sm truncate" style="{% if match.is_home %}color:var(--primary){% endif %}">
-                                {% if match.is_home %}الوفاق{% else %}{{ match.opponent }}{% endif %}
-                            </div>
-                            <div class="px-3 py-1 bg-black/30 rounded-lg font-mono font-bold border border-white/10">
-                                {% if match.our_score is not None %}
-                                    {% if match.is_home %}
-                                        {{ match.our_score }} - {{ match.their_score }}
-                                    {% else %}
-                                        {{ match.their_score }} - {{ match.our_score }}
-                                    {% endif %}
-                                {% else %}
-                                    VS
-                                {% endif %}
-                            </div>
-                            <div class="flex-1 text-left font-bold text-sm truncate" style="{% if not match.is_home %}color:var(--primary){% endif %}">
-                                {% if match.is_home %}{{ match.opponent }}{% else %}الوفاق{% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="h-full flex flex-col items-center justify-center opacity-40 text-center p-6">
-                        <i class="fas fa-futbol text-4xl mb-3"></i>
-                        <p class="text-sm">لا توجد مباريات مسجلة</p>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-
-        </div>
-    </div>
-</div>
-{% endblock %}
+</body>
+</html>
