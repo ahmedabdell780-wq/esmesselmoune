@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n turniq_tags %}
+{% load i18n turniq_tags static %}
 {% block title %}التسجيل في أكاديمية الوفاق{% endblock %}
 
 {% block extra_head %}
@@ -14,7 +14,11 @@
 <div class="max-w-4xl mx-auto px-4 py-8">
     <div class="text-center mb-10">
         {% if settings.logo %}
-        <img src="{{ settings.logo.url }}" alt="Logo" class="w-32 h-32 mx-auto mb-4">
+        <img src="{{ settings.logo.url }}" alt="Logo" class="w-32 h-32 mx-auto mb-4 object-contain"
+             onerror="this.onerror=null;this.src='{% static 'img/logo.png' %}';">
+        {% else %}
+        <img src="{% static 'img/logo.png' %}" alt="شعار الوفاق" class="w-32 h-32 mx-auto mb-4 object-contain"
+             onerror="this.onerror=null;this.style.display='none';">
         {% endif %}
         <h1 class="font-bebas text-5xl text-primary mb-4">التسجيل في أكاديمية الوفاق</h1>
         <p class="text-gray-400">نادي الوفاق الرياضي مسلمون</p>
