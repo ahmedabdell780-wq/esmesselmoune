@@ -1,0 +1,759 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شهادة الأهلية الطبية — {% if is_blank %}نموذج فارغ{% else %}{{ player.last_name }} {{ player.first_name }} ({{ category_name }}){% endif %}</title>
+    
+    <!-- Bootstrap 5 CSS & FontAwesome -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bs-body-font-family: 'Cairo', Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            background-color: #0f172a;
+            color: #000000;
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', Arial, Helvetica, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ─── Control Toolbar (On-Screen Only) ─── */
+        .screen-toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            z-index: 1050;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.25rem;
+            color: #ffffff;
+            direction: rtl;
+        }
+
+        .document-workspace {
+            padding-top: 75px;
+            padding-bottom: 50px;
+            display: flex;
+            justify-content: center;
+            background: #0b1120;
+            min-height: 100vh;
+        }
+
+        /* ─── The Official FAF Document Sheet (Exact A4 Portrait) ─── */
+        .faf-sheet {
+            width: 210mm;
+            min-height: 297mm;
+            background: #ffffff;
+            color: #000000;
+            padding: 10mm 15mm 8mm 15mm;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            box-sizing: border-box;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            direction: rtl;
+            font-family: 'Cairo', Arial, Helvetica, sans-serif;
+        }
+
+        /* Header block */
+        .med-header {
+            text-align: right;
+            padding-bottom: 2px;
+        }
+
+        .med-header .header-item {
+            font-size: 14.5px;
+            font-weight: 800;
+            color: #000000;
+            margin-bottom: 4px;
+        }
+
+        .med-divider {
+            border: none;
+            border-top: 1.2px solid #000000;
+            margin: 8px 0 10px 0;
+        }
+
+        /* Title block */
+        .med-title-block {
+            text-align: center;
+            margin: 10px 0 12px 0;
+        }
+
+        .med-title-block h2 {
+            font-size: 23px;
+            font-weight: 900;
+            margin: 0 0 6px 0;
+            color: #000000;
+            letter-spacing: -0.3px;
+        }
+
+        .med-title-block .season-text {
+            font-size: 15px;
+            font-weight: 800;
+            color: #000000;
+        }
+
+        /* Doctor & Player Row */
+        .doctor-player-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 8px;
+        }
+
+        .photo-box-container {
+            width: 32mm;
+            height: 40mm;
+            border: 1px solid #999999;
+            background: #fbfbfb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+
+        .photo-box-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-placeholder-text {
+            font-size: 11px;
+            color: #888888;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .doctor-details-box {
+            flex-grow: 1;
+            font-size: 13.5px;
+            line-height: 1.75;
+            color: #000000;
+        }
+
+        .data-row {
+            display: flex;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .label-text {
+            font-weight: 700;
+            color: #000000;
+            white-space: nowrap;
+        }
+
+        .val-text {
+            font-weight: 800;
+            color: #000000;
+        }
+
+        .val-text-latin {
+            font-family: Arial, Helvetica, sans-serif;
+            text-transform: uppercase;
+        }
+
+        .dots-text {
+            color: #444444;
+            letter-spacing: 2px;
+            font-weight: 400;
+        }
+
+        /* Legal Paragraph */
+        .legal-paragraph {
+            text-align: justify;
+            font-size: 13px;
+            line-height: 1.65;
+            font-weight: 600;
+            margin: 14px 0 10px 0;
+            color: #000000;
+        }
+
+        /* Date, Place & Doctor Stamp (Shifted Left) */
+        .doctor-attestation-block {
+            width: fit-content;
+            min-width: 330px;
+            margin-right: auto;
+            margin-left: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 10px;
+            margin-bottom: 6px;
+        }
+
+        .date-place-row {
+            display: flex;
+            justify-content: center;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 13.5px;
+            font-weight: 700;
+            width: 100%;
+        }
+
+        .doctor-signature-block {
+            text-align: center;
+            width: 100%;
+            margin: 4px 0 8px 0;
+        }
+
+        .doctor-signature-block .sig-title {
+            font-size: 13.5px;
+            font-weight: 800;
+            color: #000000;
+        }
+
+        .doctor-signature-block .sig-space {
+            height: 55px;
+        }
+
+        /* Club Undertaking Section */
+        .club-undertaking-section {
+            margin-top: 4px;
+        }
+
+        .undertaking-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 900;
+            margin: 4px 0 8px 0;
+            color: #000000;
+        }
+
+        .undertaking-text {
+            text-align: justify;
+            font-size: 13px;
+            line-height: 1.65;
+            font-weight: 600;
+            margin-bottom: 14px;
+            color: #000000;
+        }
+
+        /* Three signatures row */
+        .three-signatures-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            text-align: center;
+            padding: 0 5px;
+            margin-top: 10px;
+        }
+
+        .three-sig-col {
+            width: 30%;
+        }
+
+        .three-sig-col .col-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: #000000;
+            margin-bottom: 2px;
+        }
+
+        .three-sig-col .col-sub {
+            font-size: 11.5px;
+            font-style: italic;
+            color: #000000;
+        }
+
+        .three-sig-col .col-space {
+            height: 55px;
+        }
+
+        /* Official footer */
+        .official-doc-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+            color: #555555;
+            direction: ltr;
+            margin-top: 8px;
+            padding-top: 4px;
+            border-top: 0.5px solid #e2e8f0;
+            font-family: Arial, sans-serif;
+        }
+
+        /* In-place edit fields */
+        .edit-input-field {
+            border: 1px dashed #94a3b8;
+            background: #f8fafc;
+            padding: 1px 6px;
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: 4px;
+            color: #000000;
+            font-family: inherit;
+        }
+
+        .edit-input-field:focus {
+            outline: 2px solid #2563eb;
+            background: #ffffff;
+        }
+
+        /* ─── PRINT MEDIA QUERY (Strict 1 Page A4 Portrait) ─── */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 6mm 12mm 6mm 12mm;
+            }
+
+            html, body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+            }
+
+            .screen-toolbar,
+            .no-print {
+                display: none !important;
+            }
+
+            .document-workspace {
+                padding: 0 !important;
+                background: #ffffff !important;
+                min-height: auto !important;
+                display: block !important;
+            }
+
+            .faf-sheet {
+                width: 100% !important;
+                height: 100% !important;
+                min-height: auto !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                page-break-after: avoid !important;
+                page-break-inside: avoid !important;
+            }
+
+            .edit-input-field {
+                border: none !important;
+                background: transparent !important;
+                padding: 0 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── TOP CONTROL TOOLBAR (Screen Only) ─── -->
+    <div class="screen-toolbar no-print">
+        
+        <!-- Right side: Navigation & Player Select -->
+        <div class="d-flex align-items-center gap-2">
+            <a href="{% url 'clubs:player_list' %}" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-bold">
+                <i class="fas fa-arrow-right ms-1"></i> قائمة اللاعبين
+            </a>
+            
+            <a href="{% url 'clubs:player_passport_list' %}?category={{ category_name }}" class="btn btn-dark btn-sm rounded-pill px-3 fw-bold border border-slate-700">
+                <i class="fas fa-folder-open ms-1 text-warning"></i> وثائق {{ category_name }}
+            </a>
+
+            <!-- Player select dropdown -->
+            {% if not is_blank and siblings %}
+            <div class="dropdown me-2">
+                <select onchange="window.location.href=this.value" class="form-select form-select-sm rounded-pill bg-slate-800 text-white border-slate-700 fw-bold px-3" style="min-width: 200px;">
+                    {% for p in siblings %}
+                        <option value="{% url 'clubs:player_medical_certificate' p.id %}" {% if p.id == player.id %}selected{% endif %}>
+                            {{ forloop.counter }}. {{ p.last_name }} {{ p.first_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Prev / Next buttons -->
+            <div class="btn-group btn-group-sm">
+                {% if prev_player %}
+                <a href="{% url 'clubs:player_medical_certificate' prev_player.id %}" class="btn btn-secondary" title="السابق">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                {% endif %}
+                {% if next_player %}
+                <a href="{% url 'clubs:player_medical_certificate' next_player.id %}" class="btn btn-secondary" title="التالي">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Center: Quick switch to License Form & Anti-Doping -->
+        <div class="d-flex align-items-center gap-2">
+            {% if not is_blank and player %}
+            <a href="{% url 'clubs:player_license_form' player.id %}" class="btn btn-outline-warning btn-sm rounded-pill px-3 fw-bold">
+                <i class="fas fa-id-card ms-1"></i> طلب رخصة اللاعب
+            </a>
+            <a href="{% url 'clubs:player_anti_doping' player.id %}" class="btn btn-outline-success btn-sm rounded-pill px-3 fw-bold">
+                <i class="fas fa-flask ms-1"></i> كشف المخدرات
+            </a>
+            <a href="{% url 'clubs:player_passport' player.id %}" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-bold">
+                <i class="fas fa-passport ms-1"></i> جواز اللاعب
+            </a>
+            {% else %}
+            <a href="{% url 'clubs:blank_license_form' %}?category={{ category_name }}" class="btn btn-outline-warning btn-sm rounded-pill px-3 fw-bold">
+                <i class="fas fa-id-card ms-1"></i> طلب رخصة فارغ
+            </a>
+            <a href="{% url 'clubs:blank_anti_doping' %}?category={{ category_name }}" class="btn btn-outline-success btn-sm rounded-pill px-3 fw-bold">
+                <i class="fas fa-flask ms-1"></i> كشف مخدرات فارغ
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- Left side: Actions (Blank Toggle, Edit, Save, Print, PDF) -->
+        <div class="d-flex align-items-center gap-2">
+            
+            <!-- Toggle Blank / Filled -->
+            {% if is_blank %}
+                {% if player %}
+                <a href="{% url 'clubs:player_medical_certificate' player.id %}" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold">
+                    <i class="fas fa-user-check ms-1"></i> عرض النسخة الممتلئة
+                </a>
+                {% endif %}
+            {% else %}
+                <a href="{% url 'clubs:player_medical_certificate' player.id %}?blank=1" class="btn btn-outline-warning btn-sm rounded-pill px-3 fw-bold">
+                    <i class="fas fa-file ms-1"></i> عرض نسخة فارغة
+                </a>
+            {% endif %}
+
+            <!-- Batch Print Link -->
+            <a href="{% url 'clubs:medical_certificate_batch_print' %}?category={{ category_name }}" target="_blank" class="btn btn-dark btn-sm rounded-pill px-3 fw-bold border border-slate-700">
+                <i class="fas fa-copy ms-1 text-primary"></i> طباعة كل {{ category_name }}
+            </a>
+
+            <!-- Edit Mode Toggle -->
+            {% if not is_blank %}
+            <button id="btn-toggle-edit" onclick="toggleEditMode()" class="btn btn-warning btn-sm rounded-pill px-3 fw-bold shadow-sm">
+                <i class="fas fa-edit ms-1"></i> <span id="edit-btn-text">تعديل البيانات</span>
+            </button>
+
+            <!-- Save Changes Button -->
+            <button id="btn-save" onclick="saveFormData()" class="btn btn-success btn-sm rounded-pill px-3 fw-bold shadow-sm" style="display: none;">
+                <i class="fas fa-save ms-1"></i> حفظ التعديلات
+            </button>
+            {% endif %}
+
+            <!-- Print Button -->
+            <button onclick="window.print()" class="btn btn-light btn-sm rounded-pill px-4 fw-bold shadow-sm">
+                <i class="fas fa-print ms-1 text-dark"></i> طباعة الشهادة
+            </button>
+
+            <!-- PDF Export Button -->
+            <button id="btn-pdf-export" onclick="exportToPDF()" class="btn btn-danger btn-sm rounded-pill px-3 fw-bold shadow-sm">
+                <i class="fas fa-file-pdf ms-1"></i> PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- ─── DOCUMENT WORKSPACE ─── -->
+    <div class="document-workspace">
+        <form id="medical-form" method="post" action="{% if player %}{% url 'clubs:player_medical_certificate' player.id %}{% endif %}" onsubmit="return false;">
+            {% csrf_token %}
+
+            <div id="document-capture-area" class="faf-sheet">
+                
+                <!-- TOP HEADER & MEDICAL SECTION -->
+                <div>
+                    <!-- Header with Ligue & Club info -->
+                    <div class="med-header">
+                        <div class="header-item">رابطة كرة القدم : الرابطة الولائية لكرة القدم - تيبازة</div>
+                        <div class="header-item">
+                            النادي : 
+                            <span class="view-field">{{ club_name|default:"El-Wefaq Sportif messelmoun" }}</span>
+                            <input type="text" name="club_name" class="edit-field edit-input-field" style="display: none; width: 180px;" value="{{ club_name|default:'El-Wefaq Sportif messelmoun' }}">
+                        </div>
+                    </div>
+
+                    <hr class="med-divider">
+
+                    <!-- Certificate Title -->
+                    <div class="med-title-block">
+                        <h2>شهادة الأهلية الطبية لممارسة نشاط كرة القدم</h2>
+                        <div class="season-text">
+                            الموسم الرياضي : 
+                            <span class="view-field font-monospace">{{ season|default:"2026/2027" }}</span>
+                            <input type="text" name="season" class="edit-field edit-input-field font-monospace text-center" style="display: none; width: 120px;" value="{{ season|default:'2026/2027' }}">
+                        </div>
+                    </div>
+
+                    <hr class="med-divider">
+
+                    <!-- Doctor & Player Information -->
+                    <div class="doctor-player-section">
+                        <!-- Doctor & Player Details (Right in RTL) -->
+                        <div class="doctor-details-box">
+                            <div class="label-text mb-1">أنا الموقع أدناه، دكتور في الطب، طبيب :</div>
+                            
+                            <!-- Doctor Name -->
+                            <div class="data-row">
+                                <span class="label-text">الإسم واللقب :</span>
+                                {% if not is_blank and forms_data.doctor_name %}
+                                    <span class="val-text view-field">{{ forms_data.doctor_name }}</span>
+                                {% else %}
+                                    <span class="view-field dots-text">....................................................................................................</span>
+                                {% endif %}
+                                <input type="text" name="doctor_name" class="edit-field edit-input-field" style="display: none; min-width: 250px;" value="{{ forms_data.doctor_name|default:'' }}" placeholder="اسم ولقب الطبيب الفاحص...">
+                            </div>
+
+                            <!-- Doctor National ID / Registration -->
+                            <div class="data-row">
+                                <span class="label-text">رقم التسجيل الوطني للطبيب :</span>
+                                {% if not is_blank and forms_data.doctor_reg_number %}
+                                    <span class="val-text view-field font-monospace">{{ forms_data.doctor_reg_number }}</span>
+                                {% else %}
+                                    <span class="view-field dots-text">............................................................................</span>
+                                {% endif %}
+                                <input type="text" name="doctor_reg_number" class="edit-field edit-input-field font-monospace" style="display: none; width: 200px;" value="{{ forms_data.doctor_reg_number|default:'' }}" placeholder="رقم التسجيل بالعمادة...">
+                            </div>
+
+                            <div class="label-text mt-2 mb-1">أشهد بعد أن فحصت في هذا اليوم لاعب كرة القدم :</div>
+
+                            <!-- Player Full Name -->
+                            <div class="data-row">
+                                <span class="label-text">الإسم واللقب :</span>
+                                {% if not is_blank %}
+                                    <span class="val-text val-text-latin view-field">{{ full_name_fr }}</span>
+                                    <input type="text" name="full_name_fr" class="edit-field edit-input-field text-uppercase" style="display: none; min-width: 260px;" value="{{ full_name_fr }}">
+                                {% else %}
+                                    <span class="dots-text">....................................................................................................</span>
+                                {% endif %}
+                            </div>
+
+                            <!-- Player DOB & POB -->
+                            <div class="data-row">
+                                <span class="label-text">تاريخ ومكان الميلاد :</span>
+                                {% if not is_blank %}
+                                    <span class="val-text view-field font-monospace">{{ dob|default:"" }}</span>
+                                    <input type="text" name="dob" class="edit-field edit-input-field text-center font-monospace" style="display: none; width: 110px;" value="{{ dob|default:'' }}" placeholder="DD/MM/YYYY">
+
+                                    <span class="label-text me-2">بـ</span>
+                                    <span class="val-text val-text-latin view-field">{{ pob_fr }}</span>
+                                    <input type="text" name="pob_fr" class="edit-field edit-input-field text-uppercase" style="display: none; width: 160px;" value="{{ pob_fr }}">
+                                {% else %}
+                                    <span class="dots-text">........................</span>
+                                    <span class="label-text me-2">بـ</span>
+                                    <span class="dots-text">....................................................................</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Photo Frame (Left in RTL) -->
+                        <div class="photo-box-container">
+                            {% if not is_blank and player and player.photo_url %}
+                                <img src="{{ player.photo_url }}" alt="{{ player.last_name }}">
+                            {% elif not is_blank and player and player.photo %}
+                                <img src="{{ player.photo.url }}" alt="{{ player.last_name }}">
+                            {% else %}
+                                <div class="photo-placeholder-text">
+                                    <i class="fas fa-camera fa-2x mb-1 text-muted d-block"></i>
+                                    صورة شمسية
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Medical Clearance Legal Statement -->
+                    <p class="legal-paragraph">
+                        ووقفت بعد الفحص الطبي المعمق في اليوم المذكور، بأنه لا يعاني من نقص بدني، صحي أو بيولوجي يجعل حياته معرضة للخطر أثناء مشاركته في التدريبات أو المباريات المنظمة تحت إشراف الاتحاد الجزائري لكرة القدم وأي من رابطاته التابعة، وأصرح بأن اللاعب المعني مؤهل طبيا لممارسة نشاطات كرة القدم في صنفه والصنف الأعلى.
+                    </p>
+
+                    <!-- Doctor Attestation & Signature Block (Shifted Left) -->
+                    <div class="doctor-attestation-block">
+                        <div class="date-place-row">
+                            <span class="label-text">حرر بـ :</span>
+                            {% if not is_blank and forms_data.exam_place %}
+                                <span class="val-text view-field">{{ forms_data.exam_place }}</span>
+                            {% else %}
+                                <span class="view-field dots-text">................................</span>
+                            {% endif %}
+                            <input type="text" name="exam_place" class="edit-field edit-input-field" style="display: none; width: 140px;" value="{{ forms_data.exam_place|default:'مسلمون' }}">
+
+                            <span class="label-text me-3">بتاريخ :</span>
+                            {% if not is_blank and forms_data.exam_date %}
+                                <span class="val-text view-field font-monospace">{{ forms_data.exam_date }}</span>
+                            {% else %}
+                                <span class="view-field dots-text">................................</span>
+                            {% endif %}
+                            <input type="text" name="exam_date" class="edit-field edit-input-field text-center font-monospace" style="display: none; width: 130px;" value="{{ forms_data.exam_date|default:'' }}" placeholder="DD/MM/YYYY">
+                        </div>
+
+                        <div class="doctor-signature-block">
+                            <div class="sig-title">توقيع، ختم وتأشيرة الطبيب</div>
+                            <div class="sig-space"></div>
+                        </div>
+                    </div>
+
+                    <hr class="med-divider">
+
+                    <!-- SECTION 2: CLUB UNDERTAKING (تعهد النادي) -->
+                    <div class="club-undertaking-section">
+                        <div class="undertaking-title">تعهد النادي</div>
+
+                        <p class="undertaking-text">
+                            يتعهد كل من طبيب النادي، رئيس النادي و الأمين العام للنادي بأن الملف الطبي (PCMA للموسم {{ season|default:"2026/2027" }} ) للاعب المذكور أعلاه بحوزة النادي و يوضع تحت تصرف الهيئات في حال أي طلب للمراقبة.
+                        </p>
+
+                        <!-- Three Signatures -->
+                        <div class="three-signatures-row">
+                            <!-- Right: Club President -->
+                            <div class="three-sig-col">
+                                <div class="col-title">رئيس النادي</div>
+                                <div class="col-sub">الختم والتوقيع</div>
+                                <div class="col-space"></div>
+                            </div>
+
+                            <!-- Center: General Secretary -->
+                            <div class="three-sig-col">
+                                <div class="col-title">الأمين العام للنادي</div>
+                                <div class="col-sub">الختم والتوقيع</div>
+                                <div class="col-space"></div>
+                            </div>
+
+                            <!-- Left: Club Doctor -->
+                            <div class="three-sig-col">
+                                <div class="col-title">طبيب النادي</div>
+                                <div class="col-sub">الختم والتوقيع</div>
+                                <div class="col-space"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FOOTER -->
+                <div>
+                    <!-- FAF Connect official print footer -->
+                    <div class="official-doc-footer">
+                        <span>https://www.fafconnect.dz/impression/impression.php</span>
+                        <span>1/1</span>
+                    </div>
+                </div>
+
+            </div>
+        </form>
+    </div>
+
+    <!-- html2pdf Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        var isEditMode = false;
+
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            var btnText = document.getElementById('edit-btn-text');
+            var btnSave = document.getElementById('btn-save');
+            var viewFields = document.querySelectorAll('.view-field');
+            var editFields = document.querySelectorAll('.edit-field');
+
+            if (isEditMode) {
+                btnText.innerText = 'إلغاء التعديل';
+                btnSave.style.display = 'inline-block';
+                viewFields.forEach(function(el) { el.style.display = 'none'; });
+                editFields.forEach(function(el) { el.style.display = 'inline-block'; });
+            } else {
+                btnText.innerText = 'تعديل البيانات';
+                btnSave.style.display = 'none';
+                viewFields.forEach(function(el) { el.style.display = 'inline'; });
+                editFields.forEach(function(el) { el.style.display = 'none'; });
+            }
+        }
+
+        function saveFormData() {
+            var form = document.getElementById('medical-form');
+            var formData = new FormData(form);
+            var btnSave = document.getElementById('btn-save');
+            var oldHtml = btnSave.innerHTML;
+            btnSave.disabled = true;
+            btnSave.innerHTML = '<i class="fas fa-spinner fa-spin ms-1"></i> جاري الحفظ...';
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                btnSave.disabled = false;
+                btnSave.innerHTML = oldHtml;
+                if (data.status === 'success') {
+                    alert('تم حفظ التعديلات بنجاح!');
+                    window.location.reload();
+                } else {
+                    alert('حدث خطأ: ' + (data.message || 'فشل الحفظ'));
+                }
+            })
+            .catch(function(err) {
+                console.error(err);
+                btnSave.disabled = false;
+                btnSave.innerHTML = oldHtml;
+                alert('تم إرسال التعديل وسيتم تحديث الصفحة.');
+                window.location.reload();
+            });
+        }
+
+        function exportToPDF() {
+            var btn = document.getElementById('btn-pdf-export');
+            var oldHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin ms-1"></i> جاري الإنشاء...';
+
+            var element = document.getElementById('document-capture-area');
+            var filename = 'Certificat_Medical_{% if is_blank %}Vierge_{{ category_name }}{% else %}{{ player.last_name }}_{{ player.first_name }}{% endif %}.pdf';
+
+            var opt = {
+                margin:       [6, 10, 6, 10],
+                filename:     filename,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(function() {
+                btn.disabled = false;
+                btn.innerHTML = oldHtml;
+            }).catch(function(e) {
+                console.error(e);
+                btn.disabled = false;
+                btn.innerHTML = oldHtml;
+                window.print();
+            });
+        }
+    </script>
+</body>
+</html>

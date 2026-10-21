@@ -1,0 +1,607 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>طباعة طلبات رخص اللاعبين — فئة {{ category_name }}</title>
+    
+    <!-- Bootstrap 5 CSS & FontAwesome -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #000000;
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', Arial, Helvetica, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .screen-toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            z-index: 1050;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            color: #ffffff;
+            direction: rtl;
+        }
+
+        .batch-workspace {
+            padding-top: 75px;
+            padding-bottom: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+            background: #0b1120;
+        }
+
+        .faf-sheet {
+            width: 210mm;
+            min-height: 297mm;
+            background: #ffffff;
+            color: #000000;
+            padding: 8mm 14mm 8mm 14mm;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            box-sizing: border-box;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            direction: rtl;
+            font-family: 'Cairo', Arial, Helvetica, sans-serif;
+            page-break-after: always;
+            page-break-inside: avoid;
+        }
+
+        .faf-sheet:last-child {
+            page-break-after: auto;
+        }
+
+        .faf-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 62px;
+            padding-bottom: 4px;
+        }
+
+        .faf-logo-right, .faf-logo-left {
+            width: 58px;
+            height: 58px;
+            object-fit: contain;
+        }
+
+        .faf-header-title {
+            text-align: center;
+            flex-grow: 1;
+        }
+
+        .faf-header-title h4 {
+            font-size: 16px;
+            font-weight: 800;
+            margin: 0;
+            color: #000000;
+        }
+
+        .faf-header-title h5 {
+            font-size: 14.5px;
+            font-weight: 800;
+            margin: 4px 0 0 0;
+            color: #000000;
+        }
+
+        .faf-divider {
+            border: none;
+            border-top: 1.2px solid #000000;
+            margin: 6px 0 10px 0;
+        }
+
+        .faf-divider-thin {
+            border: none;
+            border-top: 1px solid #000000;
+            margin: 8px 0 12px 0;
+        }
+
+        .title-photo-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 6px;
+        }
+
+        .photo-box-container {
+            width: 32mm;
+            height: 40mm;
+            border: 1px solid #999999;
+            background: #fbfbfb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .photo-box-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-placeholder-text {
+            font-size: 11px;
+            color: #888888;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .title-meta-box {
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        .title-meta-box h2 {
+            font-size: 24px;
+            font-weight: 900;
+            margin: 0 0 8px 0;
+            color: #000000;
+        }
+
+        .title-meta-box .meta-line {
+            font-size: 14px;
+            font-weight: 800;
+            margin-bottom: 4px;
+            color: #000000;
+        }
+
+        .form-section-intro {
+            font-size: 13.5px;
+            font-weight: 800;
+            margin: 8px 0 8px 0;
+            color: #000000;
+        }
+
+        .data-row {
+            display: flex;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 6px;
+            font-size: 13px;
+            line-height: 1.7;
+            margin-bottom: 5px;
+            color: #000000;
+        }
+
+        .label-text {
+            font-weight: 700;
+            color: #000000;
+            white-space: nowrap;
+        }
+
+        .val-text {
+            font-weight: 800;
+            color: #000000;
+        }
+
+        .val-text-latin {
+            font-family: Arial, Helvetica, sans-serif;
+            text-transform: uppercase;
+        }
+
+        .dots-text {
+            color: #444444;
+            letter-spacing: 2px;
+            font-weight: 400;
+        }
+
+        .commitments-list {
+            list-style: none;
+            padding-right: 15px;
+            margin: 3px 0 8px 0;
+            font-size: 12.5px;
+            line-height: 1.55;
+            font-weight: 700;
+        }
+
+        .commitments-list li {
+            position: relative;
+            margin-bottom: 2px;
+        }
+
+        .commitments-list li::before {
+            content: "-";
+            position: absolute;
+            right: -12px;
+            font-weight: 800;
+        }
+
+        .parental-block {
+            margin-top: 6px;
+        }
+
+        .parental-title {
+            text-align: center;
+            font-size: 16.5px;
+            font-weight: 900;
+            margin: 6px 0 8px 0;
+            color: #000000;
+        }
+
+        .signatures-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-top: 14px;
+            padding: 0 10px;
+        }
+
+        .sig-box {
+            width: 45%;
+            text-align: center;
+        }
+
+        .sig-box .sig-title {
+            font-size: 13px;
+            font-weight: 800;
+            line-height: 1.4;
+            color: #000000;
+        }
+
+        .sig-box .sig-space {
+            height: 60px;
+        }
+
+        .official-doc-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+            color: #555555;
+            direction: ltr;
+            margin-top: 6px;
+            padding-top: 4px;
+            border-top: 0.5px solid #e2e8f0;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Print media query */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 6mm 12mm 6mm 12mm;
+            }
+
+            html, body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .screen-toolbar,
+            .no-print {
+                display: none !important;
+            }
+
+            .batch-workspace {
+                padding: 0 !important;
+                background: #ffffff !important;
+                gap: 0 !important;
+                display: block !important;
+            }
+
+            .faf-sheet {
+                width: 100% !important;
+                height: 100% !important;
+                min-height: auto !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                page-break-after: always !important;
+                page-break-inside: avoid !important;
+            }
+
+            .faf-sheet:last-child {
+                page-break-after: auto !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Toolbar -->
+    <div class="screen-toolbar no-print">
+        <div class="d-flex align-items-center gap-3">
+            <a href="{% url 'clubs:player_passport_list' %}?category={{ category_name }}" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-bold">
+                <i class="fas fa-arrow-right ms-1"></i> العودة لفهرس الوثائق
+            </a>
+            
+            <div class="fw-bold text-white fs-6">
+                طباعة طلبات رخص فئة <span class="badge bg-amber-400 text-slate-950 px-2.5 py-1 rounded-pill">{{ category_name }}</span> ({{ total_count }} استمارة)
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <button onclick="window.print()" class="btn btn-light btn-sm rounded-pill px-4 fw-bold shadow-sm">
+                <i class="fas fa-print ms-1 text-dark"></i> طباعة الكل ({{ total_count }})
+            </button>
+
+            <button id="btn-pdf-export" onclick="exportBatchPDF()" class="btn btn-danger btn-sm rounded-pill px-3 fw-bold shadow-sm">
+                <i class="fas fa-file-pdf ms-1"></i> تحميل ملف PDF مجمع
+            </button>
+        </div>
+    </div>
+
+    <!-- Workspace -->
+    <div class="batch-workspace" id="batch-capture-area">
+        {% for item in items %}
+        <div class="faf-sheet">
+            
+            <div>
+                <!-- Header -->
+                <div class="faf-header">
+                    <img src="{% static 'img/faf_logo.png' %}?v=2" alt="FAF" class="faf-logo-right" onerror="this.src='/static/img/trophy.png';">
+                    
+                    <div class="faf-header-title">
+                        <h4>الإتحاد الجزائري لكرة القدم</h4>
+                        <h5>الرابطة الولائية لكرة القدم - تيبازة</h5>
+                    </div>
+
+                    <img src="{% static 'img/ligue_tipaza_logo.png' %}?v=2" alt="Ligue Tipaza" class="faf-logo-left" onerror="this.src='/static/img/trophy.png';">
+                </div>
+
+                <hr class="faf-divider">
+
+                <!-- Title & Photo -->
+                <div class="title-photo-row">
+                    <div class="title-meta-box">
+                        <h2>طلب رخصة اللاعب</h2>
+                        <div class="meta-line">الفئة العمرية : <span class="fw-bold">{{ item.category_name }}</span></div>
+                        <div class="meta-line">الموسم الرياضي : <span class="fw-bold font-monospace">{{ item.season|default:"2026/2027" }}</span></div>
+                    </div>
+
+                    <div class="photo-box-container">
+                        {% if not item.is_blank and item.player and item.player.photo_url %}
+                            <img src="{{ item.player.photo_url }}" alt="{{ item.player.last_name }}">
+                        {% elif not item.is_blank and item.player and item.player.photo %}
+                            <img src="{{ item.player.photo.url }}" alt="{{ item.player.last_name }}">
+                        {% else %}
+                            <div class="photo-placeholder-text">
+                                <i class="fas fa-camera fa-2x mb-1 text-muted d-block"></i>
+                                صورة شمسية
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <hr class="faf-divider-thin">
+
+                <!-- Player Declaration -->
+                <div class="form-section-intro">أنا الموقع أدناه،</div>
+
+                <div class="data-row">
+                    <div style="flex: 1; display: flex; align-items: baseline; gap: 6px;">
+                        <span class="label-text">اللقب :</span>
+                        {% if not item.is_blank %}
+                            <span class="val-text val-text-latin">{{ item.last_name_fr }}</span>
+                        {% else %}
+                            <span class="dots-text">....................................................</span>
+                        {% endif %}
+                    </div>
+
+                    <div style="flex: 1; display: flex; align-items: baseline; gap: 6px;">
+                        <span class="label-text">الإسم :</span>
+                        {% if not item.is_blank %}
+                            <span class="val-text val-text-latin">{{ item.first_name_fr }}</span>
+                        {% else %}
+                            <span class="dots-text">....................................................</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="data-row">
+                    <span class="label-text">تاريخ ومكان الميلاد :</span>
+                    {% if not item.is_blank %}
+                        <span class="val-text font-monospace">{{ item.dob|default:"" }}</span>
+                        <span class="label-text me-2">بـ</span>
+                        <span class="val-text val-text-latin">{{ item.pob_fr }}</span>
+                    {% else %}
+                        <span class="dots-text">........................</span>
+                        <span class="label-text me-2">بـ</span>
+                        <span class="dots-text">....................................................................</span>
+                    {% endif %}
+                </div>
+
+                <div class="data-row">
+                    <span class="label-text">ابن :</span>
+                    {% if not item.is_blank and item.forms_data.father_name %}
+                        <span class="val-text">{{ item.forms_data.father_name }}</span>
+                    {% else %}
+                        <span class="dots-text">..................................................................................................................................................</span>
+                    {% endif %}
+                </div>
+
+                <div class="data-row">
+                    <span class="label-text">بطاقة التعريف / رخصة السياقة رقم :</span>
+                    {% if not item.is_blank and item.forms_data.id_card_number %}
+                        <span class="val-text font-monospace">{{ item.forms_data.id_card_number }}</span>
+                    {% else %}
+                        <span class="dots-text">....................................................</span>
+                    {% endif %}
+
+                    <span class="label-text me-3">سلمت بتاريخ :</span>
+                    {% if not item.is_blank and item.forms_data.id_card_date %}
+                        <span class="val-text font-monospace">{{ item.forms_data.id_card_date }}</span>
+                    {% else %}
+                        <span class="dots-text">........................................</span>
+                    {% endif %}
+                </div>
+
+                <div class="data-row">
+                    <span class="label-text">آخر رخصة للاعب :</span>
+                    <span class="val-text">{{ item.forms_data.last_license_club|default:"................................" }}</span>
+
+                    <span class="label-text me-2">إلى غاية :</span>
+                    <span class="val-text">{{ item.forms_data.last_license_expiry|default:"................................" }}</span>
+
+                    <span class="label-text me-2">( رقم الرخصة :</span>
+                    <span class="val-text font-monospace">
+                        {% if not item.is_blank and item.passport.license_number %}
+                            {{ item.passport.license_number }}
+                        {% else %}
+                            {{ item.forms_data.last_license_number|default:"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" }}
+                        {% endif %}
+                    </span>
+                    <span class="label-text">)</span>
+                </div>
+
+                <div class="data-row">
+                    <span class="label-text">أتعهد بصفتي لاعبا ضمن صفوف نادي :</span>
+                    <span class="val-text">{{ item.club_name|default:"ES Messelmoun" }}</span>
+                </div>
+
+                <div class="data-row">
+                    <span class="label-text">للموسم الرياضي :</span>
+                    <span class="val-text font-monospace">{{ item.season|default:"2026/2027" }}</span>
+                </div>
+
+                <div class="label-text mt-1">كما أتعهد باحترام ما يلي :</div>
+                <ul class="commitments-list">
+                    <li>قوانين اللعبة.</li>
+                    <li>القوانين العامة للاتحاد الجزائري لكرة القدم.</li>
+                    <li>الأخلاقيات والقيم الرياضية.</li>
+                </ul>
+
+                <!-- Parental Authorization -->
+                <div class="parental-block">
+                    <div class="parental-title">رخصة أبوية</div>
+
+                    <div class="data-row">
+                        <span class="label-text">أنا الموقع أدناه :</span>
+                        {% if not item.is_blank and item.forms_data.parent_name %}
+                            <span class="val-text">{{ item.forms_data.parent_name }}</span>
+                        {% else %}
+                            <span class="dots-text">..................................................................................................................................................</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="data-row">
+                        <span class="label-text">تاريخ ومكان الميلاد :</span>
+                        <span class="val-text">{{ item.forms_data.parent_dob_pob|default:".........................................................................................................................................." }}</span>
+                    </div>
+
+                    <div class="data-row">
+                        <span class="label-text">ب.ت / ر.س رقم :</span>
+                        <span class="val-text font-monospace">{{ item.forms_data.parent_id_number|default:"........................................" }}</span>
+
+                        <span class="label-text me-2">سلمت بتاريخ</span>
+                        <span class="val-text font-monospace">{{ item.forms_data.parent_id_date|default:"........................................" }}</span>
+
+                        <span class="label-text me-2">من طرف</span>
+                        <span class="val-text">{{ item.forms_data.parent_id_issuer|default:"........................................" }}</span>
+                    </div>
+
+                    <div class="data-row">
+                        <span class="label-text">الساكن بـ</span>
+                        <span class="val-text">{{ item.forms_data.parent_address|default:"...................................................." }}</span>
+
+                        <span class="label-text me-2">بلدية</span>
+                        <span class="val-text">{{ item.forms_data.parent_commune|default:"مسلمون" }}</span>
+
+                        <span class="label-text me-2">ولاية</span>
+                        <span class="val-text">{{ item.forms_data.parent_wilaya|default:"تيبازة" }}</span>
+                    </div>
+
+                    <div class="data-row mt-2">
+                        <span class="label-text">أرخص لابني :</span>
+                        {% if not item.is_blank %}
+                            <span class="val-text val-text-latin">{{ item.full_name_fr }}</span>
+                        {% else %}
+                            <span class="dots-text">....................................................................</span>
+                        {% endif %}
+                        <span class="label-text me-2">بممارسة كرة القدم ضمن هذا النادي.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="signatures-row">
+                    <div class="sig-box">
+                        <div class="sig-title">إمضاء وبصمة الولي الشرعي مصادق عليه</div>
+                        <div class="sig-space"></div>
+                    </div>
+
+                    <div class="sig-box">
+                        <div class="sig-title">
+                            توقيع وختم وتأشيرة<br>
+                            الرئيس الحالي للنادي
+                        </div>
+                        <div class="sig-space"></div>
+                    </div>
+                </div>
+
+                <div class="official-doc-footer">
+                    <span>https://www.fafconnect.dz/impression/impression.php</span>
+                    <span>1/2</span>
+                </div>
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- html2pdf Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        function exportBatchPDF() {
+            var btn = document.getElementById('btn-pdf-export');
+            var oldHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin ms-1"></i> جاري الإنشاء...';
+
+            var element = document.getElementById('batch-capture-area');
+            var filename = 'Demandes_Licences_{{ category_name }}.pdf';
+
+            var opt = {
+                margin:       [6, 10, 6, 10],
+                filename:     filename,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+            };
+
+            html2pdf().set(opt).from(element).save().then(function() {
+                btn.disabled = false;
+                btn.innerHTML = oldHtml;
+            }).catch(function(e) {
+                console.error(e);
+                btn.disabled = false;
+                btn.innerHTML = oldHtml;
+                window.print();
+            });
+        }
+    </script>
+</body>
+</html>

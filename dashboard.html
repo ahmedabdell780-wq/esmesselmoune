@@ -21,9 +21,11 @@
             <div class="flex items-center gap-4 md:gap-6">
                 <div class="w-24 h-24 md:w-32 md:h-32 rounded-full bg-white border-4 border-white/40 shadow-2xl flex items-center justify-center backdrop-blur-md p-1.5 overflow-hidden shrink-0">
                     {% if settings.logo %}
-                        <img src="{{ settings.logo.url }}" alt="Logo" class="w-full h-full object-contain rounded-full">
+                        <img src="{{ settings.logo.url }}" alt="Logo" class="w-full h-full object-contain rounded-full"
+                             onerror="this.onerror=null;this.src='{% static 'img/logo.png' %}';">
                     {% else %}
-                        <img src="{% static 'img/app_logo.png' %}" alt="شعار الوفاق" class="w-full h-full object-contain rounded-full" onerror="this.onerror=null;this.style.display='none';this.parentElement.innerHTML='<span class=\'text-4xl text-emerald-800 font-black\'>WRM</span>';">
+                        <img src="{% static 'img/logo.png' %}" alt="شعار الوفاق" class="w-full h-full object-contain rounded-full"
+                             onerror="this.onerror=null;this.src='{% static 'img/app_logo.png' %}';">
                     {% endif %}
                 </div>
                 <div class="text-white">

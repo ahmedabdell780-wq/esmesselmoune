@@ -1,0 +1,339 @@
+{% extends 'base.html' %}
+{% load i18n turniq_tags static %}
+{% block title %}التسجيل في أكاديمية الوفاق{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* إخفاء القوائم والفوتر لمنع الزوار من تصفح باقي الموقع */
+    header, nav, footer, #mobile-nav, .mobile-nav-toggle { display: none !important; }
+    main { padding-top: 2rem !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="text-center mb-10">
+        {% if settings.logo %}
+        <img src="{{ settings.logo.url }}" alt="Logo" class="w-32 h-32 mx-auto mb-4 object-contain"
+             onerror="this.onerror=null;this.src='{% static 'img/logo.png' %}';">
+        {% else %}
+        <img src="{% static 'img/logo.png' %}" alt="شعار الوفاق" class="w-32 h-32 mx-auto mb-4 object-contain"
+             onerror="this.onerror=null;this.style.display='none';">
+        {% endif %}
+        <h1 class="font-bebas text-5xl text-primary mb-4">التسجيل في أكاديمية الوفاق</h1>
+        <p class="text-gray-400">نادي الوفاق الرياضي مسلمون</p>
+    </div>
+
+    {% if not settings.academy_registration_open %}
+    <div class="card rounded-2xl p-12 shadow-2xl text-center">
+        <div class="text-6xl mb-4">🔒</div>
+        <h2 class="text-3xl font-bold text-red-500 mb-4">التسجيلات مغلقة حالياً</h2>
+        <p class="text-xl text-gray-300">يرجى الانتظار حتى تعلن إدارة النادي عن فتح فترة التسجيلات الجديدة للموسم القادم.</p>
+    </div>
+    {% else %}
+    <div class="card rounded-2xl p-8 shadow-2xl">
+        <form method="post" enctype="multipart/form-data" class="space-y-8">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+            <div class="bg-red-500/10 border border-red-500/30 text-red-500 p-4 rounded-xl mb-6">
+                يرجى تصحيح الأخطاء أدناه.
+                {{ form.errors }}
+            </div>
+            {% endif %}
+
+            <!-- 1. معلومات الهوية والمسار الدراسي للاعب -->
+            <div class="space-y-4">
+                <h2 class="text-2xl font-bold border-b border-white/10 pb-2 text-white/90">1. معلومات الهوية والمسار الدراسي للاعب</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label">اللقب / Nom</label>
+                        {{ form.last_name }}
+                    </div>
+                    <div>
+                        <label class="form-label">الاسم / Prénom</label>
+                        {{ form.first_name }}
+                    </div>
+                    <div>
+                        <label class="form-label">اللقب بالفرنسية / Nom en français <span class="text-xs text-slate-400 font-normal">(اختياري)</span></label>
+                        {{ form.last_name_fr }}
+                    </div>
+                    <div>
+                        <label class="form-label">الاسم بالفرنسية / Prénom en français <span class="text-xs text-slate-400 font-normal">(اختياري)</span></label>
+                        {{ form.first_name_fr }}
+                    </div>
+                    <div>
+                        <label class="form-label">تاريخ الازدياد / Date de naissance</label>
+                        {{ form.date_of_birth }}
+                    </div>
+                    <div>
+                        <label class="form-label">مكان الازدياد / Lieu de naissance</label>
+                        {{ form.place_of_birth }}
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="form-label">العنوان الشخصي / Adresse</label>
+                        {{ form.address }}
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="form-label">المؤسسة التعليمية (المستوى الدراسي) / Niveau Scolaire</label>
+                        {{ form.school_level }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. الملف الفني والرياضي للاعب -->
+            <div class="space-y-4">
+                <h2 class="text-2xl font-bold border-b border-white/10 pb-2 text-white/90">2. الملف الفني والرياضي للاعب</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label">الفئة العمرية / Catégorie</label>
+                        {{ form.category }}
+                    </div>
+                    <div>
+                        <label class="form-label">النادي أو المدرسة السابقة</label>
+                        {{ form.previous_club }}
+                    </div>
+                    <div>
+                        <label class="form-label">المنصب التكتيكي / Poste</label>
+                        {{ form.position }}
+                    </div>
+                    <div>
+                        <label class="form-label">القدم المفضلة</label>
+                        {{ form.preferred_foot }}
+                    </div>
+                    <div>
+                        <label class="form-label">الرقم المفضل للقميص</label>
+                        {{ form.jersey_number }}
+                    </div>
+                    <div>
+                        <label class="form-label">الصورة الشمسية (اختياري)</label>
+                        {{ form.photo }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. معلومات الولي -->
+            <div class="space-y-4">
+                <h2 class="text-2xl font-bold border-b border-white/10 pb-2 text-white/90">3. معلومات الولي أو الوصي الشرعي</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label">صلة القرابة</label>
+                        {{ form.parent_relation }}
+                    </div>
+                    <div>
+                        <label class="form-label">اسم ولقب الولي</label>
+                        {{ form.parent_name }}
+                    </div>
+                    <div>
+                        <label class="form-label">رقم الهاتف الأساسي</label>
+                        {{ form.parent_phone }}
+                    </div>
+                    <div>
+                        <label class="form-label">هاتف الطوارئ (الاحتياطي)</label>
+                        {{ form.emergency_phone }}
+                    </div>
+                    <div>
+                        <label class="form-label">البريد الإلكتروني</label>
+                        {{ form.parent_email }}
+                    </div>
+                    <div>
+                        <label class="form-label">المهنة ومقر العمل</label>
+                        {{ form.parent_profession }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. الملف الطبي البيومتري -->
+            <div class="space-y-4">
+                <h2 class="text-2xl font-bold border-b border-white/10 pb-2 text-white/90">4. القياسات البيومترية والملف الطبي</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="form-label">القامة (سم) / Taille</label>
+                        {{ form.height }}
+                    </div>
+                    <div>
+                        <label class="form-label">الوزن (كغ) / Poids</label>
+                        {{ form.weight }}
+                    </div>
+                    <div>
+                        <label class="form-label">فصيلة الدم / Groupe sanguin</label>
+                        {{ form.blood_type }}
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="form-label">الأمراض المزمنة أو السوابق الجراحية (إن وجدت)</label>
+                        {{ form.medical_history }}
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="form-label">شهادة طبية إلكترونية (اختياري)</label>
+                        {{ form.medical_certificate }}
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="form-label">بطاقة التعريف الوطنية (اختياري / للفئات المنخرطة في الرابطة)</label>
+                        {{ form.id_card }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-6 border-t border-white/10 flex justify-end gap-4">
+                <button type="submit" class="btn btn-primary px-8">
+                    <i class="fa-solid fa-check ml-2"></i> تأكيد وتسجيل اللاعب
+                </button>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dobInput = document.querySelector('input[name="date_of_birth"]');
+    const catSelect = document.querySelector('select[name="category"]');
+    const fnInput = document.querySelector('input[name="first_name"]');
+    const lnInput = document.querySelector('input[name="last_name"]');
+    
+    if (!dobInput || !catSelect) return;
+
+    // Badge container for auto-categorization
+    let catBadge = document.getElementById('auto-cat-badge');
+    if (!catBadge) {
+        catBadge = document.createElement('div');
+        catBadge.id = 'auto-cat-badge';
+        catBadge.className = 'mt-2 text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3 py-1.5 hidden items-center gap-2';
+        catSelect.parentNode.appendChild(catBadge);
+    }
+
+    // Duplicate warning container
+    let dupAlert = document.getElementById('dup-warning-alert');
+    if (!dupAlert) {
+        dupAlert = document.createElement('div');
+        dupAlert.id = 'dup-warning-alert';
+        dupAlert.className = 'mt-4 text-xs font-bold text-amber-200 bg-amber-500/20 border border-amber-500/40 rounded-xl p-3.5 hidden items-start gap-2.5 shadow-lg';
+        const formEl = document.querySelector('form');
+        if (formEl) {
+            formEl.insertBefore(dupAlert, formEl.firstChild);
+        }
+    }
+
+    function determineTargetCategory(dobStr) {
+        if (!dobStr) return null;
+        const parts = dobStr.split('-');
+        if (parts.length < 1) return null;
+        const year = parseInt(parts[0], 10);
+        if (isNaN(year)) return null;
+
+        if (year <= 2009) return 'U20';
+        if (year === 2010 || year === 2011) return 'U17';
+        if (year === 2012 || year === 2013) return 'U15';
+        if (year === 2014) return 'U13';
+        if (year === 2015 || year === 2016) return 'U11';
+        if (year >= 2017) return 'U9';
+        return null;
+    }
+
+    function applyAutoCategory() {
+        const val = dobInput.value;
+        const targetCatName = determineTargetCategory(val);
+        if (!targetCatName) {
+            catBadge.classList.add('hidden');
+            catBadge.classList.remove('flex');
+            return;
+        }
+
+        // Find option matching category name
+        let matched = false;
+        for (let i = 0; i < catSelect.options.length; i++) {
+            const opt = catSelect.options[i];
+            const optText = opt.text.toUpperCase();
+            if (optText.includes(targetCatName)) {
+                catSelect.value = opt.value;
+                matched = true;
+                break;
+            }
+        }
+
+        if (matched) {
+            const parts = val.split('-');
+            const yr = parts[0];
+            catBadge.innerHTML = `<i class="fas fa-magic text-emerald-400"></i> تم تحديد الفئة تلقائياً: <strong>${targetCatName}</strong> بناءً على سنة الازدياد (${yr})`;
+            catBadge.classList.remove('hidden');
+            catBadge.classList.add('flex');
+        } else {
+            catBadge.classList.add('hidden');
+            catBadge.classList.remove('flex');
+        }
+    }
+
+    let checkTimeout = null;
+    function checkDuplicate() {
+        if (!fnInput || !lnInput || !dobInput) return;
+        const fn = fnInput.value.trim();
+        const ln = lnInput.value.trim();
+        const dob = dobInput.value.trim();
+
+        if (!fn || !ln || !dob) {
+            if (dupAlert) {
+                dupAlert.classList.add('hidden');
+                dupAlert.classList.remove('flex');
+            }
+            return;
+        }
+
+        clearTimeout(checkTimeout);
+        checkTimeout = setTimeout(() => {
+            const url = `/club/players/check-duplicate/?first_name=${encodeURIComponent(fn)}&last_name=${encodeURIComponent(ln)}&date_of_birth=${encodeURIComponent(dob)}`;
+            
+            fetch(url)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.is_duplicate && data.duplicate) {
+                        dupAlert.innerHTML = `
+                            <i class="fas fa-exclamation-triangle text-amber-400 text-lg flex-shrink-0 mt-0.5"></i>
+                            <div>
+                                <div class="font-black text-amber-300 mb-0.5">تنبيه لتفادي التكرار والخلط:</div>
+                                <div>يوجد لاعب مسجل بالفعل في النادي بنفس الاسم وتاريخ الميلاد: 
+                                    <span class="underline font-black text-white">${data.duplicate.name}</span> 
+                                    (فئة: <span class="text-amber-300 font-bold">${data.duplicate.category}</span> - تاريخ الميلاد: ${data.duplicate.date_of_birth}). 
+                                    تم التعرف عليه لتفادي التكرار (رغم اختلاف الهمزة أو الفراغات).
+                                </div>
+                            </div>
+                        `;
+                        dupAlert.classList.remove('hidden');
+                        dupAlert.classList.add('flex');
+                    } else {
+                        dupAlert.classList.add('hidden');
+                        dupAlert.classList.remove('flex');
+                    }
+
+                    if (data.suggested_category && !catSelect.value) {
+                        applyAutoCategory();
+                    }
+                })
+                .catch(() => {});
+        }, 300);
+    }
+
+    dobInput.addEventListener('change', () => {
+        applyAutoCategory();
+        checkDuplicate();
+    });
+    dobInput.addEventListener('input', () => {
+        applyAutoCategory();
+        checkDuplicate();
+    });
+
+    if (fnInput) {
+        fnInput.addEventListener('input', checkDuplicate);
+        fnInput.addEventListener('change', checkDuplicate);
+    }
+    if (lnInput) {
+        lnInput.addEventListener('input', checkDuplicate);
+        lnInput.addEventListener('change', checkDuplicate);
+    }
+
+    // Initial run if pre-filled
+    if (dobInput.value && !catSelect.value) {
+        applyAutoCategory();
+    }
+});
+</script>
+{% endblock %}
