@@ -713,8 +713,10 @@
                                 <div class="photo-border">
                                     <div class="photo-inner-border">
                                         <div class="player-photo">
-                                            {% if player.photo %}
-                                                <img src="{{ player.photo.url }}" alt="{{ player.first_name }}">
+                                            {% if player.photo_url %}
+                                                <img src="{{ player.photo_url }}" alt="{{ player.first_name }}" onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\'fas fa-user\'></i>';">
+                                            {% elif player.photo %}
+                                                <img src="{{ player.photo.url }}" alt="{{ player.first_name }}" onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\'fas fa-user\'></i>';">
                                             {% else %}
                                                 <i class="fas fa-user"></i>
                                             {% endif %}
@@ -1314,8 +1316,10 @@
                 {% for p in all_category_players %}
                 <label class="modal-player-item" data-name="{{ p.first_name }} {{ p.last_name }} {{ p.position }} {{ p.jersey_number }}" style="display: flex; align-items: center; gap: 10px; background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255,255,255,0.08); padding: 8px 12px; border-radius: 12px; cursor: pointer; user-select: none; transition: all 0.15s ease;">
                     <input type="checkbox" class="modal-player-checkbox" value="{{ p.id }}" {% if p.id in selected_ids_list %}checked{% endif %} onchange="updateModalCount()" style="width: 18px; height: 18px; accent-color: #3b82f6; cursor: pointer;">
-                    {% if p.photo %}
-                        <img src="{{ p.photo.url }}" alt="{{ p.first_name }}" style="width: 36px; height: 36px; border-radius: 8px; object-fit: cover; border: 1px solid rgba(255,255,255,0.2);">
+                    {% if p.photo_url %}
+                        <img src="{{ p.photo_url }}" alt="{{ p.first_name }}" style="width: 36px; height: 36px; border-radius: 8px; object-fit: cover; border: 1px solid rgba(255,255,255,0.2);" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    {% elif p.photo %}
+                        <img src="{{ p.photo.url }}" alt="{{ p.first_name }}" style="width: 36px; height: 36px; border-radius: 8px; object-fit: cover; border: 1px solid rgba(255,255,255,0.2);" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
                     {% else %}
                         <div style="width: 36px; height: 36px; border-radius: 8px; background: #334155; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 14px;">
                             <i class="fas fa-user"></i>
