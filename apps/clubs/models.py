@@ -208,6 +208,124 @@ class ClubPlayer(models.Model):
         return f"{ln} {fn}".strip()
 
     @property
+    def photo_url(self):
+        """Permanent static photo fallback for players, matching by name and category or ID,
+        ensuring photos are served even on ephemeral filesystems like Render (where DB IDs differ)."""
+        import os
+        import re
+        from django.conf import settings
+        from django.templatetags.static import static
+
+        cat_name = (self.category.name if self.category else '').upper().strip()
+        cat_folder = cat_name.lower()
+
+        # Helper to normalize Arabic names
+        def _norm(t):
+            if not t:
+                return ""
+            t = re.sub(r'[\u064B-\u0652\u0640]', '', str(t))
+            t = re.sub(r'[إأآا]', 'ا', t)
+            t = re.sub(r'[ة]', 'ه', t)
+            t = re.sub(r'[ى]', 'ي', t)
+            t = re.sub(r'[\s_\-]+', '', t)
+            return t.lower().strip()
+
+        # 1. Match by normalized Arabic name (works on Render PostgreSQL & SQLite regardless of PK)
+        if cat_name == 'U15':
+            name_map = {
+                'عبداللاويبدرالدين': '156.jpg',
+                'بدرالدينعبداللاوي': '156.jpg',
+                'عبيداتمحمداكرم': '157.jpg',
+                'محمداكرمعبيدات': '157.jpg',
+                'عبيداتاكرم': '157.jpg',
+                'اكرمعبيدات': '157.jpg',
+                'عمورةمحمدضياءالدين': '158.jpg',
+                'محمدضياءالدينعمورة': '158.jpg',
+                'عمورةضياءالدين': '158.jpg',
+                'ضياءالدينعمورة': '158.jpg',
+                'عمورةانس': '159.jpg',
+                'انسعمورة': '159.jpg',
+                'عمروشمحمد': '160.jpg',
+                'محمدعمروش': '160.jpg',
+                'بلعيديعبدالحفيظ': '161.jpg',
+                'عبدالحفيظبلعيدي': '161.jpg',
+                'بلعيديجلوشمسالدين': '162.jpg',
+                'جلولشمسالدينبلعيدي': '162.jpg',
+                'بلعيديشمسالدين': '162.jpg',
+                'شمسالدينبلعيدي': '162.jpg',
+                'بلعيديجلو': '162.jpg',
+                'جلولبلعيدي': '162.jpg',
+                'بنحدوشهشام': '163.jpg',
+                'هشامبنحدوش': '163.jpg',
+                'شاميمحمدضياءالدين': '164.jpg',
+                'محمدضياءالدينشامي': '164.jpg',
+                'شاميضياءالدين': '164.jpg',
+                'ضياءالدينشامي': '164.jpg',
+                'حمونيوائل': '165.jpg',
+                'وائلحموني': '165.jpg',
+                'حساينياد': '166.jpg',
+                'ايادحساين': '166.jpg',
+                'رياضزكرياء': '167.jpg',
+                'زكرياءرياض': '167.jpg',
+                'رياضزكريا': '167.jpg',
+                'زكريارياض': '167.jpg',
+                'رياضانيس': '168.jpg',
+                'انيسرياض': '168.jpg',
+                'سداويفارس': '169.jpg',
+                'فارسسداوي': '169.jpg',
+                'سليمانيوسيم': '171.jpg',
+                'وسيمسليماني': '171.jpg',
+                'يحياويمهدي': '172.jpg',
+                'مهدييحياوي': '172.jpg',
+                'يمناينقيس': '173.jpg',
+                'قيسيمناين': '173.jpg',
+                'يمناينقيسعبدالمعين': '173.jpg',
+                'قيسعبدالمعينيمناين': '173.jpg',
+                'زيبوشاحمدصهيب': '174.jpg',
+                'احمدصهيبزيبوش': '174.jpg',
+                'زيبوشصهيب': '174.jpg',
+                'صهيبزيبوش': '174.jpg',
+                'زيبوشياسين': '176.jpg',
+                'ياسينزيبوش': '176.jpg',
+                'مسكيعبدالحق': '177.jpg',
+                'عبدالحقمسكي': '177.jpg',
+                'موساوييحيي': '178.jpg',
+                'موساوييحيى': '178.jpg',
+                'يحييموساوي': '178.jpg',
+                'يحيىموساوي': '178.jpg',
+            }
+            c1 = _norm(f"{self.first_name}{self.last_name}")
+            c2 = _norm(f"{self.last_name}{self.first_name}")
+            found_file = name_map.get(c1) or name_map.get(c2)
+            if not found_file:
+                for k, v in name_map.items():
+                    if k == c1 or k == c2 or (len(k) >= 6 and (k in c1 or k in c2 or c1 in k or c2 in k)):
+                        found_file = v
+                        break
+            if found_file:
+                return static(f"img/players/u15/{found_file}")
+
+        # 2. Check in static/img/players/<category>/<id>.jpg
+        if cat_folder and self.id:
+            static_cat_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'players', cat_folder, f"{self.id}.jpg")
+            if os.path.exists(static_cat_path):
+                return static(f"img/players/{cat_folder}/{self.id}.jpg")
+
+        # 3. Check in static/img/players/<id>.jpg
+        if self.id:
+            static_direct_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'players', f"{self.id}.jpg")
+            if os.path.exists(static_direct_path):
+                return static(f"img/players/{self.id}.jpg")
+
+        # 4. Check uploaded photo in media
+        if self.photo:
+            try:
+                return self.photo.url
+            except Exception:
+                pass
+        return None
+
+    @property
     def generated_card_number(self):
         cat_name = self.category.name if self.category else "U0"
         cat_clean = "".join(cat_name.split())
