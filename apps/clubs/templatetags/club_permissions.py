@@ -10,11 +10,11 @@ def can_manage_category(user, category_id):
     if user.role in ('admin', 'organizer'):
         return True
     if user.role == 'coach':
-        if not user.coach_category_id:
+        allowed_ids = user.get_coach_category_ids() if hasattr(user, 'get_coach_category_ids') else []
+        if not allowed_ids:
             return True # Head coach (no specific category restriction)
-        # Check if the object's category matches the coach's category
         if category_id:
-            return user.coach_category_id == category_id
+            return category_id in allowed_ids
     return False
 
 @register.filter
@@ -24,9 +24,9 @@ def can_manage_object(user, obj):
     if user.role in ('admin', 'organizer'):
         return True
     if user.role == 'coach':
-        if not user.coach_category_id:
+        allowed_ids = user.get_coach_category_ids() if hasattr(user, 'get_coach_category_ids') else []
+        if not allowed_ids:
             return True
-        # Find category_id on the object
         category_id = None
         if hasattr(obj, 'category_id'):
             category_id = obj.category_id
@@ -34,10 +34,9 @@ def can_manage_object(user, obj):
             category_id = obj.player.category_id
         elif hasattr(obj, 'session') and hasattr(obj.session, 'category_id'):
             category_id = obj.session.category_id
-        # For Category objects
         elif obj.__class__.__name__ == 'Category':
             category_id = obj.id
             
         if category_id:
-            return user.coach_category_id == category_id
+            return category_id in allowed_ids
     return False
