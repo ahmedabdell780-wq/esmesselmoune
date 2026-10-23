@@ -15,23 +15,31 @@ class AppearanceInline(admin.StackedInline):
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     inlines = [AppearanceInline]
-    list_display  = ('avatar_thumb', 'username', 'full_name', 'role',
+    list_display  = ('avatar_thumb', 'username', 'full_name', 'role', 'display_categories',
                      'email', 'is_active', 'date_joined')
-    list_filter   = ('role', 'is_active', 'is_staff')
+    list_filter   = ('role', 'coach_categories', 'is_active', 'is_staff')
     search_fields = ('username', 'first_name', 'last_name', 'email')
     ordering      = ('-date_joined',)
     list_editable = ('role',)
+    filter_horizontal = ('coach_categories', 'groups', 'user_permissions')
 
     fieldsets = BaseUserAdmin.fieldsets + (
         ('Profil TurniQ', {
-            'fields': ('role', 'coach_category', 'phone', 'avatar', 'neighborhood', 'bio')
+            'fields': ('role', 'coach_categories', 'phone', 'avatar', 'neighborhood', 'bio')
         }),
     )
     add_fieldsets = BaseUserAdmin.add_fieldsets + (
         ('Profil TurniQ', {
-            'fields': ('role', 'coach_category', 'phone', 'neighborhood')
+            'fields': ('role', 'coach_categories', 'phone', 'neighborhood')
         }),
     )
+
+    def display_categories(self, obj):
+        cats = [c.name for c in obj.coach_categories.all()]
+        if obj.coach_category and obj.coach_category.name not in cats:
+            cats.append(obj.coach_category.name)
+        return ", ".join(cats) if cats else "—"
+    display_categories.short_description = 'الفئات التدريبية'
 
     def avatar_thumb(self, obj):
         if obj.avatar:

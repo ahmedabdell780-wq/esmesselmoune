@@ -41,7 +41,21 @@ class User(AbstractUser):
     neighborhood = models.CharField(max_length=120, blank=True)
     bio          = models.TextField(blank=True)
     created_at   = models.DateTimeField(auto_now_add=True)
-    coach_category = models.ForeignKey('clubs.Category', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('Catégorie (Entraîneur) / الفئة (للمدرب)'), help_text=_('Si sélectionné, ce coach ne pourra gérer que cette catégorie.'))
+    coach_category = models.ForeignKey(
+        'clubs.Category',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_('Catégorie Principale (Entraîneur)'),
+        help_text=_('الفئة الأساسية (اختياري).')
+    )
+    coach_categories = models.ManyToManyField(
+        'clubs.Category',
+        blank=True,
+        related_name='coaches',
+        verbose_name=_('Catégories (Entraîneur) / الفئات (للمدرب)'),
+        help_text=_('حدد الفئات التي يدربها هذا المدرب (يمكنك اختيار أكثر من فئة).')
+    )
     updated_at   = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -50,6 +64,13 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.get_full_name() or self.username} ({self.get_role_display()})"
+
+    def get_coach_category_ids(self):
+        """Returns list of category IDs the coach is allowed to manage."""
+        ids = list(self.coach_categories.values_list('id', flat=True))
+        if self.coach_category_id and self.coach_category_id not in ids:
+            ids.append(self.coach_category_id)
+        return ids
 
     @property
     def is_admin_role(self):    return self.role == self.Role.ADMIN
