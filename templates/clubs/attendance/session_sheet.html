@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block title %}تسجيل الحضور: {{ session.team.name }} — {{ session.date|date:"Y-m-d" }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-6 animate-fadeIn">
+    
+    <!-- Top Bar: Navigation & Action -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+            <div class="flex items-center gap-2 text-xs text-gray-400 mb-2">
+                <a href="{% url 'clubs:session_list' %}" class="hover:text-primary transition-colors flex items-center gap-1">
+                    <i class="fas fa-arrow-right"></i>
+                    <span>سجل الحصص</span>
+                </a>
+                <span>/</span>
+                <span class="text-white font-bold">{{ session.team.name }}</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-black text-white flex items-center gap-3">
+                <span>ورقة الحضور والغياب</span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold bg-primary/20 text-primary border border-primary/30">
+                    {{ session.get_kind_display }}
+                </span>
+            </h1>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <a href="{% url 'clubs:attendance_stats' %}?category={{ session.team.id }}" class="btn btn-ghost btn-sm border border-white/10 text-xs flex items-center gap-1.5">
+                <i class="fas fa-chart-pie text-yellow-400"></i>
+                <span>الإحصائيات</span>
+            </a>
+            <a href="{% url 'clubs:session_list' %}" class="btn btn-ghost btn-sm border border-white/10 text-xs">
+                <span>كل الحصص</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Session Details Card -->
+    <div class="p-5 sm:p-6 rounded-[2rem] bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10 backdrop-blur-xl shadow-2xl mb-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            
+            <div class="space-y-2 flex-1">
+                <div class="flex flex-wrap items-center gap-3">
+                    <span class="px-3 py-1 rounded-xl bg-white/10 text-white font-mono font-bold text-sm">
+                        📅 {{ session.date|date:"l d F Y" }}
+                    </span>
+                    <span class="px-3 py-1 rounded-xl bg-white/5 text-gray-300 text-xs border border-white/5">
+                        📍 {{ session.location|default:"الملعب البلدي" }}
+                    </span>
+                    {% if session.title %}
+                    <span class="text-xs text-primary font-bold">
+                        🎯 {{ session.title }}
+                    </span>
+                    {% endif %}
+                </div>
+                {% if session.notes %}
+                <p class="text-xs text-gray-400 leading-relaxed pt-1">
+                    {{ session.notes }}
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- Quick Action: Mark All Present -->
+            <div class="shrink-0 flex items-center gap-3">
+                <button type="button"
+                        hx-post="{% url 'clubs:attendance_mark_all_present' session.id %}"
+                        hx-target="#attendance-sheet-list"
+                        hx-swap="innerHTML"
+                        hx-confirm="هل تريد تأكيد تسجيل جميع اللاعبين كحاضرين؟"
+                        class="min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 active:scale-95 transition-all">
+                    <span>✓✓</span>
+                    <span>تسجيل الكل حاضر</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Dynamic Counter Card (updated out-of-band on each click) -->
+        <div class="mt-6 pt-5 border-t border-white/10">
+            <div id="attendance-counter-wrapper">
+                <div class="flex items-center justify-between text-xs font-bold mb-2">
+                    <span class="text-gray-300">تم تسجيل <span class="text-primary font-mono text-sm">{{ recorded_count }}</span> من أصل <span class="text-white font-mono text-sm">{{ total_players }}</span> لاعب</span>
+                    <span class="text-primary font-mono">{{ progress_pct }}%</span>
+                </div>
+                <div class="w-full bg-white/10 h-2.5 rounded-full overflow-hidden">
+                    <div class="bg-gradient-to-r from-emerald-500 to-primary h-full rounded-full transition-all duration-300" 
+                         style="width: {{ progress_pct }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Players Attendance List -->
+    <div class="space-y-4">
+        <div class="flex items-center justify-between px-2">
+            <h2 class="font-bold text-sm text-gray-300 uppercase tracking-wider flex items-center gap-2">
+                <span>👥 قائمة لاعبي الفئة</span>
+                <span class="text-xs text-gray-500 font-mono">({{ total_players }})</span>
+            </h2>
+            <div class="text-[11px] text-gray-400">
+                <span>اضغط على الزر المطلوب لتحديث حالة اللاعب فورياً</span>
+            </div>
+        </div>
+
+        <div id="attendance-sheet-list" class="space-y-3">
+            {% for item in player_items %}
+                {% include 'clubs/attendance/partials/player_row.html' with item=item session=session total_players=total_players recorded_count=recorded_count progress_pct=progress_pct %}
+            {% empty %}
+                <div class="p-12 text-center rounded-3xl bg-white/5 border border-white/10">
+                    <p class="text-gray-400 font-bold mb-2">لا يوجد لاعبون مسجلون في هذه الفئة حالياً.</p>
+                    <a href="{% url 'clubs:player_add' %}" class="btn btn-primary btn-sm">إضافة لاعبين</a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

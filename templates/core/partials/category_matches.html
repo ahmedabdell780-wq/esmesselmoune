@@ -1,0 +1,38 @@
+{% load i18n %}
+{% if matches %}
+    {% for match in matches %}
+    <div class="p-3 rounded-2xl bg-black/30 border border-white/5 hover:border-white/20 transition-all flex items-center justify-between gap-2">
+        <div class="flex flex-col items-center flex-1 min-w-0">
+            <span class="text-base mb-0.5">{% if match.is_home %}🛡️{% else %}⚔️{% endif %}</span>
+            <span class="text-[10px] font-bold {% if match.is_home %}text-primary{% else %}text-gray-300{% endif %} truncate w-full text-center">
+                {% if match.is_home %}{% trans "الوفاق" %}{% else %}{{ match.opponent }}{% endif %}
+            </span>
+        </div>
+        <div class="flex flex-col items-center shrink-0">
+            <div class="font-bebas text-lg px-2.5 py-0.5 rounded-lg border {% if match.our_score is not None %}bg-white/10 text-white border-white/10{% else %}bg-yellow-500/10 text-yellow-400 border-yellow-500/20{% endif %}">
+                {% if match.our_score is not None and match.their_score is not None %}
+                    {% if match.is_home %}
+                        {{ match.our_score }} - {{ match.their_score }}
+                    {% else %}
+                        {{ match.their_score }} - {{ match.our_score }}
+                    {% endif %}
+                {% else %}
+                    <span class="text-xs font-mono font-bold tracking-wider">VS</span>
+                {% endif %}
+            </div>
+            <span class="text-[8px] text-gray-400 font-mono mt-1">{{ match.date|date:"d M" }}</span>
+        </div>
+        <div class="flex flex-col items-center flex-1 min-w-0">
+            <span class="text-base mb-0.5">{% if not match.is_home %}🛡️{% else %}⚔️{% endif %}</span>
+            <span class="text-[10px] font-bold {% if not match.is_home %}text-primary{% else %}text-gray-300{% endif %} truncate w-full text-center">
+                {% if match.is_home %}{{ match.opponent }}{% else %}{% trans "الوفاق" %}{% endif %}
+            </span>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="flex flex-col items-center justify-center py-8 text-center text-gray-500">
+        <i class="fas fa-calendar-times text-2xl mb-2 opacity-30"></i>
+        <p class="text-xs font-medium">{% trans "لا توجد مباريات مسجلة لهذه الفئة" %}</p>
+    </div>
+{% endif %}

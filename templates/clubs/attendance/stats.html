@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block title %}إحصائيات ونسب الحضور — ESM{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-6 animate-fadeIn">
+    
+    <!-- Top Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div>
+            <div class="flex items-center gap-2 text-xs text-gray-400 mb-1">
+                <a href="{% url 'clubs:session_list' %}" class="hover:text-primary">سجل الحصص</a>
+                <span>/</span>
+                <span class="text-white">إحصائيات الحضور</span>
+            </div>
+            <h1 class="text-3xl font-black text-white flex items-center gap-3">
+                <span>📊 إحصائيات حضور وغياب اللاعبين</span>
+            </h1>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <a href="{% url 'clubs:session_list' %}" class="btn btn-ghost border border-white/10 text-xs font-bold">
+                <span>📋 قائمة الحصص</span>
+            </a>
+            <a href="{% url 'clubs:session_create' %}" class="btn btn-primary text-xs font-black shadow-lg shadow-primary/30">
+                <span>➕ حصة جديدة</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="p-4 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-md mb-6">
+        <form method="get" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            <div>
+                <label class="block text-[11px] text-gray-400 font-bold mb-1">تصفية حسب الفئة</label>
+                <select name="category" onchange="this.form.submit()" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white">
+                    <option value="">جميع الفئات</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-[11px] text-gray-400 font-bold mb-1">ترتيب النتائج</label>
+                <select name="sort" onchange="this.form.submit()" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white">
+                    <option value="absences_desc" {% if sort_by == 'absences_desc' %}selected{% endif %}>الأكثر غياباً أولاً 🚨</option>
+                    <option value="rate_asc" {% if sort_by == 'rate_asc' %}selected{% endif %}>أقل نسبة حضور أولاً</option>
+                    <option value="rate_desc" {% if sort_by == 'rate_desc' %}selected{% endif %}>أعلى نسبة حضور أولاً 🌟</option>
+                    <option value="name" {% if sort_by == 'name' %}selected{% endif %}>حسب الاسم أبجدياً</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-[11px] text-gray-400 font-bold mb-1">من تاريخ</label>
+                <input type="date" name="date_from" value="{{ date_from }}" onchange="this.form.submit()" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white">
+            </div>
+
+            <div>
+                <label class="block text-[11px] text-gray-400 font-bold mb-1">إلى تاريخ</label>
+                <input type="date" name="date_to" value="{{ date_to }}" onchange="this.form.submit()" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white">
+            </div>
+        </form>
+    </div>
+
+    <!-- Quick Stats Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="p-5 rounded-2xl bg-white/[0.03] border border-white/5">
+            <span class="text-xs text-gray-400 font-bold block mb-1">إجمالي الحصص المبرمجة</span>
+            <span class="text-3xl font-black text-white font-mono">{{ total_sessions }}</span>
+        </div>
+        <div class="p-5 rounded-2xl bg-white/[0.03] border border-white/5">
+            <span class="text-xs text-gray-400 font-bold block mb-1">عدد اللاعبين المعنيين</span>
+            <span class="text-3xl font-black text-primary font-mono">{{ player_stats|length }}</span>
+        </div>
+        <div class="p-5 rounded-2xl bg-white/[0.03] border border-white/5">
+            <span class="text-xs text-gray-400 font-bold block mb-1">أعلى نسبة انضباط</span>
+            <span class="text-3xl font-black text-emerald-400 font-mono">
+                {% if player_stats %}{{ player_stats.0.rate|default:100 }}%{% else %}0%{% endif %}
+            </span>
+        </div>
+        <div class="p-5 rounded-2xl bg-white/[0.03] border border-white/5">
+            <span class="text-xs text-gray-400 font-bold block mb-1">تنبيهات الغياب المرتفع</span>
+            <span class="text-3xl font-black text-rose-500 font-mono">
+                {% regroup player_stats by absent as absent_list %}
+                {{ player_stats|slice:":3"|length }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Stats Table / Mobile Cards -->
+    <div class="rounded-3xl bg-white/[0.02] border border-white/10 overflow-hidden shadow-2xl">
+        <div class="overflow-x-auto">
+            <table class="w-full text-right text-sm">
+                <thead class="bg-white/5 text-[11px] text-gray-400 uppercase tracking-wider border-b border-white/10">
+                    <tr>
+                        <th class="p-4 font-black">اللاعب</th>
+                        <th class="p-4 font-black">الفئة</th>
+                        <th class="p-4 text-center font-black">الحصص</th>
+                        <th class="p-4 text-center font-black text-emerald-400">حاضر ✓</th>
+                        <th class="p-4 text-center font-black text-amber-400">متأخر ⏱</th>
+                        <th class="p-4 text-center font-black text-rose-400">غايب ✗</th>
+                        <th class="p-4 text-center font-black text-slate-400">معذور 📝</th>
+                        <th class="p-4 text-center font-black">نسبة الحضور</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                    {% for row in player_stats %}
+                    <tr class="hover:bg-white/[0.04] transition-colors">
+                        <td class="p-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
+                                    {% if row.player.photo %}
+                                        <img src="{{ row.player.photo.url }}" alt="{{ row.player.first_name }}" width="36" height="36" class="w-full h-full object-cover">
+                                    {% else %}
+                                        <span>#{{ row.player.jersey_number|default:row.player.id }}</span>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <span class="font-bold text-white block">{{ row.player.first_name }} {{ row.player.last_name }}</span>
+                                    <span class="text-[10px] text-gray-400">{{ row.player.position|default:"لاعب" }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="p-4 text-xs font-bold text-gray-300">
+                            <span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/5">
+                                {{ row.team.name }}
+                            </span>
+                        </td>
+                        <td class="p-4 text-center font-mono font-bold text-gray-300">
+                            {{ row.sessions_count }}
+                        </td>
+                        <td class="p-4 text-center font-mono font-black text-emerald-400">
+                            {{ row.present }}
+                        </td>
+                        <td class="p-4 text-center font-mono font-bold text-amber-400">
+                            {{ row.late }}
+                        </td>
+                        <td class="p-4 text-center font-mono font-black text-rose-400">
+                            {{ row.absent }}
+                        </td>
+                        <td class="p-4 text-center font-mono font-bold text-slate-400">
+                            {{ row.excused }}
+                        </td>
+                        <td class="p-4 text-center">
+                            <div class="inline-flex items-center gap-2">
+                                <span class="font-mono font-black text-xs 
+                                    {% if row.rate >= 80 %}text-emerald-400
+                                    {% elif row.rate >= 60 %}text-amber-400
+                                    {% else %}text-rose-400{% endif %}">
+                                    {{ row.rate }}%
+                                </span>
+                                <div class="w-16 bg-white/10 h-2 rounded-full overflow-hidden hidden sm:block">
+                                    <div class="h-full rounded-full 
+                                        {% if row.rate >= 80 %}bg-emerald-500
+                                        {% elif row.rate >= 60 %}bg-amber-500
+                                        {% else %}bg-rose-500{% endif %}" 
+                                         style="width: {{ row.rate }}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="p-12 text-center text-gray-400">
+                            لا توجد بيانات حضور مسجلة تطابق معايير البحث.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

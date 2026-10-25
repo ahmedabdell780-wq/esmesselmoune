@@ -1,12 +1,13 @@
 from django.urls import path
+from django.views.decorators.cache import cache_page
 from . import views
 
 app_name = 'tournaments'
 
 urlpatterns = [
     path('',                  views.TournamentListView.as_view(),   name='list'),
-    path('standings/',        views.StandingsView.as_view(),        name='standings'),
-    path('<int:pk>/standings/', views.StandingsView.as_view(),      name='standings_detail'),
+    path('standings/',        cache_page(180)(views.StandingsView.as_view()),        name='standings'),
+    path('<int:pk>/standings/', cache_page(180)(views.StandingsView.as_view()),      name='standings_detail'),
     path('groups-print/',  views.StandingsPrintView.as_view(),   name='groups_print'),
     path('<int:pk>/groups-print/', views.StandingsPrintView.as_view(), name='groups_print_detail'),
     path('group-poster/',  views.GroupStandingsPosterView.as_view(),   name='group_poster'),
@@ -20,8 +21,8 @@ urlpatterns = [
     path('<int:pk>/calendar-print/', views.MatchesPrintView.as_view(), name='calendar_print_detail'),
     path('<int:pk>/group-calendar-print/', views.GroupMatchesPrintView.as_view(), name='group_calendar_print_detail'),
     path('<int:pk>/all-players-print/', views.TournamentAllPlayersPrintView.as_view(), name='all_players_print'),
-    path('bracket/',          views.BracketView.as_view(),          name='bracket'),
-    path('<int:pk>/bracket/', views.BracketView.as_view(),          name='bracket_detail'),
+    path('bracket/',          cache_page(180)(views.BracketView.as_view()),          name='bracket'),
+    path('<int:pk>/bracket/', cache_page(180)(views.BracketView.as_view()),          name='bracket_detail'),
     path('<int:pk>/tree-print/', views.TournamentTreePrintView.as_view(), name='tree_print'),
     path('admin/',            views.TournamentAdminView.as_view(),  name='admin_panel'),
     path('admin/<int:pk>/manual-groups/', views.ManualGroupView.as_view(), name='manual_groups'),

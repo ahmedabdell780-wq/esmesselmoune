@@ -87,4 +87,18 @@ urlpatterns = [
     path('news/', views.NewsListView.as_view(), name='news_list'),
     path('news/<slug:slug>/', views.NewsDetailView.as_view(), name='news_detail'),
 
+    # Advanced Attendance Tracking Module
+    path('sessions/', views.SessionListView.as_view(), name='session_list'),
+    path('sessions/create/', views.SessionCreateView.as_view(), name='session_create'),
+    path('sessions/<int:pk>/sheet/', views.SessionAttendanceSheetView.as_view(), name='session_sheet'),
+    path('sessions/<int:session_pk>/record/<int:player_pk>/', views.AttendanceRecordHTMXView.as_view(), name='attendance_record'),
+    path('sessions/<int:session_pk>/mark-all-present/', views.AttendanceMarkAllPresentHTMXView.as_view(), name='attendance_mark_all_present'),
+    path('sessions/stats/', views.AttendanceStatsView.as_view(), name='attendance_stats'),
+
+    # Guardian Portal & Announcements
+    path('guardian/portal/', views.GuardianPortalView.as_view(), name='guardian_portal'),
+    path('announcements/', views.AnnouncementListView.as_view(), name='announcement_list'),
+    path('announcements/create/', views.AnnouncementCreateView.as_view(), name='announcement_create'),
+    path('announcements/<int:pk>/', views.AnnouncementDetailView.as_view(), name='announcement_detail'),
+
 ]

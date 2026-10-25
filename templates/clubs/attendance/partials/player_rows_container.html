@@ -1,0 +1,3 @@
+{% for item in player_items %}
+    {% include 'clubs/attendance/partials/player_row.html' with item=item session=session total_players=total_players recorded_count=recorded_count progress_pct=progress_pct %}
+{% endfor %}

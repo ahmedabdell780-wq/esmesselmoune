@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block title %}سجل الحصص والتدريبات — ESM{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-6 animate-fadeIn">
+    
+    <!-- Top Action Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div>
+            <div class="flex items-center gap-2 text-xs text-gray-400 mb-1">
+                <a href="{% url 'clubs:dashboard' %}" class="hover:text-primary">لوحة الأكاديمية</a>
+                <span>/</span>
+                <span class="text-white">وحدة الحضور والغياب</span>
+            </div>
+            <h1 class="text-3xl font-black text-white flex items-center gap-3">
+                <span>📋 سجل الحصص والتدريبات</span>
+            </h1>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <a href="{% url 'clubs:attendance_stats' %}" class="btn btn-ghost border border-white/10 hover:border-yellow-400/50 hover:bg-yellow-400/10 text-xs sm:text-sm font-bold flex items-center gap-2">
+                <i class="fas fa-chart-line text-yellow-400"></i>
+                <span>إحصائيات الحضور</span>
+            </a>
+            <a href="{% url 'clubs:session_create' %}" class="btn btn-primary text-xs sm:text-sm font-black flex items-center gap-2 shadow-lg shadow-primary/30">
+                <span>➕</span>
+                <span>حصة جديدة</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="p-4 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-md mb-6">
+        <form method="get" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            <div>
+                <label class="block text-[11px] text-gray-400 font-bold mb-1">الفئة / الفريق</label>
+                <select name="category" onchange="this.form.submit()" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white">
+                    <option value="">جميع الفئات</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-[11px] text-gray-400 font-bold mb-1">نوع الحصة</label>
+                <select name="kind" onchange="this.form.submit()" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white">
+                    <option value="">جميع الأنواع</option>
+                    {% for k_val, k_label in kinds %}
+                        <option value="{{ k_val }}" {% if selected_kind == k_val %}selected{% endif %}>{{ k_label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-[11px] text-gray-400 font-bold mb-1">من تاريخ</label>
+                <input type="date" name="date_from" value="{{ date_from }}" onchange="this.form.submit()" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white">
+            </div>
+
+            <div>
+                <label class="block text-[11px] text-gray-400 font-bold mb-1">إلى تاريخ</label>
+                <input type="date" name="date_to" value="{{ date_to }}" onchange="this.form.submit()" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white">
+            </div>
+        </form>
+    </div>
+
+    <!-- Sessions List -->
+    <div class="space-y-3">
+        {% for session in sessions %}
+        <div class="p-5 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-white/20 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 group">
+            
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex flex-col items-center justify-center shrink-0 group-hover:border-primary/50 transition-colors">
+                    <span class="text-xs text-gray-400 font-bold">{{ session.date|date:"M" }}</span>
+                    <span class="text-lg font-black text-white font-mono leading-none">{{ session.date|date:"d" }}</span>
+                </div>
+
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="px-2.5 py-0.5 rounded-lg text-xs font-black bg-primary/20 text-primary border border-primary/30">
+                            {{ session.team.name }}
+                        </span>
+                        <span class="px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-white/5 text-gray-300">
+                            {{ session.get_kind_display }}
+                        </span>
+                        <span class="text-xs text-gray-500 font-mono">
+                            {{ session.date|date:"l" }}
+                        </span>
+                    </div>
+                    <div class="text-xs text-gray-400 flex items-center gap-3">
+                        {% if session.title %}
+                            <span class="text-white font-bold">{{ session.title }}</span>
+                        {% endif %}
+                        <span>📍 {{ session.location }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance Metrics & CTA -->
+            <div class="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-3 sm:pt-0 border-white/5">
+                <div class="text-right">
+                    <div class="text-xs font-bold text-gray-300">
+                        سُجّل <span class="text-primary font-mono font-black">{{ session.recorded_attendances_count }}</span> / <span class="text-white font-mono">{{ session.total_players_count }}</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-[10px] text-gray-500 mt-1">
+                        <span class="text-emerald-400 font-bold">✓ {{ session.present_count }} حاضر</span>
+                        <span>•</span>
+                        <span class="text-amber-400 font-bold">⏱ {{ session.late_count }} متأخر</span>
+                        <span>•</span>
+                        <span class="text-rose-400 font-bold">✗ {{ session.absent_count }} غايب</span>
+                    </div>
+                </div>
+
+                <a href="{% url 'clubs:session_sheet' session.pk %}" class="btn btn-ghost hover:bg-primary hover:text-black border border-white/10 text-xs font-bold px-4 py-2 rounded-xl transition-all flex items-center gap-2">
+                    <span>فتح ورقة الحضور</span>
+                    <span>←</span>
+                </a>
+            </div>
+
+        </div>
+        {% empty %}
+        <div class="p-12 text-center rounded-3xl bg-white/5 border border-white/10">
+            <span class="text-4xl block mb-3 opacity-40">📅</span>
+            <p class="text-gray-300 font-bold mb-2">لا توجد حصص مسجلة مطابقة للبحث.</p>
+            <p class="text-xs text-gray-500 mb-6">ابدأ بإنشاء حصة تدريبية جديدة للفريق لتسجيل حضور اللاعبين.</p>
+            <a href="{% url 'clubs:session_create' %}" class="btn btn-primary btn-sm">➕ إنشاء حصة جديدة</a>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

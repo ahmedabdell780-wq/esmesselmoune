@@ -8,11 +8,15 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <meta name="theme-color" content="#0d1117"/>
+  <meta name="theme-color" content="#02200d"/>
   <meta name="mobile-web-app-capable" content="yes"/>
-    <link rel="icon" href="/static/img/app_icon.jpg" type="image/jpeg">
-  <link rel="apple-touch-icon" href="/static/img/app_icon.jpg">
-  <link rel="manifest" href="/static/manifest.json"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="CLUB E.S.M"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/img/icons/favicon-32x32.png"/>
+  <link rel="icon" type="image/png" sizes="16x16" href="/static/img/icons/favicon-16x16.png"/>
+  <link rel="apple-touch-icon" href="/static/img/icons/apple-touch-icon.png"/>
+  <link rel="manifest" href="/manifest.json"/>
   <title>{% block title %}TurniQ{% endblock %} — {% trans "Tournoi Inter-Quartiers" %}</title>
 
   <!-- Tailwind -->
@@ -40,7 +44,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <!-- HTMX -->
-  <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   <!-- Alpine.js -->
   <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
@@ -188,7 +192,7 @@
   {% block extra_head %}{% endblock %}
 </head>
 
-<body class="{% if appearance.theme == 'dark' %}dark{% endif %}">
+<body class="{% if appearance.theme == 'dark' %}dark{% endif %}" hx-boost="true" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
 
 <!-- GLOBAL BACKGROUND -->
 <div id="global-bg" class="no-print"></div>
@@ -251,37 +255,24 @@
       </div>
     </div>
 
-        <!-- DESKTOP NAV -->
+    <!-- DESKTOP NAV -->
     <div class="hidden md:flex items-center gap-0.5">
-      <a href="{% url 'core:home' %}" class="nav-link">🏠</a>
-      
-      <!-- Tournament Dropdown -->
-      <div class="relative group">
-        <button class="nav-link flex items-center gap-1 cursor-pointer">
-          🏆 البطولة
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-        </button>
-        <div class="absolute right-0 mt-2 w-48 bg-[#0a0f1c] border border-white/10 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 overflow-hidden">
-          <a href="{% url 'matches:calendar' %}"      class="block px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white border-b border-white/5">📅 {% trans "Calendrier" %}</a>
-          <a href="{% url 'tournaments:standings' %}" class="block px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white border-b border-white/5">📊 {% trans "Classement" %}</a>
-          <a href="{% url 'tournaments:bracket' %}"   class="block px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white border-b border-white/5">🏆 {% trans "Bracket" %}</a>
-          <a href="{% url 'teams:list' %}"            class="block px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white border-b border-white/5">⚽ {% trans "Équipes" %}</a>
-          <a href="{% url 'teams:global_ranking' %}"  class="block px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white">🌍 {% trans "Classement Global" %}</a>
-        </div>
-      </div>
-      
-      <a href="{% url 'clubs:dashboard' %}" class="nav-link">🎓 أكاديمية الوفاق</a>
-      
+      <a href="{% url 'core:home' %}"                class="nav-link">🏠</a>
+      <a href="{% url 'matches:calendar' %}"         class="nav-link">📅 {% trans "Calendrier" %}</a>
+      <a href="{% url 'tournaments:standings' %}"    class="nav-link">📊 {% trans "Classement" %}</a>
+      <a href="{% url 'tournaments:bracket' %}"      class="nav-link">🏆 {% trans "Bracket" %}</a>
+      <a href="{% url 'teams:list' %}"               class="nav-link">⚽ {% trans "Équipes" %}</a>
+      <a href="{% url 'teams:global_ranking' %}"     class="nav-link">🌍 {% trans "Classement Global" %}</a>
+      <a href="{% url 'clubs:dashboard' %}"          class="nav-link">🛡️ أكاديمية الوفاق</a>
+      <a href="{% url 'clubs:academy_register' %}"   class="nav-link text-emerald-400 font-bold">📝 التسجيل في الأكاديمية</a>
+      <a href="{% url 'matches:stats' %}"            class="nav-link">📈 {% trans "Stats" %}</a>
       {% if registration_open_tournament %}
-      <a href="{% url 'teams:registration' %}" class="btn btn-primary btn-sm ml-2 mr-1 animate-pulse" style="white-space: nowrap;">
+      <a href="{% url 'teams:registration' %}" class="btn btn-primary btn-sm ml-2 animate-pulse">
         🚀 {% trans "S'inscrire" %}
       </a>
       {% endif %}
-      <a href="{% url 'clubs:academy_register' %}" class="nav-link text-emerald-400 font-bold" style="white-space: nowrap;">👤 التسجيل في الأكاديمية</a>
-      
-      <a href="{% url 'matches:stats' %}" class="nav-link">📈 {% trans "Stats" %}</a>
-      
     </div>
+
     <!-- RIGHT CONTROLS -->
     <div class="flex items-center gap-1.5 flex-shrink-0">
 
@@ -389,7 +380,7 @@
             <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold overflow-hidden flex-shrink-0"
                  style="background:var(--primary-glow);color:var(--primary);border:1px solid var(--primary)">
               {% if user.avatar %}
-                <img src="{{ user.avatar.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/img/app_logo.png';" />
+                <img src="{{ user.avatar.url }}" class="w-full h-full object-cover"/>
               {% else %}
                 {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
               {% endif %}
@@ -407,6 +398,10 @@
             </div>
             <a href="{% url 'accounts:profile' %}"    class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-white/5 transition">👤 {% trans "Profil" %}</a>
             <a href="{% url 'accounts:appearance' %}" class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-white/5 transition">🎨 {% trans "Apparence" %}</a>
+            <a href="{% url 'clubs:guardian_portal' %}" class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-white/5 transition text-emerald-400 font-bold">🛡️ بوابة ولي الأمر</a>
+            {% if user.role == 'admin' or user.role == 'organizer' or user.role == 'coach' %}
+            <a href="{% url 'clubs:announcement_list' %}" class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-white/5 transition text-yellow-400 font-bold">📢 إعلانات النادي</a>
+            {% endif %}
             {% if user.role == 'admin' or user.role == 'organizer' %}
             <a href="{% url 'teams:create' %}"        class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-white/5 transition">➕ {% trans "Nouvelle équipe" %}</a>
             {% endif %}
@@ -431,45 +426,31 @@
   </div>
 
   <!-- MOBILE NAV -->
-    <div id="mobile-nav" class="hidden md:hidden border-t px-4 py-3 grid grid-cols-3 gap-2 no-print"
-         style="border-color:var(--border)">
-      <a href="{% url 'core:home' %}" class="nav-link justify-center text-center flex-col text-xs gap-0.5">🏠<span>{% trans "Accueil" %}</span></a>
-      
-      <!-- Tournaments Menu Toggle -->
-      <button onclick="document.getElementById('mobile-tournaments-menu').classList.toggle('hidden')" class="nav-link justify-center text-center flex-col text-xs gap-0.5">
-        🏆<span>البطولة</span>
-      </button>
-
-      <!-- Dashboard -->
-      <a href="{% url 'clubs:dashboard' %}" class="nav-link justify-center text-center flex-col text-xs gap-0.5">🎓<span>أكاديمية</span></a>
-      
-      <!-- Tournament Menu (Hidden by default) -->
-      <div id="mobile-tournaments-menu" class="hidden col-span-3 grid grid-cols-3 gap-2 p-2 rounded-xl bg-black/20 border border-white/5 mb-2 mt-1">
-        <a href="{% url 'matches:calendar' %}"      class="nav-link justify-center text-center flex-col text-xs gap-0.5">📅<span>{% trans "Calendrier" %}</span></a>
-        <a href="{% url 'tournaments:standings' %}" class="nav-link justify-center text-center flex-col text-xs gap-0.5">📊<span>{% trans "Classement" %}</span></a>
-        <a href="{% url 'tournaments:bracket' %}"   class="nav-link justify-center text-center flex-col text-xs gap-0.5">🏆<span>{% trans "Bracket" %}</span></a>
-        <a href="{% url 'teams:list' %}"            class="nav-link justify-center text-center flex-col text-xs gap-0.5">⚽<span>{% trans "Équipes" %}</span></a>
-        <a href="{% url 'teams:global_ranking' %}"  class="nav-link justify-center text-center flex-col text-xs gap-0.5">🌍<span>{% trans "Class. Global" %}</span></a>
-        <a href="{% url 'matches:stats' %}"         class="nav-link justify-center text-center flex-col text-xs gap-0.5">📈<span>{% trans "Stats" %}</span></a>
-      </div>
-
-      {% if registration_open_tournament %}
-      <a href="{% url 'teams:registration' %}" class="nav-link justify-center text-center flex-col text-xs gap-0.5" style="color:var(--primary)">🚀<span>{% trans "S'inscrire" %}</span></a>
-      {% endif %}
-      
-      <a href="{% url 'clubs:academy_register' %}" class="nav-link justify-center text-center flex-col text-xs gap-0.5" style="color: #34d399;">👤<span class="font-bold">التسجيل</span></a>
-      
-      <!-- Mobile search -->
-      <div class="col-span-3 mt-1 relative">
-        <form onsubmit="handleMobileSearchSubmit(event)" class="relative flex items-center">
-          <input type="text" id="mobile-search-input" placeholder="{% trans 'Rechercher... / بحث' %}"
-                 class="form-input py-2 ps-9 pe-4 text-xs font-bold rounded-xl w-full border border-white/10"
-                 style="background:var(--card2); color: var(--text-light);"/>
-          <span class="absolute inset-y-0 start-3 flex items-center text-xs pointer-events-none" style="color:var(--muted)">🔍</span>
-        </form>
-      </div>
+  <div id="mobile-nav" class="hidden md:hidden border-t px-4 py-3 grid grid-cols-3 gap-2 no-print"
+       style="border-color:var(--border)">
+    <a href="{% url 'core:home' %}"             class="nav-link justify-center text-center flex-col text-xs gap-0.5">🏠<span>{% trans "Accueil" %}</span></a>
+    <a href="{% url 'matches:calendar' %}"      class="nav-link justify-center text-center flex-col text-xs gap-0.5">📅<span>{% trans "Calendrier" %}</span></a>
+    <a href="{% url 'tournaments:standings' %}" class="nav-link justify-center text-center flex-col text-xs gap-0.5">📊<span>{% trans "Classement" %}</span></a>
+    <a href="{% url 'tournaments:bracket' %}"   class="nav-link justify-center text-center flex-col text-xs gap-0.5">🏆<span>{% trans "Bracket" %}</span></a>
+    <a href="{% url 'teams:list' %}"            class="nav-link justify-center text-center flex-col text-xs gap-0.5">⚽<span>{% trans "Équipes" %}</span></a>
+    <a href="{% url 'teams:global_ranking' %}"  class="nav-link justify-center text-center flex-col text-xs gap-0.5">🌍<span>{% trans "Class. Global" %}</span></a>
+    <a href="{% url 'clubs:dashboard' %}"  class="nav-link justify-center text-center flex-col text-xs gap-0.5">🛡️<span>أكاديمية الوفاق</span></a>
+    <a href="{% url 'clubs:academy_register' %}" class="nav-link justify-center text-center flex-col text-xs gap-0.5" style="color: #34d399;">📝<span class="font-bold">تسجيل</span></a>
+    <a href="{% url 'matches:stats' %}"         class="nav-link justify-center text-center flex-col text-xs gap-0.5">📈<span>{% trans "Stats" %}</span></a>
+    {% if registration_open_tournament %}
+    <a href="{% url 'teams:registration' %}" class="nav-link justify-center text-center flex-col text-xs gap-0.5" style="color:var(--primary)">🚀<span>{% trans "S'inscrire" %}</span></a>
+    {% endif %}
+    <!-- Mobile search -->
+    <div class="col-span-3 mt-1 relative">
+      <form onsubmit="handleMobileSearchSubmit(event)" class="relative flex items-center">
+        <input type="text" id="mobile-search-input" placeholder="{% trans 'Rechercher... / ابحث عن فريق، لاعب، بطولة' %}"
+               class="form-input py-2 ps-9 pe-4 text-xs font-bold rounded-xl w-full border border-white/10"
+               style="background:var(--card2); color: var(--text-light);"/>
+        <span class="absolute inset-y-0 start-3 flex items-center text-xs pointer-events-none" style="color:var(--muted)">🔍</span>
+      </form>
     </div>
-  </nav>
+  </div>
+</nav>
 
 <!-- DJANGO MESSAGES → auto toast -->
 {% if messages %}
@@ -519,45 +500,20 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <!-- FOOTER -->
-<footer class="mt-12 border-t py-8 no-print" style="border-color:var(--border)">
-  <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-6">
-    
-    <!-- Left: App Name -->
-    <div class="text-center md:text-start flex-1">
-      <p class="font-bebas text-2xl tracking-widest text-white">{{ site_settings.app_name|upper }}</p>
-      <p class="text-xs mt-1" style="color:var(--muted)">{% trans "Tournoi Inter-Quartiers" %} - دورة الوفاء و الإخاء</p>
+<footer class="mt-12 border-t py-6 no-print" style="border-color:var(--border)">
+  <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+    <div>
+      <p class="font-bebas text-lg tracking-widest" style="color:var(--muted)">{{ site_settings.app_name|upper }}</p>
+      <p class="text-xs" style="color:var(--border)">{% trans "Tournoi Inter-Quartiers" %} · مسلمون · تيبازة 🇩🇿</p>
     </div>
-    
-    <!-- Middle: Links -->
-    <div class="flex items-center justify-center gap-6 text-xs flex-1" style="color:var(--muted)">
-      <a href="{% url 'tournaments:standings' %}" class="hover:text-primary transition-colors">{% trans "Classement" %}</a>
-      <a href="{% url 'matches:calendar' %}"      class="hover:text-primary transition-colors">{% trans "Calendrier" %}</a>
-      <a href="{% url 'matches:stats' %}"         class="hover:text-primary transition-colors">{% trans "Stats" %}</a>
+    <div class="flex items-center gap-3 text-xs" style="color:var(--muted)">
+      <a href="{% url 'tournaments:standings' %}" class="hover:underline">{% trans "Classement" %}</a>
+      <a href="{% url 'matches:calendar' %}"      class="hover:underline">{% trans "Calendrier" %}</a>
+      <a href="{% url 'matches:stats' %}"         class="hover:underline">{% trans "Stats" %}</a>
       {% if user.is_authenticated %}
-      <a href="{% url 'accounts:appearance' %}"   class="hover:text-primary transition-colors">🎨</a>
+      <a href="{% url 'accounts:appearance' %}"   class="hover:underline">🎨</a>
       {% endif %}
     </div>
-
-    <!-- Right: Developer Credit (New Design) -->
-    <div class="flex justify-end flex-1">
-      <div class="group relative cursor-default" dir="rtl">
-        <!-- Glow effect -->
-        <div class="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/30 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
-        
-        <div class="relative flex items-center gap-3 bg-black/40 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/5 shadow-lg overflow-hidden transition-all duration-300 group-hover:border-primary/30 group-hover:bg-black/60">
-          <!-- Animated border accent -->
-          <div class="absolute bottom-0 right-0 h-[2px] bg-gradient-to-l from-primary via-primary/50 to-transparent w-full scale-x-0 group-hover:scale-x-100 transition-transform duration-700 origin-right"></div>
-          
-          <img src="/static/img/developer.jpg" alt="المبرمج عبداللاوي-ح" class="w-10 h-10 rounded-[10px] object-cover border border-white/10 shadow-sm transform group-hover:scale-105 transition-transform duration-500 filter group-hover:brightness-110">
-          
-          <div class="flex flex-col text-right pe-1">
-            <span class="text-[9px] uppercase tracking-[0.1em] text-primary font-bold mb-0.5 opacity-80">Developed By</span>
-            <span class="text-gray-200 font-bold text-[13px] tracking-wide group-hover:text-white transition-colors">المبرمج عبداللاوي-ح</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
   </div>
 </footer>
 
@@ -866,6 +822,21 @@ function markAllRead() {
     if (res.ok) location.reload();
   });
 }
+</script>
+
+<!-- PWA Service Worker Registration -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        .then(function(reg) {
+          // Successfully registered
+        })
+        .catch(function(err) {
+          console.warn('[PWA] Service Worker registration failed:', err);
+        });
+    });
+  }
 </script>
 
 {% block extra_js %}{% endblock %}

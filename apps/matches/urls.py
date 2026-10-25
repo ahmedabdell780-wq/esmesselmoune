@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.decorators.cache import cache_page
 from . import views
 
 app_name = 'matches'
@@ -33,6 +34,6 @@ urlpatterns = [
     path('cards/<int:pk>/delete/',      views.DeleteCardView.as_view(),       name='delete_card'),
     path('cards/<int:pk>/edit/',        views.EditCardView.as_view(),         name='edit_card'),
     path('events/<int:pk>/delete/',     views.DeleteGenericEventView.as_view(), name='delete_event'),
-    path('stats/',              views.StatsView.as_view(),         name='stats'),
+    path('stats/',              cache_page(180)(views.StatsView.as_view()),         name='stats'),
 ]
 

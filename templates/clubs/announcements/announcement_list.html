@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block title %}إعلانات أولياء الأمور — إدارة النادي{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-6 animate-fadeIn">
+    
+    <!-- Top Action Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div>
+            <div class="flex items-center gap-2 text-xs text-gray-400 mb-1">
+                <a href="{% url 'clubs:dashboard' %}" class="hover:text-primary">لوحة الأكاديمية</a>
+                <span>/</span>
+                <span class="text-white">إعلانات أولياء الأمور</span>
+            </div>
+            <h1 class="text-3xl font-black text-white flex items-center gap-3">
+                <span>📢 إعلانات وتوجيهات أولياء الأمور</span>
+            </h1>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <a href="{% url 'clubs:session_list' %}" class="btn btn-ghost border border-white/10 text-xs font-bold">
+                <span>📋 سجل الحصص</span>
+            </a>
+            <a href="{% url 'clubs:announcement_create' %}" class="btn btn-primary text-xs sm:text-sm font-black flex items-center gap-2 shadow-lg shadow-primary/30">
+                <span>➕</span>
+                <span>إعلان جديد</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="p-4 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-md mb-6">
+        <form method="get" class="flex flex-col sm:flex-row items-center gap-3">
+            <div class="w-full sm:w-64">
+                <select name="category" onchange="this.form.submit()" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white">
+                    <option value="">جميع الفئات المستهدفة</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>فئة {{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+    </div>
+
+    <!-- Announcements List -->
+    <div class="space-y-4">
+        {% for announcement in announcements %}
+        <div class="p-5 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-white/20 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group">
+            
+            <div class="space-y-2 flex-1">
+                <div class="flex flex-wrap items-center gap-2.5">
+                    {% if announcement.team %}
+                        <span class="px-2.5 py-0.5 rounded-lg text-xs font-black bg-primary/20 text-primary border border-primary/30">
+                            فئة {{ announcement.team.name }}
+                        </span>
+                    {% else %}
+                        <span class="px-2.5 py-0.5 rounded-lg text-xs font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                            عام لجميع الفئات
+                        </span>
+                    {% endif %}
+                    <h3 class="font-bold text-white text-base">
+                        <a href="{% url 'clubs:announcement_detail' announcement.pk %}" class="hover:text-primary transition-colors">
+                            {{ announcement.title }}
+                        </a>
+                    </h3>
+                </div>
+
+                <p class="text-xs text-gray-400 line-clamp-2 max-w-2xl leading-relaxed">
+                    {{ announcement.body }}
+                </p>
+
+                <div class="flex items-center gap-4 text-[11px] text-gray-500">
+                    <span>📅 {{ announcement.created_at|date:"d M Y - H:i" }}</span>
+                    <span>•</span>
+                    <span>✍️ {{ announcement.author.get_full_name|default:announcement.author.username }}</span>
+                </div>
+            </div>
+
+            <!-- Read Receipts Metrics & CTA -->
+            <div class="shrink-0 flex items-center justify-between md:justify-end gap-6 border-t md:border-t-0 pt-3 md:pt-0 border-white/5">
+                <div class="text-right">
+                    <div class="text-xs font-bold text-gray-300">
+                        قرأه <span class="text-emerald-400 font-mono font-black text-sm">{{ announcement.read_count }}</span> من أصل <span class="text-white font-mono">{{ announcement.target_guardians_count }}</span> ولي أمر
+                    </div>
+                    <div class="flex items-center gap-2 mt-1">
+                        <div class="w-24 bg-white/10 h-2 rounded-full overflow-hidden">
+                            <div class="h-full bg-emerald-500 rounded-full" style="width: {{ announcement.read_percentage }}%"></div>
+                        </div>
+                        <span class="text-[11px] font-mono text-emerald-400 font-bold">{{ announcement.read_percentage }}%</span>
+                    </div>
+                </div>
+
+                <a href="{% url 'clubs:announcement_detail' announcement.pk %}" class="btn btn-ghost border border-white/10 text-xs font-bold hover:bg-primary hover:text-black transition-all">
+                    <span>التفاصيل ومن قرأ ←</span>
+                </a>
+            </div>
+
+        </div>
+        {% empty %}
+        <div class="p-12 text-center rounded-3xl bg-white/5 border border-white/10 text-gray-400">
+            <span class="text-4xl block mb-3 opacity-40">📢</span>
+            <p class="font-bold text-gray-300 mb-2">لا توجد إعلانات منشورة حالياً.</p>
+            <p class="text-xs text-gray-500 mb-6">انشر إعلاناً وتوجيهات لولاة أمور لاعبي الأكاديمية.</p>
+            <a href="{% url 'clubs:announcement_create' %}" class="btn btn-primary btn-sm">➕ نشر إعلان جديد</a>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

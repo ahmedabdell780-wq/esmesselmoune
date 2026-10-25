@@ -1,0 +1,145 @@
+{% load i18n static %}
+<div id="player-row-{{ item.player.id }}" 
+     class="p-4 rounded-2xl bg-white/[0.04] border border-white/10 hover:border-white/20 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    
+    <!-- Player Info -->
+    <div class="flex items-center gap-3 min-w-0">
+        <div class="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden">
+            {% if item.player.photo %}
+                <img src="{{ item.player.photo.url }}" alt="{{ item.player.first_name }}" width="48" height="48" class="w-full h-full object-cover">
+            {% else %}
+                <span class="text-gray-400">#{{ item.player.jersey_number|default:item.player.id }}</span>
+            {% endif %}
+        </div>
+        <div class="min-w-0">
+            <div class="font-bold text-white text-base truncate flex items-center gap-2">
+                <span>{{ item.player.first_name }} {{ item.player.last_name }}</span>
+                {% if item.status == 'present' %}
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50"></span>
+                {% elif item.status == 'late' %}
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-lg shadow-amber-500/50"></span>
+                {% elif item.status == 'absent' %}
+                    <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-lg shadow-rose-500/50"></span>
+                {% elif item.status == 'excused' %}
+                    <span class="w-2.5 h-2.5 rounded-full bg-slate-400 shadow-lg shadow-slate-400/50"></span>
+                {% endif %}
+            </div>
+            <div class="text-xs text-gray-400 flex items-center gap-2 mt-0.5">
+                <span>{{ item.player.position|default:"لاعب" }}</span>
+                {% if item.player.jersey_number %}
+                    <span class="px-1.5 py-0.2 rounded bg-white/5 font-mono text-[10px]">#{{ item.player.jersey_number }}</span>
+                {% endif %}
+                {% if item.status %}
+                    <span class="font-bold text-[11px] 
+                        {% if item.status == 'present' %}text-emerald-400
+                        {% elif item.status == 'late' %}text-amber-400
+                        {% elif item.status == 'absent' %}text-rose-400
+                        {% elif item.status == 'excused' %}text-slate-300{% endif %}">
+                        • {% if item.status == 'present' %}حاضر{% elif item.status == 'late' %}متأخر{% elif item.status == 'absent' %}غايب{% elif item.status == 'excused' %}معذور{% endif %}
+                    </span>
+                {% else %}
+                    <span class="text-[11px] text-gray-500 italic">• لم يُسجّل بعد</span>
+                {% endif %}
+            </div>
+
+            <!-- WhatsApp Absence Alert Button -->
+            {% if item.status == 'absent' %}
+                <div class="mt-2">
+                    {% if item.attendance.whatsapp_absence_url %}
+                        <a href="{{ item.attendance.whatsapp_absence_url }}" 
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-slate-950 border border-emerald-500/40 text-[11px] font-black transition-all shadow-md group/wa">
+                            <i class="fab fa-whatsapp text-sm text-emerald-400 group-hover/wa:text-slate-950"></i>
+                            <span>إرسال إشعار الغياب لواتساب الولي 💬</span>
+                        </a>
+                    {% else %}
+                        <span class="text-[10px] text-gray-500 italic flex items-center gap-1">
+                            <i class="fab fa-whatsapp opacity-40"></i>
+                            <span>لا يتوفر رقم هاتف لولي الأمر</span>
+                        </span>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 4 Action Buttons (Min 44px touch targets) -->
+    <div class="grid grid-cols-4 gap-2 w-full sm:w-auto shrink-0" role="group" aria-label="حالة الحضور">
+        <!-- Present (أخضر) -->
+        <button type="button"
+                hx-post="{% url 'clubs:attendance_record' session.id item.player.id %}"
+                hx-vals='{"status": "present"}'
+                hx-target="#player-row-{{ item.player.id }}"
+                hx-swap="outerHTML"
+                class="min-h-[44px] min-w-[44px] px-3 py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-md active:scale-95
+                       {% if item.status == 'present' %}
+                           bg-emerald-600 text-white ring-2 ring-emerald-400 shadow-emerald-600/30
+                       {% else %}
+                           bg-white/5 text-gray-300 hover:bg-emerald-600/20 hover:text-emerald-400 border border-white/5
+                       {% endif %}">
+            <span>✓</span>
+            <span>حاضر</span>
+        </button>
+
+        <!-- Late (برتقالي) -->
+        <button type="button"
+                hx-post="{% url 'clubs:attendance_record' session.id item.player.id %}"
+                hx-vals='{"status": "late"}'
+                hx-target="#player-row-{{ item.player.id }}"
+                hx-swap="outerHTML"
+                class="min-h-[44px] min-w-[44px] px-3 py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-md active:scale-95
+                       {% if item.status == 'late' %}
+                           bg-amber-500 text-slate-950 ring-2 ring-amber-300 shadow-amber-500/30
+                       {% else %}
+                           bg-white/5 text-gray-300 hover:bg-amber-500/20 hover:text-amber-400 border border-white/5
+                       {% endif %}">
+            <span>⏱</span>
+            <span>متأخر</span>
+        </button>
+
+        <!-- Absent (أحمر) -->
+        <button type="button"
+                hx-post="{% url 'clubs:attendance_record' session.id item.player.id %}"
+                hx-vals='{"status": "absent"}'
+                hx-target="#player-row-{{ item.player.id }}"
+                hx-swap="outerHTML"
+                class="min-h-[44px] min-w-[44px] px-3 py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-md active:scale-95
+                       {% if item.status == 'absent' %}
+                           bg-rose-600 text-white ring-2 ring-rose-400 shadow-rose-600/30
+                       {% else %}
+                           bg-white/5 text-gray-300 hover:bg-rose-600/20 hover:text-rose-400 border border-white/5
+                       {% endif %}">
+            <span>✗</span>
+            <span>غايب</span>
+        </button>
+
+        <!-- Excused (رمادي) -->
+        <button type="button"
+                hx-post="{% url 'clubs:attendance_record' session.id item.player.id %}"
+                hx-vals='{"status": "excused"}'
+                hx-target="#player-row-{{ item.player.id }}"
+                hx-swap="outerHTML"
+                class="min-h-[44px] min-w-[44px] px-3 py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-md active:scale-95
+                       {% if item.status == 'excused' %}
+                           bg-slate-600 text-white ring-2 ring-slate-400 shadow-slate-600/30
+                       {% else %}
+                           bg-white/5 text-gray-300 hover:bg-slate-600/20 hover:text-slate-300 border border-white/5
+                       {% endif %}">
+            <span>📝</span>
+            <span>معذور</span>
+        </button>
+    </div>
+</div>
+
+<!-- Out of band swap to update the header counter dynamically -->
+<div id="attendance-counter-wrapper" hx-swap-oob="true">
+    <div class="flex items-center justify-between text-xs font-bold mb-2">
+        <span class="text-gray-300">تم تسجيل <span class="text-primary font-mono text-sm">{{ recorded_count }}</span> من أصل <span class="text-white font-mono text-sm">{{ total_players }}</span> لاعب</span>
+        <span class="text-primary font-mono">{{ progress_pct }}%</span>
+    </div>
+    <div class="w-full bg-white/10 h-2.5 rounded-full overflow-hidden">
+        <div class="bg-gradient-to-r from-emerald-500 to-primary h-full rounded-full transition-all duration-300" 
+             style="width: {{ progress_pct }}%"></div>
+    </div>
+</div>

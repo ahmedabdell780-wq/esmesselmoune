@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block title %}{{ announcement.title }} — متابعة القراءات{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-6 animate-fadeIn">
+    
+    <!-- Top Bar -->
+    <div class="flex items-center justify-between gap-4 mb-6">
+        <div>
+            <div class="flex items-center gap-2 text-xs text-gray-400 mb-1">
+                <a href="{% url 'clubs:announcement_list' %}" class="hover:text-primary">قائمة الإعلانات</a>
+                <span>/</span>
+                <span class="text-white">تفاصيل الإعلان ومن قرأ</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-black text-white flex items-center gap-3">
+                <span>{{ announcement.title }}</span>
+            </h1>
+        </div>
+
+        <a href="{% url 'clubs:announcement_list' %}" class="btn btn-ghost border border-white/10 text-xs">
+            <span>← العودة للقائمة</span>
+        </a>
+    </div>
+
+    <!-- Announcement Body & Stats Card -->
+    <div class="p-6 sm:p-8 rounded-[2rem] bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10 shadow-2xl backdrop-blur-xl mb-8">
+        
+        <div class="flex flex-wrap items-center gap-3 mb-4">
+            {% if announcement.team %}
+                <span class="px-3 py-1 rounded-xl text-xs font-black bg-primary/20 text-primary border border-primary/30">
+                    فئة {{ announcement.team.name }}
+                </span>
+            {% else %}
+                <span class="px-3 py-1 rounded-xl text-xs font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    عام لجميع الفئات
+                </span>
+            {% endif %}
+            <span class="text-xs text-gray-400 font-mono">📅 {{ announcement.created_at|date:"l d F Y - H:i" }}</span>
+            <span class="text-xs text-gray-400">✍️ بواسطة: {{ announcement.author.get_full_name|default:announcement.author.username }}</span>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-black/30 border border-white/5 mb-6 text-gray-200 text-sm leading-relaxed whitespace-pre-line">
+            {{ announcement.body }}
+        </div>
+
+        <!-- Read Progress -->
+        <div class="pt-4 border-t border-white/10">
+            <div class="flex items-center justify-between text-xs font-bold mb-2">
+                <span class="text-gray-300">
+                    نسبة القراءة: قرأه <span class="text-emerald-400 font-mono font-black text-sm">{{ read_count }}</span> من أصل <span class="text-white font-mono">{{ total_target }}</span> ولي أمر
+                </span>
+                <span class="text-emerald-400 font-mono">{{ read_pct }}%</span>
+            </div>
+            <div class="w-full bg-white/10 h-2.5 rounded-full overflow-hidden">
+                <div class="bg-gradient-to-r from-emerald-500 to-primary h-full rounded-full transition-all duration-300" 
+                     style="width: {{ read_pct }}%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receipts & Unread Tabs / Lists -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Guardians Who Read (تأكيدات القراءة) -->
+        <div class="p-6 rounded-3xl bg-white/[0.03] border border-emerald-500/20 shadow-xl">
+            <h2 class="font-black text-base text-emerald-400 flex items-center gap-2 mb-4">
+                <span>✓ أولياء الأمور الذين قرأوا الإعلان</span>
+                <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">
+                    {{ receipts|length }}
+                </span>
+            </h2>
+
+            <div class="space-y-2.5 max-h-[400px] overflow-y-auto pr-1">
+                {% for receipt in receipts %}
+                <div class="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between gap-3">
+                    <div>
+                        <span class="font-bold text-white text-xs block">
+                            {{ receipt.guardian.user.get_full_name|default:receipt.guardian.user.username }}
+                        </span>
+                        <span class="text-[10px] text-gray-400">
+                            {{ receipt.guardian.relationship }}
+                            {% if receipt.guardian.players.all %}
+                                (ولي: {% for p in receipt.guardian.players.all %}{{ p.first_name }} {% endfor %})
+                            {% endif %}
+                        </span>
+                    </div>
+                    <span class="text-[10px] font-mono text-emerald-400 shrink-0 bg-emerald-500/10 px-2 py-1 rounded-lg border border-emerald-500/20">
+                        {{ receipt.read_at|date:"d M - H:i" }}
+                    </span>
+                </div>
+                {% empty %}
+                <p class="text-xs text-gray-500 italic py-4 text-center">لم يقم أي ولي أمر بفتح الإعلان بعد.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Guardians Who Have Not Read Yet (لم يقرأوا بعد) -->
+        <div class="p-6 rounded-3xl bg-white/[0.03] border border-rose-500/20 shadow-xl">
+            <h2 class="font-black text-base text-rose-400 flex items-center gap-2 mb-4">
+                <span>⏳ أولياء أمور لم يقرأوا بعد</span>
+                <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300">
+                    {{ unread_guardians|length }}
+                </span>
+            </h2>
+
+            <div class="space-y-2.5 max-h-[400px] overflow-y-auto pr-1">
+                {% for guardian in unread_guardians %}
+                <div class="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between gap-3">
+                    <div>
+                        <span class="font-bold text-white text-xs block">
+                            {{ guardian.user.get_full_name|default:guardian.user.username }}
+                        </span>
+                        <span class="text-[10px] text-gray-400">
+                            {{ guardian.relationship }}
+                            {% if guardian.players.all %}
+                                (ولي: {% for p in guardian.players.all %}{{ p.first_name }} {% endfor %})
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    {% if guardian.phone %}
+                    <a href="https://wa.me/{{ guardian.formatted_phone }}" target="_blank" class="text-emerald-400 text-xs px-2 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-black transition-all flex items-center gap-1 font-mono">
+                        <i class="fab fa-whatsapp"></i>
+                        <span>{{ guardian.phone }}</span>
+                    </a>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="p-8 text-center text-xs text-emerald-400 font-bold">
+                    🎉 ممتاز! جميع أولياء الأمور المعنيين قرأوا هذا الإعلان.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

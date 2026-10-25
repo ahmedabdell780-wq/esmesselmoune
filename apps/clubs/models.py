@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
 import uuid
@@ -412,6 +413,28 @@ class ClubPlayer(models.Model):
         passport.ensure_rows_populated()
         return passport
 
+    @property
+    def whatsapp_phone(self):
+        """استخراج وتنسيق رقم واتساب ولي أمر اللاعب بالصيغة الدولية الجزائرية"""
+        # 1. ومن ملف ولي الأمر إن وُجد
+        guardian = self.guardians.first() if hasattr(self, 'guardians') else None
+        if guardian and guardian.phone:
+            formatted = format_algerian_phone_for_whatsapp(guardian.phone)
+            if formatted:
+                return formatted
+        # 2. من حقل هاتف الولي في بطاقة اللاعب
+        if self.parent_phone:
+            formatted = format_algerian_phone_for_whatsapp(self.parent_phone)
+            if formatted:
+                return formatted
+        # 3. من هاتف الطوارئ
+        if self.emergency_phone:
+            formatted = format_algerian_phone_for_whatsapp(self.emergency_phone)
+            if formatted:
+                return formatted
+        return ""
+
+
 class TrainingSession(models.Model):
     """حصة تدريبية"""
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='trainings', verbose_name=_('Catégorie'))
@@ -702,6 +725,26 @@ class ClubNews(models.Model):
     def __str__(self):
         return self.title
 
+    def save(self, *args, **kwargs):
+        if self.image and not self.image.name.lower().endswith('.webp'):
+            try:
+                from PIL import Image
+                from io import BytesIO
+                from django.core.files.base import ContentFile
+                import os
+                img = Image.open(self.image)
+                if img.mode in ('RGBA', 'LA') or (img.mode == 'P' and 'transparency' in img.info):
+                    img = img.convert('RGBA')
+                else:
+                    img = img.convert('RGB')
+                buffer = BytesIO()
+                img.save(buffer, format='WEBP', quality=85)
+                base_name = os.path.splitext(os.path.basename(self.image.name))[0]
+                self.image.save(f"{base_name}.webp", ContentFile(buffer.getvalue()), save=False)
+            except Exception:
+                pass
+        super().save(*args, **kwargs)
+
 class ClubNotification(models.Model):
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='club_notifications', verbose_name=_('Destinataire'))
     title = models.CharField(max_length=200, verbose_name=_('Titre'))
@@ -816,3 +859,263 @@ def update_league_standings(sender, instance, **kwargs):
             
         home_st.save()
         away_st.save()
+
+
+# --- وحدة تسجيل الحضور المتطورة (Attendance Tracking Module) ---
+
+class Session(models.Model):
+    """حصة تدريبية أو نشاط لفئة معينة (Équipe / Catégorie)"""
+    class Kind(models.TextChoices):
+        TRAINING = 'training', _('تدريب (Entraînement)')
+        MATCH = 'match', _('مباراة (Match)')
+        TACTICAL = 'tactical', _('حصة نظرية / تكتيك (Tactique)')
+        PHYSICAL = 'physical', _('إعداد بدني (Physique)')
+        RECOVERY = 'recovery', _('استرجاع (Récupération)')
+        OTHER = 'other', _('أخرى (Autre)')
+
+    team = models.ForeignKey(
+        Category,
+        on_delete=models.CASCADE,
+        related_name='academic_sessions',
+        verbose_name=_('الفريق / الفئة (Équipe / Catégorie)')
+    )
+    date = models.DateField(default=timezone.now, verbose_name=_('التاريخ (Date)'))
+    kind = models.CharField(
+        max_length=20,
+        choices=Kind.choices,
+        default=Kind.TRAINING,
+        verbose_name=_('نوع الحصة (Type)')
+    )
+    title = models.CharField(max_length=150, blank=True, verbose_name=_('عنوان / موضوع الحصة'))
+    location = models.CharField(max_length=120, blank=True, default='الملعب البلدي مسالمون', verbose_name=_('المكان'))
+    notes = models.TextField(blank=True, verbose_name=_('ملاحظات'))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _('حصة تدريب / نشاط')
+        verbose_name_plural = _('سجل الحصص')
+        ordering = ['-date', '-created_at']
+
+    def __str__(self):
+        return f"{self.team} - {self.get_kind_display()} ({self.date})"
+
+    @property
+    def total_players_count(self):
+        return self.team.players.filter(is_active=True).count()
+
+    @property
+    def recorded_attendances_count(self):
+        return self.attendances.count()
+
+    @property
+    def present_count(self):
+        return self.attendances.filter(status='present').count()
+
+    @property
+    def late_count(self):
+        return self.attendances.filter(status='late').count()
+
+    @property
+    def absent_count(self):
+        return self.attendances.filter(status='absent').count()
+
+    @property
+    def excused_count(self):
+        return self.attendances.filter(status='excused').count()
+
+
+class Attendance(models.Model):
+    """تسجيل حضور لاعب في حصة معينة"""
+    class Status(models.TextChoices):
+        PRESENT = 'present', _('حاضر (Présent)')
+        LATE = 'late', _('متأخر (En retard)')
+        ABSENT = 'absent', _('غايب (Absent)')
+        EXCUSED = 'excused', _('معذور (Excusé)')
+
+    session = models.ForeignKey(
+        Session,
+        on_delete=models.CASCADE,
+        related_name='attendances',
+        verbose_name=_('الحصة (Séance)')
+    )
+    player = models.ForeignKey(
+        ClubPlayer,
+        on_delete=models.CASCADE,
+        related_name='academic_attendances',
+        verbose_name=_('اللاعب (Joueur)')
+    )
+    status = models.CharField(
+        max_length=10,
+        choices=Status.choices,
+        default=Status.PRESENT,
+        verbose_name=_('الحالة (Statut)')
+    )
+    note = models.CharField(max_length=255, blank=True, verbose_name=_('ملاحظة (Note / Motif)'))
+    recorded_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _('تسجيل حضور')
+        verbose_name_plural = _('تسجيلات الحضور')
+        unique_together = [['session', 'player']]
+        ordering = ['player__last_name', 'player__first_name']
+
+    def __str__(self):
+        return f"{self.player} - {self.session} [{self.get_status_display()}]"
+
+    @property
+    def whatsapp_absence_url(self):
+        """رابط واتساب جاهز للإرسال لولي أمر اللاعب عند الغياب"""
+        phone = getattr(self.player, 'whatsapp_phone', '')
+        if not phone:
+            return ""
+        import urllib.parse
+        player_name = f"{self.player.first_name} {self.player.last_name}"
+        session_kind = self.session.get_kind_display()
+        session_date = self.session.date.strftime("%Y-%m-%d")
+        msg = (
+            f"السلام عليكم ورحمة الله،\n"
+            f"نعلمكم من إدارة نادي وفاق مسلمون (ESM) بغياب ابنكم {player_name} عن حصة {session_kind} بتاريخ {session_date}.\n"
+            f"يرجى موافاتنا بسبب الغياب أو تقديم العذر للمدرب.\n"
+            f"نادي الوفاق الرياضي مسلمون."
+        )
+        return f"https://wa.me/{phone}?text={urllib.parse.quote(msg)}"
+
+
+# ==============================================================================
+# بوابة ولي الأمر والإعلانات (Guardian Portal & Announcements)
+# ==============================================================================
+
+def format_algerian_phone_for_whatsapp(phone: str) -> str:
+    """تحويل أرقام الهواتف الجزائرية للصيغة الدولية 213XXXXXXXXX لواتساب"""
+    if not phone:
+        return ""
+    digits = "".join(filter(str.isdigit, str(phone)))
+    if digits.startswith("00213"):
+        digits = digits[2:]
+    elif digits.startswith("0") and len(digits) == 10:
+        digits = "213" + digits[1:]
+    elif digits.startswith("213") and len(digits) == 12:
+        pass
+    elif len(digits) == 9 and digits.startswith(("5", "6", "7")):
+        digits = "213" + digits
+    return digits
+
+
+class Guardian(models.Model):
+    """ملف ولي أمر اللاعب في الأكاديمية"""
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='guardian_profile',
+        verbose_name=_('حساب المستخدم (Compte)')
+    )
+    phone = models.CharField(max_length=20, blank=True, verbose_name=_('رقم هاتف ولي الأمر (واتساب)'))
+    players = models.ManyToManyField(
+        ClubPlayer,
+        related_name='guardians',
+        blank=True,
+        verbose_name=_('الأبناء / اللاعبين المسجلين')
+    )
+    relationship = models.CharField(
+        max_length=30,
+        blank=True,
+        default='أب',
+        verbose_name=_('صلة القرابة (Père / Mère / Tuteur)')
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _('ولي أمر (Tuteur)')
+        verbose_name_plural = _('أولياء الأمور (Tuteurs)')
+        ordering = ['user__last_name', 'user__first_name']
+
+    def __str__(self):
+        full_name = self.user.get_full_name() or self.user.username
+        return f"{full_name} ({self.relationship})"
+
+    @property
+    def formatted_phone(self):
+        return format_algerian_phone_for_whatsapp(self.phone)
+
+
+class Announcement(models.Model):
+    """إعلانات وتوجيهات موجهة لأولياء أمور فئة معينة أو لجميع الفئات"""
+    team = models.ForeignKey(
+        Category,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='announcements',
+        verbose_name=_('الفئة المستهدفة (اتركه فارغاً لنشر الإعلان لجميع الفئات)')
+    )
+    title = models.CharField(max_length=200, verbose_name=_('عنوان الإعلان'))
+    body = models.TextField(verbose_name=_('نص الإعلان والتفاصيل'))
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='announcements_published',
+        verbose_name=_('الناشر (المدرب / الإدارة)')
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ النشر'))
+
+    class Meta:
+        verbose_name = _('إعلان أولياء الأمور')
+        verbose_name_plural = _('إعلانات أولياء الأمور')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        target = self.team.name if self.team else "الجميع"
+        return f"[{target}] {self.title}"
+
+    def get_target_guardians(self):
+        """استرجاع أولياء الأمور المعنيين بهذا الإعلان"""
+        if self.team:
+            return Guardian.objects.filter(players__category=self.team, players__is_active=True).distinct()
+        return Guardian.objects.filter(players__is_active=True).distinct()
+
+    @property
+    def read_count(self):
+        return self.receipts.count()
+
+    @property
+    def target_guardians_count(self):
+        return self.get_target_guardians().count()
+
+    @property
+    def read_percentage(self):
+        total = self.target_guardians_count
+        if total == 0:
+            return 100 if self.read_count > 0 else 0
+        return round((self.read_count / total) * 100)
+
+
+class Receipt(models.Model):
+    """تسجيل قراءة ولي الأمر للإعلان (تأكيد القراءة)"""
+    announcement = models.ForeignKey(
+        Announcement,
+        on_delete=models.CASCADE,
+        related_name='receipts',
+        verbose_name=_('الإعلان')
+    )
+    guardian = models.ForeignKey(
+        Guardian,
+        on_delete=models.CASCADE,
+        related_name='read_receipts',
+        verbose_name=_('ولي الأمر')
+    )
+    read_at = models.DateTimeField(auto_now_add=True, verbose_name=_('وقت وتاريخ القراءة'))
+
+    class Meta:
+        verbose_name = _('تأكيد قراءة إعلان')
+        verbose_name_plural = _('تأكيدات قراءة الإعلانات')
+        unique_together = [['announcement', 'guardian']]
+        ordering = ['-read_at']
+
+    def __str__(self):
+        return f"{self.guardian} قرأ: {self.announcement.title} ({self.read_at.strftime('%Y-%m-%d %H:%M')})"
+
+

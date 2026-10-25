@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block title %}بوابة أولياء الأمور — نادي ESM{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-6 animate-fadeIn">
+    
+    <!-- Hero / Welcome Header -->
+    <div class="relative rounded-[2.5rem] p-6 sm:p-8 bg-gradient-to-br from-emerald-950/60 via-slate-900 to-black border border-emerald-500/30 shadow-2xl mb-8 overflow-hidden">
+        <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        
+        <div class="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+            <div>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold mb-3">
+                    <span>🛡️</span>
+                    <span>فضاء أولياء أمور لاعبي الأكاديمية</span>
+                </span>
+                <h1 class="text-2xl sm:text-4xl font-black text-white">
+                    مرحباً بك، {{ guardian.user.get_full_name|default:guardian.user.username }}
+                </h1>
+                <p class="text-xs sm:text-sm text-gray-300 mt-1 max-w-xl">
+                    تابع إعلانات النادي الرسمية، حضور وغياب أبنائك في التدريبات، ومواعيد مبارياتهم القادمة بكل شفافية.
+                </p>
+            </div>
+
+            {% if guardian.phone %}
+            <div class="shrink-0 flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/5 border border-white/10 text-xs text-gray-300">
+                <i class="fab fa-whatsapp text-emerald-400 text-base"></i>
+                <span class="font-mono">{{ guardian.phone }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Section 1: Announcements for Kids Categories -->
+    <div class="mb-10">
+        <div class="flex items-center justify-between mb-4 px-2">
+            <h2 class="text-lg sm:text-xl font-black text-white flex items-center gap-2">
+                <span>📢 إعلانات النادي وتوجيهات المدرب</span>
+                <span class="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary font-bold font-mono">{{ announcements|length }}</span>
+            </h2>
+        </div>
+
+        <div class="space-y-3">
+            {% for announcement in announcements %}
+            <div class="p-5 rounded-2xl bg-white/[0.04] border border-white/10 hover:border-emerald-500/40 transition-all group shadow-md">
+                <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-2">
+                    <div class="flex items-center gap-2.5">
+                        {% if announcement.team %}
+                            <span class="px-2.5 py-0.5 rounded-lg text-xs font-black bg-primary/20 text-primary border border-primary/30">
+                                فئة {{ announcement.team.name }}
+                            </span>
+                        {% else %}
+                            <span class="px-2.5 py-0.5 rounded-lg text-xs font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                عام لجميع الفئات
+                            </span>
+                        {% endif %}
+                        <h3 class="font-bold text-white text-base group-hover:text-primary transition-colors">
+                            {{ announcement.title }}
+                        </h3>
+                    </div>
+                    <span class="text-[11px] text-gray-400 font-mono shrink-0">
+                        {{ announcement.created_at|date:"d M Y - H:i" }}
+                    </span>
+                </div>
+
+                <p class="text-xs sm:text-sm text-gray-300 leading-relaxed whitespace-pre-line pl-2 pr-1">
+                    {{ announcement.body }}
+                </p>
+
+                <div class="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-gray-400">
+                    <span class="flex items-center gap-1.5">
+                        <i class="fas fa-user-edit text-xs text-primary"></i>
+                        <span>الناشر: {{ announcement.author.get_full_name|default:announcement.author.username|default:"إدارة النادي" }}</span>
+                    </span>
+                    <span class="text-emerald-400 font-bold flex items-center gap-1">
+                        <i class="fas fa-check-double text-xs"></i>
+                        <span>تم تأكيد قراءتك للإعلان</span>
+                    </span>
+                </div>
+            </div>
+            {% empty %}
+            <div class="p-8 text-center rounded-2xl bg-white/5 border border-white/10 text-gray-400 text-xs">
+                لا توجد إعلانات جديدة منشورة حالياً لفئات أبنائك.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Section 2: Kids Cards & Attendance Performance -->
+    <div class="mb-10">
+        <h2 class="text-lg sm:text-xl font-black text-white flex items-center gap-2 mb-4 px-2">
+            <span>⚽ بطاقات الأبناء ومتابعة الحضور</span>
+            <span class="text-xs text-gray-400">({{ kids_data|length }} لاعبين مسجلين)</span>
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {% for item in kids_data %}
+            <div class="p-6 rounded-[2rem] bg-gradient-to-br from-white/[0.05] to-white/[0.02] border border-white/10 shadow-xl backdrop-blur-md flex flex-col justify-between">
+                
+                <div>
+                    <!-- Player Header -->
+                    <div class="flex items-center gap-4 mb-5 pb-4 border-b border-white/10">
+                        <div class="w-16 h-16 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden shrink-0">
+                            {% if item.player.photo %}
+                                <img src="{{ item.player.photo.url }}" alt="{{ item.player.first_name }}" width="64" height="64" class="w-full h-full object-cover">
+                            {% else %}
+                                <span class="text-2xl">🛡️</span>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-black text-white text-lg">{{ item.player.first_name }} {{ item.player.last_name }}</h3>
+                                {% if item.category %}
+                                <span class="px-2 py-0.5 rounded-lg text-xs font-bold bg-primary/20 text-primary border border-primary/30">
+                                    {{ item.category.name }}
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div class="text-xs text-gray-400 mt-0.5">
+                                <span>{{ item.player.position|default:"لاعب" }}</span>
+                                {% if item.player.jersey_number %}
+                                    <span class="px-1.5 py-0.2 rounded bg-white/5 font-mono text-[10px]">#{{ item.player.jersey_number }}</span>
+                                {% endif %}
+                                <span class="mx-1">•</span>
+                                <span>مواليد {{ item.player.date_of_birth|date:"Y" }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Attendance Rate Indicator -->
+                    <div class="p-4 rounded-2xl bg-black/30 border border-white/5 mb-5">
+                        <div class="flex items-center justify-between text-xs font-bold mb-2">
+                            <span class="text-gray-300">نسبة الانضباط والحضور العام:</span>
+                            <span class="font-mono text-sm 
+                                {% if item.rate >= 80 %}text-emerald-400
+                                {% elif item.rate >= 60 %}text-amber-400
+                                {% else %}text-rose-400{% endif %}">
+                                {{ item.rate }}%
+                            </span>
+                        </div>
+                        <div class="w-full bg-white/10 h-2.5 rounded-full overflow-hidden mb-3">
+                            <div class="h-full rounded-full 
+                                {% if item.rate >= 80 %}bg-emerald-500
+                                {% elif item.rate >= 60 %}bg-amber-500
+                                {% else %}bg-rose-500{% endif %}" 
+                                 style="width: {{ item.rate }}%"></div>
+                        </div>
+
+                        <!-- Mini metrics -->
+                        <div class="grid grid-cols-4 gap-1 text-center pt-2 border-t border-white/5 text-[10px]">
+                            <div>
+                                <span class="text-gray-400 block">حاضر</span>
+                                <span class="font-bold text-emerald-400 font-mono text-xs">{{ item.present_count }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400 block">متأخر</span>
+                                <span class="font-bold text-amber-400 font-mono text-xs">{{ item.late_count }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400 block">غياب</span>
+                                <span class="font-bold text-rose-400 font-mono text-xs">{{ item.absent_count }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400 block">معذور</span>
+                                <span class="font-bold text-slate-300 font-mono text-xs">{{ item.excused_count }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Sessions Breakdown -->
+                    <div class="space-y-2">
+                        <span class="text-[11px] font-bold text-gray-400 block">آخر الحصص المسجلة:</span>
+                        {% for att in item.recent_attendances %}
+                        <div class="flex items-center justify-between p-2.5 rounded-xl bg-white/5 text-xs">
+                            <div class="flex items-center gap-2">
+                                <span class="font-mono text-gray-300">{{ att.session.date|date:"d M" }}</span>
+                                <span class="text-gray-400 text-[11px]">{{ att.session.get_kind_display }}</span>
+                            </div>
+                            <span class="font-bold text-[11px] px-2 py-0.5 rounded-md
+                                {% if att.status == 'present' %}bg-emerald-500/20 text-emerald-400 border border-emerald-500/30
+                                {% elif att.status == 'late' %}bg-amber-500/20 text-amber-400 border border-amber-500/30
+                                {% elif att.status == 'absent' %}bg-rose-500/20 text-rose-400 border border-rose-500/30
+                                {% elif att.status == 'excused' %}bg-slate-500/20 text-slate-300 border border-slate-500/30{% endif %}">
+                                {{ att.get_status_display }}
+                            </span>
+                        </div>
+                        {% empty %}
+                        <p class="text-xs text-gray-500 italic py-2">لا توجد حصص مسجلة مؤخراً.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+            {% empty %}
+            <div class="col-span-2 p-10 text-center rounded-3xl bg-white/5 border border-white/10 text-gray-400">
+                لم يتم ربط أي لاعبين بحسابك بعد. يرجى التواصل مع إدارة النادي لربط أبنائك المسجلين.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Section 3: Upcoming Matches -->
+    <div>
+        <h2 class="text-lg sm:text-xl font-black text-white flex items-center gap-2 mb-4 px-2">
+            <span>🏆 مباريات الأبناء القادمة</span>
+        </h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {% for match in upcoming_matches %}
+            <div class="p-5 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-between gap-4">
+                <div class="space-y-1">
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-primary/20 text-primary">
+                        فئة {{ match.category.name }}
+                    </span>
+                    <div class="text-sm font-bold text-white">
+                        الوفاق <span class="text-xs text-gray-400">ضد</span> {{ match.opponent }}
+                    </div>
+                    <div class="text-xs text-gray-400 flex items-center gap-2">
+                        <span>📍 {{ match.location|default:"الملعب البلدي" }}</span>
+                        <span>•</span>
+                        <span class="{% if match.is_home %}text-emerald-400{% else %}text-amber-400{% endif %} font-bold text-[10px]">
+                            {% if match.is_home %}داخل الديار{% else %}خارج الديار{% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="text-center shrink-0 bg-white/5 px-3 py-2 rounded-xl border border-white/10">
+                    <span class="text-xs text-primary font-bold block">{{ match.date|date:"d M" }}</span>
+                    {% if match.time %}
+                        <span class="text-[11px] text-gray-300 font-mono">{{ match.time|time:"H:i" }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-2 p-8 text-center rounded-2xl bg-white/5 border border-white/10 text-gray-400 text-xs">
+                لا توجد مباريات رسمية مجدولة حالياً لفئات أبنائك.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

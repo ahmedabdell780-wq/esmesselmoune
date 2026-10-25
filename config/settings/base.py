@@ -135,6 +135,15 @@ else:
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+WHITENOISE_MAX_AGE = 31536000  # 1 year cache headers for static files
+WHITENOISE_MANIFEST_STRICT = False
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'turniq-cache',
+    }
+}
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 

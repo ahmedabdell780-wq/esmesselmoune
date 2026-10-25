@@ -118,6 +118,36 @@ class PlayerDetailView(LoginRequiredMixin, DetailView):
     template_name = 'clubs/player_detail.html'
     context_object_name = 'player'
 
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+
+        player = self.get_object()
+        user = request.user
+        role_val = getattr(user, 'role', '')
+
+        # 1. الإدارة والمشرفين يملكون الصلاحية الكاملة
+        if role_val in ['admin', 'organizer'] or user.is_staff or user.is_superuser:
+            return super().dispatch(request, *args, **kwargs)
+
+        # 2. المدرب يرى فقط لاعبي فئاته التدريبية
+        if role_val == 'coach' or user.groups.filter(name='coach').exists():
+            coach_cats = user.coach_categories.all()
+            if not coach_cats.exists() and user.coach_category:
+                coach_cats = [user.coach_category]
+            if not coach_cats or (player.category and player.category in coach_cats):
+                return super().dispatch(request, *args, **kwargs)
+            raise PermissionDenied("حماية الخصوصية: لا يمكنك الاطلاع على بيانات لاعبين خارج فئاتك التدريبية.")
+
+        # 3. ولي الأمر يرى فقط ملفات أبنائه
+        guardian = getattr(user, 'guardian_profile', None)
+        is_own_child = (guardian and player in guardian.players.all()) or (player.parent_user == user)
+        if is_own_child:
+            return super().dispatch(request, *args, **kwargs)
+
+        raise PermissionDenied("حماية الخصوصية: بيانات القاصرين وأرقام هواتفهم لا تظهر إلا لأولياء أمورهم والإدارة.")
+
+
 class PlayerCardsPrintView(LoginRequiredMixin, ListView):
     model = ClubPlayer
     template_name = 'clubs/player_cards_print.html'
@@ -947,7 +977,7 @@ class SubscriptionUpdateView(LoginRequiredMixin, DateInputMixin, UpdateView):
 
 class SubscriptionDeleteView(LoginRequiredMixin, DeleteView):
     model = Subscription
-    template_name = 'clubs/generic_confirm_delete.html'
+    template_name = 'clubs/confirm_delete.html'
     
     def get_success_url(self):
         return reverse_lazy('clubs:player_detail', kwargs={'pk': self.object.player.id})
@@ -2561,11 +2591,24 @@ def populate_league_view(request):
 
         # 2. Staff (10 members)
         staff_objs = []
+        staff_photo_map = {
+            'إبراهيم بوستة': 'clubs/staff/ibrahim_boussetta.jpg',
+            'حكيم شرفي': 'clubs/staff/hakim_charafi.jpg',
+            'رياض لعراب': 'clubs/staff/riad_laarab.jpg',
+            'عريج يوسف': 'clubs/staff/arij_youssef.jpg',
+            'علي قيدون': 'clubs/staff/ali_guidoun.jpg',
+            'نصرالدين بيرم': 'clubs/staff/nasreddine_bayrem.jpg',
+        }
         for item in items:
             if item.get('model') == 'clubs.staffmember':
                 f = dict(item['fields'])
                 cat_id = f.pop('category_assigned', None)
                 f.pop('user', None)
+                staff_name = f"{f.get('first_name', '')} {f.get('last_name', '')}".strip()
+                for k, p in staff_photo_map.items():
+                    if k in staff_name or staff_name in k:
+                        f['photo'] = p
+                        break
                 staff_objs.append(StaffMember(id=item['pk'], category_assigned_id=cat_id, **f))
         if staff_objs:
             StaffMember.objects.bulk_create(staff_objs)
@@ -2702,3 +2745,529 @@ def test_matches_view(request):
     html += "</pre>"
         
     return HttpResponse(html)
+
+
+# ==============================================================================
+# وحدة تسجيل الحضور المتقدمة للمدربين والإدارة (Advanced Attendance Module)
+# ==============================================================================
+
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
+from apps.clubs.models import Session, Attendance
+
+
+class CoachOrAdminAccessMixin(LoginRequiredMixin):
+    """
+    تقييد الوصول لـ:
+    - المستخدمين ضمن مجموعة 'coach'
+    - أصحاب الدور 'coach' أو الإدارة ('admin', 'organizer') أو المشرفين
+    """
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+
+        user = request.user
+        role_val = getattr(user, 'role', '')
+        is_coach = (
+            role_val == 'coach' or
+            user.groups.filter(name='coach').exists()
+        )
+        is_admin = (
+            role_val in ['admin', 'organizer'] or
+            user.is_superuser or
+            user.is_staff
+        )
+
+        if not (is_coach or is_admin):
+            raise PermissionDenied("هذه الوحدة مخصصة للمدربين والإدارة فقط.")
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_coach_categories(self):
+        user = self.request.user
+        role_val = getattr(user, 'role', '')
+        is_admin = (
+            role_val in ['admin', 'organizer'] or
+            user.is_superuser or
+            user.is_staff
+        )
+        if is_admin:
+            return Category.objects.all()
+
+        cats = user.coach_categories.all()
+        if not cats.exists() and user.coach_category:
+            return Category.objects.filter(pk=user.coach_category.pk)
+        return cats if cats.exists() else Category.objects.all()
+
+
+class SessionListView(CoachOrAdminAccessMixin, ListView):
+    """قائمة الحصص مع الفلترة حسب الفئة والنوع والتاريخ"""
+    model = Session
+    template_name = 'clubs/attendance/session_list.html'
+    context_object_name = 'sessions'
+    paginate_by = 15
+
+    def get_queryset(self):
+        qs = Session.objects.select_related('team').prefetch_related('attendances')
+        cats = self.get_coach_categories()
+        qs = qs.filter(team__in=cats)
+
+        category_id = self.request.GET.get('category')
+        if category_id:
+            qs = qs.filter(team_id=category_id)
+
+        kind = self.request.GET.get('kind')
+        if kind:
+            qs = qs.filter(kind=kind)
+
+        date_from = self.request.GET.get('date_from')
+        if date_from:
+            qs = qs.filter(date__gte=date_from)
+
+        date_to = self.request.GET.get('date_to')
+        if date_to:
+            qs = qs.filter(date__lte=date_to)
+
+        return qs.order_by('-date', '-created_at')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['categories'] = self.get_coach_categories()
+        ctx['kinds'] = Session.Kind.choices
+        ctx['selected_category'] = self.request.GET.get('category', '')
+        ctx['selected_kind'] = self.request.GET.get('kind', '')
+        ctx['date_from'] = self.request.GET.get('date_from', '')
+        ctx['date_to'] = self.request.GET.get('date_to', '')
+        return ctx
+
+
+class SessionCreateView(CoachOrAdminAccessMixin, CreateView):
+    """إنشاء حصة جديدة"""
+    model = Session
+    fields = ['team', 'date', 'kind', 'title', 'location', 'notes']
+    template_name = 'clubs/attendance/session_form.html'
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        form.fields['team'].queryset = self.get_coach_categories()
+        form.fields['team'].label = "الفئة / الفريق"
+        form.fields['date'].label = "التاريخ"
+        form.fields['kind'].label = "نوع الحصة"
+        form.fields['title'].label = "موضوع / عنوان الحصة (اختياري)"
+        form.fields['location'].label = "المكان"
+        form.fields['notes'].label = "ملاحظات إضافية"
+        return form
+
+    def get_success_url(self):
+        messages.success(self.request, "تم إنشاء الحصة بنجاح. يمكنك الآن بدء تسجيل الحضور.")
+        return reverse('clubs:session_sheet', kwargs={'pk': self.object.pk})
+
+
+class SessionAttendanceSheetView(CoachOrAdminAccessMixin, DetailView):
+    """ورقة تسجيل حضور الحصة للمدرب"""
+    model = Session
+    template_name = 'clubs/attendance/session_sheet.html'
+    context_object_name = 'session'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        session = self.object
+        players = list(
+            session.team.players
+            .filter(is_active=True)
+            .order_by('last_name', 'first_name')
+        )
+        attendances = {
+            a.player_id: a 
+            for a in session.attendances.select_related('player')
+        }
+
+        player_items = []
+        for p in players:
+            att = attendances.get(p.id)
+            player_items.append({
+                'player': p,
+                'attendance': att,
+                'status': att.status if att else None,
+                'note': att.note if att else '',
+            })
+
+        total_players = len(players)
+        recorded_count = len(attendances)
+        progress_pct = round((recorded_count / total_players * 100)) if total_players > 0 else 0
+
+        ctx['player_items'] = player_items
+        ctx['total_players'] = total_players
+        ctx['recorded_count'] = recorded_count
+        ctx['present_count'] = sum(1 for a in attendances.values() if a.status == 'present')
+        ctx['late_count'] = sum(1 for a in attendances.values() if a.status == 'late')
+        ctx['absent_count'] = sum(1 for a in attendances.values() if a.status == 'absent')
+        ctx['excused_count'] = sum(1 for a in attendances.values() if a.status == 'excused')
+        ctx['progress_pct'] = progress_pct
+        return ctx
+
+
+class AttendanceRecordHTMXView(CoachOrAdminAccessMixin, View):
+    """تسجيل أو تحديث حضور لاعب واحد فورياً عبر HTMX"""
+    def post(self, request, session_pk, player_pk):
+        session = get_object_or_404(Session, pk=session_pk)
+        player = get_object_or_404(ClubPlayer, pk=player_pk, category=session.team)
+        status = request.POST.get('status', 'present')
+        note = request.POST.get('note', '')
+
+        valid_statuses = [s[0] for s in Attendance.Status.choices]
+        if status not in valid_statuses:
+            status = Attendance.Status.PRESENT
+
+        attendance, _ = Attendance.objects.update_or_create(
+            session=session,
+            player=player,
+            defaults={'status': status, 'note': note}
+        )
+
+        total_players = session.team.players.filter(is_active=True).count()
+        recorded_count = session.attendances.count()
+        progress_pct = round((recorded_count / total_players * 100)) if total_players > 0 else 0
+
+        context = {
+            'session': session,
+            'item': {
+                'player': player,
+                'attendance': attendance,
+                'status': attendance.status,
+                'note': attendance.note,
+            },
+            'total_players': total_players,
+            'recorded_count': recorded_count,
+            'progress_pct': progress_pct,
+        }
+        return render(request, 'clubs/attendance/partials/player_row.html', context)
+
+
+class AttendanceMarkAllPresentHTMXView(CoachOrAdminAccessMixin, View):
+    """زر تسجيل الكل حاضر للحصة دفعة واحدة"""
+    def post(self, request, session_pk):
+        session = get_object_or_404(Session, pk=session_pk)
+        players = list(session.team.players.filter(is_active=True).order_by('last_name', 'first_name'))
+
+        for p in players:
+            Attendance.objects.update_or_create(
+                session=session,
+                player=p,
+                defaults={'status': Attendance.Status.PRESENT}
+            )
+
+        attendances = {a.player_id: a for a in session.attendances.all()}
+        player_items = []
+        for p in players:
+            att = attendances.get(p.id)
+            player_items.append({
+                'player': p,
+                'attendance': att,
+                'status': att.status if att else 'present',
+                'note': att.note if att else '',
+            })
+
+        total_players = len(players)
+        recorded_count = len(attendances)
+        progress_pct = 100
+
+        context = {
+            'session': session,
+            'player_items': player_items,
+            'total_players': total_players,
+            'recorded_count': recorded_count,
+            'progress_pct': progress_pct,
+        }
+        return render(request, 'clubs/attendance/partials/player_rows_container.html', context)
+
+
+class AttendanceStatsView(CoachOrAdminAccessMixin, TemplateView):
+    """صفحة إحصائيات حضور وغياب كل لاعب ونسب المشاركة"""
+    template_name = 'clubs/attendance/stats.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        cats = self.get_coach_categories()
+        ctx['categories'] = cats
+
+        selected_cat_id = self.request.GET.get('category')
+        if selected_cat_id:
+            target_cats = cats.filter(pk=selected_cat_id)
+        else:
+            target_cats = cats
+
+        sessions = Session.objects.filter(team__in=target_cats)
+        date_from = self.request.GET.get('date_from')
+        date_to = self.request.GET.get('date_to')
+        if date_from:
+            sessions = sessions.filter(date__gte=date_from)
+        if date_to:
+            sessions = sessions.filter(date__lte=date_to)
+
+        total_sessions = sessions.count()
+        ctx['total_sessions'] = total_sessions
+        ctx['selected_category'] = selected_cat_id or ''
+        ctx['date_from'] = date_from or ''
+        ctx['date_to'] = date_to or ''
+
+        players = (
+            ClubPlayer.objects
+            .filter(category__in=target_cats, is_active=True)
+            .select_related('category')
+            .order_by('category__min_age', 'last_name', 'first_name')
+        )
+
+        from django.db.models import Count, Q
+        attendances_qs = Attendance.objects.filter(session__in=sessions)
+        stats_by_player = {
+            row['player']: row for row in attendances_qs.values('player').annotate(
+                present=Count('id', filter=Q(status='present')),
+                late=Count('id', filter=Q(status='late')),
+                absent=Count('id', filter=Q(status='absent')),
+                excused=Count('id', filter=Q(status='excused')),
+                total=Count('id')
+            )
+        }
+
+        # Map session counts per team for accuracy
+        sessions_per_team = {}
+        for s in sessions:
+            sessions_per_team[s.team_id] = sessions_per_team.get(s.team_id, 0) + 1
+
+        player_stats = []
+        for p in players:
+            data = stats_by_player.get(p.id, {'present': 0, 'late': 0, 'absent': 0, 'excused': 0, 'total': 0})
+            team_sessions = sessions_per_team.get(p.category_id, 0)
+            eval_total = team_sessions if team_sessions > 0 else data['total']
+            attended = data['present'] + data['late']
+            rate = round((attended / eval_total * 100), 1) if eval_total > 0 else 0.0
+
+            player_stats.append({
+                'player': p,
+                'team': p.category,
+                'sessions_count': eval_total,
+                'present': data['present'],
+                'late': data['late'],
+                'absent': data['absent'],
+                'excused': data['excused'],
+                'rate': rate,
+            })
+
+        sort_by = self.request.GET.get('sort', 'absences_desc')
+        if sort_by == 'absences_desc':
+            player_stats.sort(key=lambda x: (-x['absent'], x['rate']))
+        elif sort_by == 'rate_asc':
+            player_stats.sort(key=lambda x: (x['rate'], -x['absent']))
+        elif sort_by == 'rate_desc':
+            player_stats.sort(key=lambda x: (-x['rate'], x['absent']))
+        else:
+            player_stats.sort(key=lambda x: (x['player'].last_name, x['player'].first_name))
+
+        ctx['player_stats'] = player_stats
+        ctx['sort_by'] = sort_by
+        return ctx
+
+
+# ==============================================================================
+# بوابة ولي الأمر ونظام الإعلانات وتأكيدات القراءة (Guardian Portal & Announcements)
+# ==============================================================================
+
+from django.db.models import Count, Q
+from apps.clubs.models import Guardian, Announcement, Receipt
+
+
+class GuardianRequiredMixin(LoginRequiredMixin):
+    """التحقق من أن المستخدم يملك حساب ولي أمر لأحد لاعبي الأكاديمية"""
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+
+        guardian = getattr(request.user, 'guardian_profile', None)
+        if not guardian:
+            linked_players = ClubPlayer.objects.filter(parent_user=request.user)
+            if linked_players.exists() or request.user.role == 'parent':
+                guardian, _ = Guardian.objects.get_or_create(
+                    user=request.user,
+                    defaults={'phone': getattr(request.user, 'phone', '')}
+                )
+                guardian.players.add(*linked_players)
+
+        if not guardian and not request.user.is_staff and not request.user.is_superuser:
+            raise PermissionDenied("هذه البوابة مخصصة لأولياء أمور لاعبي الأكاديمية فقط.")
+
+        return super().dispatch(request, *args, **kwargs)
+
+
+class GuardianPortalView(GuardianRequiredMixin, TemplateView):
+    """
+    بوابة ولي الأمر:
+    - إعلانات فئات أبنائه فقط (والإعلانات العامة)
+    - تسجيل قراءة الإعلانات تلقائياً
+    - سجل حضور وغياب الأبناء ونسبهم
+    - مباريات فئات أبنائه القادمة
+    """
+    template_name = 'clubs/guardian/portal.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        user = self.request.user
+        guardian = getattr(user, 'guardian_profile', None)
+        
+        # If staff testing without profile, fallback to first guardian if exists
+        if not guardian and (user.is_staff or user.is_superuser):
+            guardian = Guardian.objects.first()
+
+        ctx['guardian'] = guardian
+
+        if not guardian:
+            ctx['kids_data'] = []
+            ctx['announcements'] = []
+            ctx['upcoming_matches'] = []
+            return ctx
+
+        # 1. Guardian's Children (Privacy: only this guardian's children)
+        kids = list(guardian.players.filter(is_active=True).select_related('category'))
+        kid_categories = [k.category for k in kids if k.category]
+
+        # 2. Announcements targeted at these categories or all categories
+        announcements_qs = (
+            Announcement.objects
+            .filter(Q(team__in=kid_categories) | Q(team__isnull=True))
+            .select_related('team', 'author')
+            .order_by('-created_at')[:10]
+        )
+        announcements = list(announcements_qs)
+
+        # 3. Mark read receipt for all viewed announcements
+        for a in announcements:
+            Receipt.objects.get_or_create(announcement=a, guardian=guardian)
+
+        ctx['announcements'] = announcements
+
+        # 4. Kids Attendance & Performance
+        kids_data = []
+        for kid in kids:
+            recent_attendances = (
+                Attendance.objects
+                .filter(player=kid)
+                .select_related('session')
+                .order_by('-session__date')[:5]
+            )
+            total_sessions = Session.objects.filter(team=kid.category).count()
+            att_counts = Attendance.objects.filter(player=kid).aggregate(
+                present=Count('id', filter=Q(status='present')),
+                late=Count('id', filter=Q(status='late')),
+                absent=Count('id', filter=Q(status='absent')),
+                excused=Count('id', filter=Q(status='excused')),
+            )
+            present_c = att_counts['present'] or 0
+            late_c = att_counts['late'] or 0
+            absent_c = att_counts['absent'] or 0
+            excused_c = att_counts['excused'] or 0
+            attended = present_c + late_c
+            rate = round((attended / total_sessions * 100), 1) if total_sessions > 0 else 100.0
+
+            kids_data.append({
+                'player': kid,
+                'category': kid.category,
+                'recent_attendances': recent_attendances,
+                'total_sessions': total_sessions,
+                'present_count': present_c,
+                'late_count': late_c,
+                'absent_count': absent_c,
+                'excused_count': excused_c,
+                'rate': rate,
+            })
+
+        ctx['kids_data'] = kids_data
+
+        # 5. Upcoming Matches for kids' categories
+        ctx['upcoming_matches'] = (
+            ClubMatch.objects
+            .filter(category__in=kid_categories, date__gte=timezone.now().date())
+            .select_related('category')
+            .order_by('date', 'time')[:4]
+        )
+
+        return ctx
+
+
+class AnnouncementListView(CoachOrAdminAccessMixin, ListView):
+    """قائمة الإعلانات للمدرب والإدارة مع إحصائيات من قرأ"""
+    model = Announcement
+    template_name = 'clubs/announcements/announcement_list.html'
+    context_object_name = 'announcements'
+    paginate_by = 12
+
+    def get_queryset(self):
+        qs = Announcement.objects.select_related('team', 'author').prefetch_related('receipts')
+        cats = self.get_coach_categories()
+        qs = qs.filter(Q(team__in=cats) | Q(team__isnull=True))
+
+        category_id = self.request.GET.get('category')
+        if category_id:
+            qs = qs.filter(team_id=category_id)
+
+        return qs.order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['categories'] = self.get_coach_categories()
+        ctx['selected_category'] = self.request.GET.get('category', '')
+        return ctx
+
+
+class AnnouncementCreateView(CoachOrAdminAccessMixin, CreateView):
+    """إنشاء إعلان جديد لأولياء الأمور"""
+    model = Announcement
+    fields = ['team', 'title', 'body']
+    template_name = 'clubs/announcements/announcement_form.html'
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        form.fields['team'].queryset = self.get_coach_categories()
+        form.fields['team'].label = "الفئة المستهدفة (اتركه فارغاً لنشر الإعلان لجميع فئات النادي)"
+        form.fields['title'].label = "عنوان الإعلان"
+        form.fields['body'].label = "نص الإعلان والتعليمات"
+        return form
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        messages.success(self.request, "تم نشر الإعلان بنجاح، وسيظهر فوراً في بوابات أولياء الأمور.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('clubs:announcement_detail', kwargs={'pk': self.object.pk})
+
+
+class AnnouncementDetailView(CoachOrAdminAccessMixin, DetailView):
+    """تفاصيل الإعلان ورؤية قائمة من قرأ ومن لم يقرأ بدقة"""
+    model = Announcement
+    template_name = 'clubs/announcements/announcement_detail.html'
+    context_object_name = 'announcement'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        announcement = self.object
+
+        # 1. Guardians who read
+        receipts = announcement.receipts.select_related('guardian__user').order_by('-read_at')
+        read_guardian_ids = list(receipts.values_list('guardian_id', flat=True))
+        ctx['receipts'] = receipts
+
+        # 2. Target guardians who have NOT read yet
+        target_guardians = announcement.get_target_guardians().select_related('user').prefetch_related('players')
+        unread_guardians = target_guardians.exclude(id__in=read_guardian_ids)
+        ctx['unread_guardians'] = unread_guardians
+
+        total_target = target_guardians.count()
+        read_count = len(read_guardian_ids)
+        read_pct = round((read_count / total_target * 100)) if total_target > 0 else (100 if read_count > 0 else 0)
+
+        ctx['total_target'] = total_target
+        ctx['read_count'] = read_count
+        ctx['read_pct'] = read_pct
+        return ctx
+
+

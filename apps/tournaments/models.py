@@ -187,6 +187,8 @@ class Group(models.Model):
     @property
     def sorted_standings(self):
         """Sorted standings for this group using official tie-breakers."""
+        if hasattr(self, '_precomputed_standings'):
+            return self._precomputed_standings
         from .services.scheduler import StandingsCalculator
         calc = StandingsCalculator(self.tournament)
         return calc.get_sorted_standings(self)
@@ -333,6 +335,38 @@ class CommitteeMember(models.Model):
 
     def __str__(self):
         return f"{self.full_name} — {self.get_role_display()} ({self.tournament.name})"
+
+    @property
+    def photo_url(self):
+        """Permanent static photo fallback for committee members."""
+        import os
+        from django.conf import settings
+        from django.templatetags.static import static
+        mapping = {
+            'بوستة إبراهيم': 'ibrahim_boussetta.jpg',
+            'إبراهيم بوستة': 'ibrahim_boussetta.jpg',
+            'شرفي حكيم': 'hakim_charafi.jpg',
+            'حكيم شرفي': 'hakim_charafi.jpg',
+            'لعراب رياض': 'riad_laarab.jpg',
+            'رياض لعراب': 'riad_laarab.jpg',
+            'عريج يوسف': 'arij_youssef.jpg',
+            'قيدون علي': 'ali_guidoun.jpg',
+            'علي قيدون': 'ali_guidoun.jpg',
+            'بيرم نصرالدين': 'nasreddine_bayrem.jpg',
+            'نصرالدين بيرم': 'nasreddine_bayrem.jpg',
+        }
+        for k, filename in mapping.items():
+            if k in self.full_name or self.full_name in k:
+                staff_subpath = os.path.join(settings.BASE_DIR, 'static', 'img', 'staff', filename)
+                if os.path.exists(staff_subpath):
+                    return static(f"img/staff/{filename}")
+                return static(f"img/{filename}")
+        if self.photo:
+            try:
+                return self.photo.url
+            except Exception:
+                pass
+        return None
 
 
 # ─── Signals ─────────────────────────────────────────────────────────────────

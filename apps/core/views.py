@@ -1,8 +1,21 @@
+from django.shortcuts import render
 from django.views.generic import TemplateView
 from django.utils import timezone
-from apps.tournaments.models import Tournament
+from django.db.models import Count, Q
+from apps.tournaments.models import Tournament, GroupStanding
 from apps.matches.models import Match, Goal
 from apps.teams.models import Team
+from apps.clubs.models import ClubMatch
+
+
+def category_matches(request, category_name):
+    """Partial view to render matches for a specific category (U15, U17, U20)."""
+    matches = (
+        ClubMatch.objects
+        .filter(category__name__iexact=category_name)
+        .order_by('-date', '-time')[:5]
+    )
+    return render(request, 'core/partials/category_matches.html', {'matches': matches})
 
 
 class HomeView(TemplateView):
@@ -10,91 +23,118 @@ class HomeView(TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        from apps.clubs.models import ClubNews, ClubPlayer, ClubMatch
-        
-        ctx['recent_news'] = ClubNews.objects.filter(is_published=True).order_by('-created_at')[:3]
-        ctx['stats'] = {
-            'total_players': ClubPlayer.objects.filter(is_active=True).count()
-        }
-        
-        # Get next match for Wifak
-        teams_data = {
-            "وفاق حجوط": "wh", "أمل سيدي عمر": "esa", "ونام بوجبرون": "wbm",
-            "مولودية مراد": "mcm", "اتحاد مناصر": "usm", "الوفاق مسلمون": "esms",
-            "تحدي الداموس": "thd", "مولودية قوراية": "mcg", "شبيبة حجوط": "jsh",
-            "اتحاد القليعة": "usjk", "نخبة فجانة": "nf", "نجمة حجوط": "ebh"
-        }
-        next_matches = []
-        for cat in ["U15", "U17", "U20"]:
-            match = ClubMatch.objects.filter(category__name__icontains=cat, our_score__isnull=True).order_by('date').first()
-            if match:
-                match.opponent_code = teams_data.get(match.opponent, "thd") # default to thd if not found
-                if match.opponent == "اتحاد مناصر":
-                    match.opponent_code = "esm" # exception handled in generator
-                next_matches.append(match)
-                
-        ctx['next_matches'] = next_matches
 
-        # --- FULL SCHEDULE & STATS ---
-        schedule_data = []
-        for cat in ["U15", "U17", "U20"]:
-            cat_matches = []
-            stats = {'played': 0, 'won': 0, 'drawn': 0, 'lost': 0, 'gf': 0, 'ga': 0, 'pts': 0, 'gd': 0}
-            matches = ClubMatch.objects.filter(category__name__icontains=cat).order_by('date', 'time')
-            for match in matches:
-                match.opponent_code = teams_data.get(match.opponent, "thd")
-                if match.opponent == "اتحاد مناصر":
-                    match.opponent_code = "esm"
-                cat_matches.append(match)
-                if match.our_score is not None and match.their_score is not None:
-                    stats['played'] += 1
-                    stats['gf'] += match.our_score
-                    stats['ga'] += match.their_score
-                    if match.our_score > match.their_score:
-                        stats['won'] += 1
-                        stats['pts'] += 3
-                    elif match.our_score == match.their_score:
-                        stats['drawn'] += 1
-                        stats['pts'] += 1
-                    else:
-                        stats['lost'] += 1
-            stats['gd'] = stats['gf'] - stats['ga']
-            
-            schedule_data.append({
-                'category': cat,
-                'matches': cat_matches,
-                'stats': stats
-            })
-            
-        ctx['schedule_data'] = schedule_data
+        tournament = (
+            Tournament.objects
+            .filter(status__in=[
+                Tournament.Status.GROUP_STAGE,
+                Tournament.Status.KNOCKOUT,
+                Tournament.Status.FINISHED,
+            ])
+            .order_by('-year', '-edition')
+            .first()
+        )
+
+        ctx['tournament'] = tournament
+
+        # Add manager's team context for onboarding flow
+        if self.request.user.is_authenticated and self.request.user.role == 'manager':
+            ctx['manager_team'] = self.request.user.teams_managed.first()
+
+        if tournament:
+            # Upcoming match (hero card uses only the first match)
+            ctx['upcoming_matches'] = (
+                Match.objects
+                .filter(tournament=tournament, status=Match.Status.SCHEDULED,
+                        match_date__gte=timezone.now())
+                .select_related('team1', 'team2')
+                .order_by('match_date')[:1]
+            )
+
+            # First group with sorted standings for mini-table
+            first_group = tournament.groups.first()
+            if first_group:
+                standings = list(
+                    GroupStanding.objects
+                    .filter(group=first_group)
+                    .select_related('team')
+                    .order_by('-points', '-goal_difference', '-goals_for')[:4]
+                )
+                first_group._precomputed_standings = standings
+                ctx['groups'] = [first_group]
+            else:
+                ctx['groups'] = []
+
+            # Aggregated Stats
+            match_counts = Match.objects.filter(tournament=tournament).aggregate(
+                total=Count('id'),
+                finished=Count('id', filter=Q(status=Match.Status.FINISHED)),
+            )
+            total_goals = Goal.objects.filter(match__tournament=tournament).count()
+
+            ctx['stats'] = {
+                'total_teams': tournament.registered_team_count,
+                'total_matches': match_counts['total'] or 0,
+                'finished_matches': match_counts['finished'] or 0,
+                'total_goals': total_goals,
+            }
+
+        # Category matches default tab (U15)
+        ctx['u15_matches'] = (
+            ClubMatch.objects
+            .filter(category__name__iexact='U15')
+            .order_by('-date', '-time')[:5]
+        )
+
+        # Past Tournaments (Hall of Fame) - single query with select_related
+        past_list = list(
+            Tournament.objects
+            .filter(status=Tournament.Status.FINISHED)
+            .select_related('winner')
+            .order_by('-year', '-edition')
+        )
+        defending_champ = past_list[0] if past_list else None
+        ctx['defending_champion_tournament'] = defending_champ
+        ctx['defending_champion'] = defending_champ.winner if defending_champ else None
+
+        if tournament and defending_champ and defending_champ.id == tournament.id:
+            ctx['past_tournaments'] = [t for t in past_list if t.id != tournament.id]
+        else:
+            ctx['past_tournaments'] = past_list
 
         return ctx
 
 
-from django.shortcuts import redirect
-from django.views.decorators.http import require_POST
-from apps.accounts.models import AppearanceSettings
-
-@require_POST
-def update_appearance(request):
-    if request.user.is_authenticated:
-        appearance, _ = AppearanceSettings.objects.get_or_create(user=request.user)
-        
-        # update theme
-        theme = request.POST.get('theme')
-        if theme in dict(AppearanceSettings.Theme.choices):
-            appearance.theme = theme
-            
-        # update language
-        language = request.POST.get('language')
-        if language in ['fr', 'ar']:
-            appearance.language = language
-            
-        appearance.save()
-    
-    next_url = request.POST.get('next', request.META.get('HTTP_REFERER', '/'))
-    return redirect(next_url)
+import os
+from django.conf import settings
+from django.http import HttpResponse, Http404
 
 
-class AboutUsView(TemplateView):
-    template_name = 'core/about.html'
+def service_worker(request):
+    """Serve the root Service Worker script with unrestricted root scope."""
+    sw_path = os.path.join(settings.BASE_DIR, 'static', 'sw.js')
+    if os.path.exists(sw_path):
+        with open(sw_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        response = HttpResponse(content, content_type='application/javascript')
+        response['Service-Worker-Allowed'] = '/'
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        return response
+    raise Http404("Service Worker not found")
+
+
+def manifest_json(request):
+    """Serve the Web App Manifest from the site root."""
+    manifest_path = os.path.join(settings.BASE_DIR, 'static', 'manifest.json')
+    if os.path.exists(manifest_path):
+        with open(manifest_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        response = HttpResponse(content, content_type='application/manifest+json')
+        response['Cache-Control'] = 'public, max-age=86400'
+        return response
+    raise Http404("Manifest not found")
+
+
+class OfflineView(TemplateView):
+    """Fallback offline view displayed by Service Worker when network fails."""
+    template_name = 'offline.html'
